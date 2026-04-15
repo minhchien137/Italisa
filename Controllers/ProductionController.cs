@@ -114,6 +114,23 @@ namespace ItalisaTools.Controllers
 
             return Json(processes);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetCodesByProcess(string process)
+        {
+            var mappings = await _context.SVN_ProductMapping
+                .Where(m => m.Operation_Name == process)
+                .Select(m => m.product_id)
+                .ToListAsync();
+
+            var codes = await _context.SVN_Italisa_Code
+                .Where(c => c.Italisa_no.HasValue && mappings.Contains(c.Italisa_no.Value))
+                .Select(c => new { value = c.Italisa_no, text = c.Italisa_no + " - " + c.Item_code })
+                .ToListAsync();
+
+            return Json(codes);
+        }
+
     }
 
     public class ProductionCreateDto

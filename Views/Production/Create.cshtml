@@ -80,7 +80,6 @@
             text-transform: uppercase;
             color: #a8d0f8;
         }
-        /* hide ERP badge on very small screens */
         @@media (max-width: 360px) { .nav-brand span { display: none; } }
 
         .nav-links { display: flex; gap: 4px; }
@@ -97,7 +96,6 @@
         .nav-links a:hover { background: rgba(255,255,255,0.12); color: var(--white); }
         .nav-links a.active { background: var(--denim-mid); color: var(--white); }
 
-        /* hide text labels on mobile, keep icons */
         @@media (max-width: 480px) {
             .nav-links a .nav-label { display: none; }
             .nav-links a { padding: 6px 10px; font-size: 1rem; }
@@ -164,7 +162,7 @@
         /* ── FORM ── */
         .form-grid {
             display: grid;
-            grid-template-columns: 1fr;          /* mobile: single column */
+            grid-template-columns: 1fr;
             gap: 1rem;
         }
         @@media (min-width: 540px) {
@@ -193,7 +191,6 @@
             background: var(--white);
             transition: all 0.2s;
             outline: none;
-            /* bigger tap target on mobile */
             min-height: 44px;
         }
         input[type="number"]:focus {
@@ -268,6 +265,31 @@
         .select2-results__option { padding: 10px 12px !important; }
         .select2-container { width: 100% !important; }
 
+        /* ── CODE SELECT LOADING STATE ── */
+        .code-loading-hint {
+            font-size: 0.78rem;
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 18px;
+        }
+        .code-loading-hint.info    { color: var(--gray-400); }
+        .code-loading-hint.warning { color: #d97706; }
+        .code-loading-hint.success { color: var(--success); }
+
+        .code-spinner {
+            width: 12px; height: 12px;
+            border: 2px solid var(--denim-light);
+            border-top-color: var(--denim);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: none;
+            flex-shrink: 0;
+        }
+        .code-spinner.show { display: inline-block; }
+        @@keyframes spin { to { transform: rotate(360deg); } }
+
         .input-hint { font-size: 0.78rem; color: var(--gray-400); margin-top: 2px; }
 
         /* ── DIVIDER ── */
@@ -281,7 +303,7 @@
         /* ── BUTTONS ── */
         .btn-row {
             display: flex;
-            flex-direction: column-reverse;   /* mobile: stack, primary on top */
+            flex-direction: column-reverse;
             gap: 10px;
         }
         @@media (min-width: 480px) {
@@ -304,8 +326,8 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            min-height: 46px;             /* comfortable tap target */
-            width: 100%;                  /* full width on mobile */
+            min-height: 46px;
+            width: 100%;
         }
         @@media (min-width: 480px) {
             .btn { width: auto; }
@@ -332,7 +354,7 @@
             background: rgba(15,47,82,0.5);
             backdrop-filter: blur(4px);
             z-index: 1000;
-            align-items: flex-end;        /* mobile: slide up from bottom */
+            align-items: flex-end;
             justify-content: center;
             padding: 0;
         }
@@ -342,7 +364,7 @@
         .modal-overlay.show { display: flex; animation: fadeIn 0.2s; }
         .modal-box {
             background: var(--white);
-            border-radius: 20px 20px 0 0;   /* mobile: bottom sheet */
+            border-radius: 20px 20px 0 0;
             padding: 1.75rem 1.25rem;
             width: 100%;
             max-width: 100%;
@@ -356,7 +378,6 @@
                 max-width: 440px;
             }
         }
-        /* drag handle for bottom sheet feel */
         .modal-handle {
             width: 40px; height: 4px;
             background: var(--gray-200);
@@ -431,7 +452,6 @@
             max-width: 400px;
         }
         .toast.show { transform: translateX(-50%) translateY(0); }
-        /* on desktop, move to top-right */
         @@media (min-width: 600px) {
             .toast {
                 top: 1.5rem; right: 1.5rem;
@@ -450,6 +470,16 @@
     </style>
 </head>
 <body>
+
+<nav>
+    <div class="nav-brand">
+        🏭 Italisa Tools <span>ERP</span>
+    </div>
+    <div class="nav-links">
+        <a href="/Production/Create" class="active">➕ <span class="nav-label">Data Entry</span></a>
+        <a href="/Production/History">📋 <span class="nav-label">History</span></a>
+    </div>
+</nav>
 
 <div class="page-wrapper">
     <div class="page-header">
@@ -479,8 +509,8 @@
                     </select>
                 </div>
 
-               <div class="form-group">
-                    <label>Process<span class="required">*</span></label>
+                <div class="form-group">
+                    <label>Process <span class="required">*</span></label>
                     <select id="processSelect">
                         <option value="">-- Select Process --</option>
                         @foreach (var p in processes)
@@ -490,16 +520,15 @@
                     </select>
                 </div>
 
-
                 <div class="form-group">
                     <label>Code (Italisa No - Item Code) <span class="required">*</span></label>
                     <select id="codeSelect">
-                        <option value="">-- Select Code --</option>
-                        @foreach (var c in codes)
-                        {
-                            <option value="@c.Italisa_no">@c.Italisa_no - @c.Item_code</option>
-                        }
+                        <option value="">-- Select Process first --</option>
                     </select>
+                    <div class="code-loading-hint info" id="codeHint">
+                        <span class="code-spinner" id="codeSpinner"></span>
+                        <span id="codeHintText">⬆ Select a Process to load matching codes</span>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -528,7 +557,7 @@
     </div>
 </div>
 
-<!-- CONFIRM MODAL (bottom sheet on mobile) -->
+<!-- CONFIRM MODAL -->
 <div class="modal-overlay" id="confirmModal">
     <div class="modal-box">
         <div class="modal-handle"></div>
@@ -554,45 +583,107 @@
 <script>
     const pathBase = '@Context.Request.PathBase'.replace(/\/$/, '');
 
+    const select2Config = {
+        width: '100%',
+        language: {
+            noResults: function () { return "No results found"; },
+            searching: function () { return "Searching..."; }
+        }
+    };
+
     $(document).ready(function () {
-        const savedVendorInit = localStorage.getItem('lastVendor');
-        const select2Config = {
-            width: '100%',
-            language: {
-                noResults: function () { return "No results found"; },
-                searching: function () { return "Searching..."; }
-            }
-        };
         $('#vendorSelect').select2({ ...select2Config, placeholder: '-- Select Vendor --' });
-        $('#codeSelect').select2({ ...select2Config, placeholder: '-- Select Code --' });
         $('#processSelect').select2({ ...select2Config, placeholder: '-- Select Process --' });
+        $('#codeSelect').select2({ ...select2Config, placeholder: '-- Select Process first --' });
         $('#typeSelect').select2({ ...select2Config, placeholder: '-- Select Type --', minimumResultsForSearch: Infinity });
+
+        // Khi thay đổi Process → load codes tương ứng
+        $('#processSelect').on('change', function () {
+            const processValue = $(this).val();
+            loadCodesByProcess(processValue);
+        });
+
+        // Restore vendor từ localStorage
+        const savedVendor = localStorage.getItem('lastVendor');
+        if (savedVendor) {
+            $('#vendorSelect').val(savedVendor).trigger('change');
+        }
     });
 
+    // ── Load codes theo process ──
+    async function loadCodesByProcess(processValue) {
+        const $codeSelect = $('#codeSelect');
+        const spinner     = document.getElementById('codeSpinner');
+        const hintEl      = document.getElementById('codeHint');
+        const hintText    = document.getElementById('codeHintText');
+
+        // Reset code dropdown
+        $codeSelect.empty().append('<option value="">-- Loading... --</option>').trigger('change');
+
+        if (!processValue) {
+            $codeSelect.empty().append('<option value="">-- Select Process first --</option>').trigger('change');
+            hintEl.className  = 'code-loading-hint info';
+            hintText.textContent = '⬆ Select a Process to load matching codes';
+            spinner.classList.remove('show');
+            return;
+        }
+
+        // Show loading
+        spinner.classList.add('show');
+        hintEl.className  = 'code-loading-hint info';
+        hintText.textContent = 'Loading matching codes...';
+
+        try {
+            const res   = await fetch(`${pathBase}/Production/GetCodesByProcess?process=${encodeURIComponent(processValue)}`);
+            const codes = await res.json();
+
+            $codeSelect.empty().append('<option value="">-- Select Code --</option>');
+
+            if (codes.length === 0) {
+                hintEl.className  = 'code-loading-hint warning';
+                hintText.textContent = `⚠ No codes found for process "${processValue}"`;
+            } else {
+                codes.forEach(c => {
+                    $codeSelect.append(new Option(c.text, c.value));
+                });
+                hintEl.className  = 'code-loading-hint success';
+                hintText.textContent = `✔ ${codes.length} code(s) matched for "${processValue}"`;
+            }
+
+            $codeSelect.trigger('change');
+        } catch (e) {
+            $codeSelect.empty().append('<option value="">-- Error loading codes --</option>').trigger('change');
+            hintEl.className  = 'code-loading-hint warning';
+            hintText.textContent = '❌ Failed to load codes. Please try again.';
+            console.error('GetCodesByProcess error:', e);
+        } finally {
+            spinner.classList.remove('show');
+        }
+    }
+
+    // ── Form data ──
     function getFormData() {
-    const vendorSel = document.getElementById('vendorSelect');
-    const codeSel = document.getElementById('codeSelect');
-    const typeSel = document.getElementById('typeSelect');
-    const processSel = document.getElementById('processSelect');
+        const vendorSel  = document.getElementById('vendorSelect');
+        const codeSel    = document.getElementById('codeSelect');
+        const typeSel    = document.getElementById('typeSelect');
+        const processSel = document.getElementById('processSelect');
 
-    return {
-        vendor: vendorSel.value,
-        vendorText: vendorSel.options[vendorSel.selectedIndex]?.text,
-        process: processSel.value,
-        processText: processSel.options[processSel.selectedIndex]?.text,
-        productId: parseInt(codeSel.value) || null,
-        codeText: codeSel.options[codeSel.selectedIndex]?.text,
-        typeValue: typeSel.value,
-        quantity: parseInt(document.getElementById('quantityInput').value) || null
-    };
-}
-
-
+        return {
+            vendor:      vendorSel.value,
+            vendorText:  vendorSel.options[vendorSel.selectedIndex]?.text,
+            process:     processSel.value,
+            processText: processSel.options[processSel.selectedIndex]?.text,
+            productId:   parseInt(codeSel.value) || null,
+            codeText:    codeSel.options[codeSel.selectedIndex]?.text,
+            typeValue:   typeSel.value,
+            quantity:    parseInt(document.getElementById('quantityInput').value) || null
+        };
+    }
 
     function validateForm(data) {
         if (!data.vendor)                          return 'Please select a Vendor.';
+        if (!data.process)                         return 'Please select a Process.';
         if (!data.productId)                       return 'Please select a Code.';
-        if (!data.process)                       return 'Please select a Process.';
         if (!data.typeValue)                       return 'Please select a Type.';
         if (!data.quantity || data.quantity <= 0)  return 'Please enter a valid Quantity (> 0).';
         return null;
@@ -626,12 +717,23 @@
             const response = await fetch(`${pathBase}/Production/Create`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ vendor: data.vendor,process: data.process, productId: data.productId, typeValue: data.typeValue, quantity: data.quantity })
+                body: JSON.stringify({
+                    vendor:    data.vendor,
+                    process:   data.process,
+                    productId: data.productId,
+                    typeValue: data.typeValue,
+                    quantity:  data.quantity
+                })
             });
             const result = await response.json();
             closeModal();
-            if (result.success) { localStorage.setItem('lastVendor', data.vendor); showToast(result.message, 'success'); resetForm(); }
-            else { showToast(result.message, 'error'); }
+            if (result.success) {
+                localStorage.setItem('lastVendor', data.vendor);
+                showToast(result.message, 'success');
+                resetForm();
+            } else {
+                showToast(result.message, 'error');
+            }
         } catch (e) {
             closeModal();
             showToast('An error occurred while connecting to the server.', 'error');
@@ -648,9 +750,10 @@
         } else {
             $('#vendorSelect').val('').trigger('change');
         }
-        $('#codeSelect').val('').trigger('change');
-        $('#typeSelect').val('').trigger('change');
+
+        // Reset process → sẽ trigger loadCodesByProcess('') tự động
         $('#processSelect').val('').trigger('change');
+        $('#typeSelect').val('').trigger('change');
         document.getElementById('quantityInput').value = '';
     }
 
@@ -665,9 +768,6 @@
 
     document.getElementById('confirmModal').addEventListener('click', function (e) {
         if (e.target === this) closeModal();
-            if (savedVendorInit) {
-            $('#vendorSelect').val(savedVendorInit).trigger('change');
-        }
     });
 </script>
 </body>
