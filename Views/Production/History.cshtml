@@ -36,58 +36,8 @@
                 radial-gradient(ellipse at 80% 20%, rgba(37,99,168,0.05) 0%, transparent 50%);
         }
 
-        /* ── NAV ── */
-        nav {
-            background: var(--denim-dark);
-            padding: 0 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            height: 60px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        .nav-brand {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--white);
-            display: flex; align-items: center; gap: 8px;
-        }
-        .nav-brand span {
-            background: var(--denim-mid);
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            color: #a8d0f8;
-        }
-        @@media (max-width: 360px) { .nav-brand span { display: none; } }
-
-        .nav-links { display: flex; gap: 4px; }
-        .nav-links a {
-            color: rgba(255,255,255,0.7);
-            text-decoration: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 0.84rem;
-            font-weight: 500;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-        .nav-links a:hover { background: rgba(255,255,255,0.12); color: var(--white); }
-        .nav-links a.active { background: var(--denim-mid); color: var(--white); }
-        @@media (max-width: 480px) {
-            .nav-links a .nav-label { display: none; }
-            .nav-links a { padding: 6px 10px; font-size: 1rem; }
-        }
-
         /* ── LAYOUT ── */
-        .page-wrapper { max-width: 1200px; margin: 0 auto; padding: 1.5rem 1rem; }
+        .page-wrapper { max-width: 1300px; margin: 0 auto; padding: 1.5rem 1rem; }
         @@media (min-width: 600px) { .page-wrapper { padding: 2.5rem 1.5rem; } }
 
         .page-header { margin-bottom: 1.5rem; }
@@ -121,7 +71,7 @@
             align-items: center;
             justify-content: space-between;
             border-bottom: 1px solid rgba(27,79,138,0.1);
-            cursor: pointer;         /* collapsible on mobile */
+            cursor: pointer;
             user-select: none;
         }
         .filter-header h3 {
@@ -131,42 +81,24 @@
             color: var(--denim-dark);
             display: flex; align-items: center; gap: 8px;
         }
-        .filter-toggle {
-            font-size: 0.8rem;
-            color: var(--denim);
-            font-weight: 600;
-            transition: transform 0.2s;
-        }
+        .filter-toggle { font-size: 0.8rem; color: var(--denim); font-weight: 600; transition: transform 0.2s; }
         .filter-toggle.collapsed { transform: rotate(-90deg); }
         @@media (min-width: 768px) { .filter-toggle { display: none; } }
 
-        .filter-body {
-            padding: 1rem 1.25rem;
-            transition: max-height 0.3s ease;
-        }
-        .filter-body.collapsed {
-            display: none;
-        }
+        .filter-body { padding: 1rem 1.25rem; }
+        .filter-body.collapsed { display: none; }
         @@media (min-width: 768px) { .filter-body { display: block !important; } }
 
-        /* ── FILTER FIELDS ── */
         .filter-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;   /* 2-col on mobile */
+            grid-template-columns: 1fr 1fr;
             gap: 0.75rem;
         }
-        @@media (min-width: 600px) {
-            .filter-grid { grid-template-columns: repeat(3, 1fr); gap: 1rem; }
-        }
-        @@media (min-width: 900px) {
-            .filter-grid { grid-template-columns: repeat(5, 1fr); align-items: end; }
-        }
+        @@media (min-width: 600px) { .filter-grid { grid-template-columns: repeat(3, 1fr); gap: 1rem; } }
+        @@media (min-width: 900px) { .filter-grid { grid-template-columns: repeat(5, 1fr); align-items: end; } }
 
         .filter-group { display: flex; flex-direction: column; gap: 5px; }
-        /* btn row spans both cols on mobile */
-        .filter-group.btn-col {
-            grid-column: 1 / -1;
-        }
+        .filter-group.btn-col { grid-column: 1 / -1; }
         @@media (min-width: 600px) { .filter-group.btn-col { grid-column: auto; } }
 
         .filter-group label {
@@ -263,7 +195,6 @@
             white-space: nowrap;
         }
         .badge-blue   { background: var(--denim-light); color: var(--denim-dark); }
-        .badge-green  { background: #d1fae5; color: #065f46; }
         .badge-purple { background: #ede9fe; color: #5b21b6; }
 
         /* ── DESKTOP TABLE ── */
@@ -289,15 +220,33 @@
         .td-vendor{ font-weight: 600; color: var(--denim-dark); }
         .td-qty   { font-weight: 700; color: var(--denim); font-size: 1rem; }
         .td-date  { color: var(--gray-600); font-size: 0.81rem; white-space: nowrap; }
+        .td-desc {
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--gray-600);
+            font-size: 0.82rem;
+        }
+        .td-img { text-align: center; }
+        .thumb {
+            width: 48px; height: 48px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1.5px solid var(--gray-200);
+            cursor: zoom-in;
+            transition: transform 0.15s, box-shadow 0.15s;
+            display: block; margin: 0 auto;
+        }
+        .thumb:hover { transform: scale(1.08); box-shadow: 0 4px 12px rgba(27,79,138,0.2); }
+        .no-val { color: var(--gray-400); font-size: 0.78rem; }
 
-        /* ── MOBILE CARD LIST (replaces table on small screens) ── */
+        /* ── MOBILE CARD LIST ── */
         .card-list { display: none; }
-
         @@media (max-width: 640px) {
             .table-wrapper table { display: none; }
             .card-list { display: block; }
         }
-
         .data-card {
             border-bottom: 1px solid var(--gray-100);
             padding: 1rem 1.25rem;
@@ -305,45 +254,21 @@
         }
         .data-card:last-child { border-bottom: none; }
         .data-card:hover { background: var(--denim-xlight); }
-
         .data-card-top {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 0.6rem;
         }
-        .data-card-vendor {
-            font-weight: 700;
-            color: var(--denim-dark);
-            font-size: 0.95rem;
-        }
-        .data-card-id {
-            font-size: 0.75rem;
-            color: var(--gray-400);
-            font-weight: 600;
-        }
-        .data-card-body {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.4rem 0.75rem;
-        }
+        .data-card-vendor { font-weight: 700; color: var(--denim-dark); font-size: 0.95rem; }
+        .data-card-id     { font-size: 0.75rem; color: var(--gray-400); font-weight: 600; }
+        .data-card-body { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem 0.75rem; }
         .data-card-field { display: flex; flex-direction: column; gap: 2px; }
-        .data-card-label {
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: var(--gray-400);
-            letter-spacing: 0.3px;
-        }
-        .data-card-value {
-            font-size: 0.86rem;
-            color: var(--gray-800);
-        }
-        .data-card-qty {
-            font-weight: 700;
-            color: var(--denim);
-            font-size: 1rem;
-        }
+        .data-card-field.full { grid-column: 1 / -1; }
+        .data-card-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; color: var(--gray-400); letter-spacing: 0.3px; }
+        .data-card-value { font-size: 0.86rem; color: var(--gray-800); }
+        .data-card-qty   { font-weight: 700; color: var(--denim); font-size: 1rem; }
+        .card-thumb { width: 72px; height: 72px; object-fit: cover; border-radius: 8px; border: 1.5px solid var(--gray-200); cursor: zoom-in; margin-top: 4px; }
 
         /* ── EMPTY / LOADING ── */
         .empty-state { text-align: center; padding: 3rem 1.5rem; color: var(--gray-400); }
@@ -359,19 +284,32 @@
             margin: 0 auto 0.9rem;
         }
         @@keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── LIGHTBOX ── */
+        .lightbox {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.82);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .lightbox.show { display: flex; animation: fadeIn 0.2s; }
+        .lightbox img { max-width: 100%; max-height: 90vh; border-radius: 10px; object-fit: contain; box-shadow: 0 16px 60px rgba(0,0,0,0.5); }
+        .lightbox-close {
+            position: fixed; top: 1rem; right: 1rem;
+            background: rgba(255,255,255,0.15); color: white;
+            border: none; border-radius: 50%;
+            width: 38px; height: 38px; font-size: 1.2rem;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
+        }
+        .lightbox-close:hover { background: rgba(255,255,255,0.3); }
+        @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
-
-<nav>
-    <div class="nav-brand">
-        🏭 Italisa Tools <span>ERP</span>
-    </div>
-    <div class="nav-links">
-        <a href="/Production/Create">➕ <span class="nav-label">Data Entry</span></a>
-        <a href="/Production/History" class="active">📋 <span class="nav-label">History</span></a>
-    </div>
-</nav>
 
 <div class="page-wrapper">
     <div class="page-header">
@@ -420,7 +358,7 @@
                     <label style="visibility:hidden">‎</label>
                     <div class="btn-filter-row">
                         <button class="btn btn-primary" onclick="loadData()">🔍 Search</button>
-                        <button class="btn btn-outline" onclick="clearFilters()">✖ Clear Filters</button>
+                        <button class="btn btn-outline" onclick="clearFilters()">✖ Clear</button>
                     </div>
                 </div>
             </div>
@@ -440,17 +378,19 @@
                 <thead>
                     <tr>
                         <th>#ID</th>
-                        <th>Vendor</th>
                         <th>Process</th>
-                        <th>Code (Italisa - Item)</th>
+                        <th>Product ID</th>
+                        <th>Vendor</th>
                         <th>Type</th>
                         <th>Quantity</th>
-                        <th>Record Date</th>
+                        <th>Date Finished</th>
+                        <th>Description</th>
+                        <th>Image</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
                     <tr>
-                        <td colspan="6">
+                        <td colspan="9">
                             <div class="loading-state">
                                 <div class="spinner"></div>
                                 <p>Loading data...</p>
@@ -471,20 +411,23 @@
     </div>
 </div>
 
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <img id="lightboxImg" src="" alt="Full image" onclick="event.stopPropagation()" />
+</div>
+
 <script>
     const pathBase = '@Context.Request.PathBase'.replace(/\/$/, '');
 
-    /* ── Filter collapsible (mobile only) ── */
+    /* ── Filter collapsible (mobile) ── */
     let filterOpen = true;
     function toggleFilter() {
         if (window.innerWidth >= 768) return;
         filterOpen = !filterOpen;
-        const body   = document.getElementById('filterBody');
-        const toggle = document.getElementById('filterToggle');
-        body.classList.toggle('collapsed', !filterOpen);
-        toggle.classList.toggle('collapsed', !filterOpen);
+        document.getElementById('filterBody').classList.toggle('collapsed', !filterOpen);
+        document.getElementById('filterToggle').classList.toggle('collapsed', !filterOpen);
     }
-
     window.addEventListener('DOMContentLoaded', () => {
         if (window.innerWidth < 768) {
             filterOpen = false;
@@ -493,125 +436,170 @@
         }
     });
 
-    /* ── Vendors ── */
+    /* ── Lightbox ── */
+    function openLightbox(src) {
+        document.getElementById('lightboxImg').src = src;
+        document.getElementById('lightbox').classList.add('show');
+    }
+    function closeLightbox() {
+        document.getElementById('lightbox').classList.remove('show');
+        document.getElementById('lightboxImg').src = '';
+    }
+
+    /* ── Load Vendors ── */
     async function loadVendors() {
         try {
-            const res = await fetch(`${pathBase}/Production/GetVendors`);
+            const res     = await fetch(`${pathBase}/Production/GetVendors`);
             const vendors = await res.json();
-            const sel = document.getElementById('filterVendor');
+            const sel     = document.getElementById('filterVendor');
             vendors.forEach(v => {
                 if (v) {
                     const opt = document.createElement('option');
-                    opt.value = v;
-                    opt.textContent = v;
+                    opt.value = v; opt.textContent = v;
                     sel.appendChild(opt);
                 }
             });
-        } catch (e) {
-            console.error('Load vendors error:', e);
-        }
+        } catch (e) { console.error('Load vendors error:', e); }
     }
 
-    /* ── Data ── */
+    /* ── Load Processes ── */
+    async function loadProcesses() {
+        try {
+            const res       = await fetch(`${pathBase}/Production/GetProcesses`);
+            const processes = await res.json();
+            const sel       = document.getElementById('filterProcess');
+            processes.forEach(p => {
+                if (p) {
+                    const opt = document.createElement('option');
+                    opt.value = p; opt.textContent = p;
+                    sel.appendChild(opt);
+                }
+            });
+        } catch (e) { console.error('Load processes error:', e); }
+    }
+
+    /* ── Load Data ── */
     async function loadData() {
         const vendor    = document.getElementById('filterVendor').value;
-        const process   = document.getElementById('filterProcess').value; // ✅ ADD
+        const process   = document.getElementById('filterProcess').value;
         const typeValue = document.getElementById('filterType').value;
         const dateFrom  = document.getElementById('filterDateFrom').value;
         const dateTo    = document.getElementById('filterDateTo').value;
 
         const loadingHTML = `<div class="loading-state"><div class="spinner"></div><p>Loading data...</p></div>`;
-        document.getElementById('tableBody').innerHTML = `<tr><td colspan="7">${loadingHTML}</td></tr>`;
+        document.getElementById('tableBody').innerHTML = `<tr><td colspan="9">${loadingHTML}</td></tr>`;
         document.getElementById('cardList').innerHTML  = loadingHTML;
 
         const params = new URLSearchParams();
         if (vendor)    params.append('vendor', vendor);
-        if (process)   params.append('process', process); // ✅ ADD
+        if (process)   params.append('process', process);
         if (typeValue) params.append('typeValue', typeValue);
         if (dateFrom)  params.append('dateFrom', dateFrom);
         if (dateTo)    params.append('dateTo', dateTo);
 
         try {
             const res  = await fetch(`${pathBase}/Production/GetHistory?` + params.toString());
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || `HTTP ${res.status}`);
+            }
             const data = await res.json();
 
             document.getElementById('recordCount').textContent = `${data.length} records`;
 
             if (data.length === 0) {
                 const emptyHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><p>No records match your filters.</p></div>`;
-                document.getElementById('tableBody').innerHTML = `<tr><td colspan="7">${emptyHTML}</td></tr>`;
+                document.getElementById('tableBody').innerHTML = `<tr><td colspan="9">${emptyHTML}</td></tr>`;
                 document.getElementById('cardList').innerHTML  = emptyHTML;
                 return;
             }
 
-            /* desktop rows */
-            document.getElementById('tableBody').innerHTML = data.map(row => `
+            /* ── Desktop rows ── */
+            // Các cột: id | process | product_id | vendor | type_value | product_qty | date_finished | description | image_path
+            document.getElementById('tableBody').innerHTML = data.map(row => {
+                const descCell = row.description
+                    ? `<td class="td-desc" title="${escHtml(row.description)}">${escHtml(row.description)}</td>`
+                    : `<td class="no-val">—</td>`;
+
+                const imgCell = row.image_path
+                    ? `<td class="td-img"><img class="thumb" src="${row.image_path}" alt="img" loading="lazy" onclick="openLightbox('${row.image_path}')" /></td>`
+                    : `<td class="td-img no-val">—</td>`;
+
+                return `
                 <tr>
                     <td class="td-id">#${row.id}</td>
-                    <td class="td-vendor">${row.vendor ?? '-'}</td>
-                    <td>${row.process ?? '-'}</td> <!-- ✅ ADD -->
-                    <td>${row.itemCode ?? '-'}</td>
+                    <td>${escHtml(row.process ?? '—')}</td>
+                    <td>${row.product_id ?? '<span class="no-val">—</span>'}</td>
+                    <td class="td-vendor">${escHtml(row.vendor ?? '—')}</td>
                     <td>
                         <span class="badge ${row.type_value === 'Production Quantity' ? 'badge-blue' : 'badge-purple'}">
-                            ${row.type_value ?? '-'}
+                            ${escHtml(row.type_value ?? '—')}
                         </span>
                     </td>
-                    <td class="td-qty">${row.product_qty?.toLocaleString() ?? '-'}</td>
-                    <td class="td-date">
-                        ${row.date_finished ? new Date(row.date_finished).toLocaleString() : '-'}
-                    </td>
-                </tr>
-            `).join('');
+                    <td class="td-qty">${row.product_qty != null ? row.product_qty.toLocaleString() : '<span class="no-val">—</span>'}</td>
+                    <td class="td-date">${row.date_finished ? new Date(row.date_finished).toLocaleString() : '—'}</td>
+                    ${descCell}
+                    ${imgCell}
+                </tr>`;
+            }).join('');
 
-            /* mobile cards */
-            document.getElementById('cardList').innerHTML = data.map(row => `
+            /* ── Mobile cards ── */
+            document.getElementById('cardList').innerHTML = data.map(row => {
+                const imgSection = row.image_path
+                    ? `<div class="data-card-field full">
+                           <span class="data-card-label">Image</span>
+                           <img class="card-thumb" src="${row.image_path}" alt="img" loading="lazy" onclick="openLightbox('${row.image_path}')" />
+                       </div>`
+                    : '';
+                const descSection = row.description
+                    ? `<div class="data-card-field full">
+                           <span class="data-card-label">Description</span>
+                           <span class="data-card-value" style="font-size:0.82rem;color:var(--gray-600)">${escHtml(row.description)}</span>
+                       </div>`
+                    : '';
+                return `
                 <div class="data-card">
                     <div class="data-card-top">
-                        <span class="data-card-vendor">${row.vendor ?? '-'}</span>
+                        <span class="data-card-vendor">${escHtml(row.vendor ?? '—')}</span>
                         <span class="data-card-id">#${row.id}</span>
                     </div>
                     <div class="data-card-body">
-
                         <div class="data-card-field">
                             <span class="data-card-label">Process</span>
-                            <span class="data-card-value">${row.process ?? '-'}</span>
+                            <span class="data-card-value">${escHtml(row.process ?? '—')}</span>
                         </div>
-
                         <div class="data-card-field">
-                            <span class="data-card-label">Code</span>
-                            <span class="data-card-value">${row.itemCode ?? '-'}</span>
+                            <span class="data-card-label">Product ID</span>
+                            <span class="data-card-value">${row.product_id ?? '—'}</span>
                         </div>
-
                         <div class="data-card-field">
                             <span class="data-card-label">Quantity</span>
-                            <span class="data-card-value data-card-qty">
-                                ${row.product_qty?.toLocaleString() ?? '-'}
-                            </span>
+                            <span class="data-card-value data-card-qty">${row.product_qty != null ? row.product_qty.toLocaleString() : '—'}</span>
                         </div>
-
                         <div class="data-card-field">
                             <span class="data-card-label">Type</span>
                             <span class="data-card-value">
                                 <span class="badge ${row.type_value === 'Production Quantity' ? 'badge-blue' : 'badge-purple'}">
-                                    ${row.type_value ?? '-'}
+                                    ${escHtml(row.type_value ?? '—')}
                                 </span>
                             </span>
                         </div>
-
-                        <div class="data-card-field">
-                            <span class="data-card-label">Record Date</span>
+                        <div class="data-card-field full">
+                            <span class="data-card-label">Date Finished</span>
                             <span class="data-card-value" style="font-size:0.8rem;color:var(--gray-600)">
-                                ${row.date_finished ? new Date(row.date_finished).toLocaleDateString() : '-'}
+                                ${row.date_finished ? new Date(row.date_finished).toLocaleString() : '—'}
                             </span>
                         </div>
-
+                        ${descSection}
+                        ${imgSection}
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
 
         } catch (e) {
-            const errHTML = `<div class="empty-state"><div class="empty-state-icon">⚠️</div><p>An error occurred while loading data. Please try again.</p></div>`;
-            document.getElementById('tableBody').innerHTML = `<tr><td colspan="7">${errHTML}</td></tr>`;
+            console.error('GetHistory error:', e);
+            const errHTML = `<div class="empty-state"><div class="empty-state-icon">⚠️</div><p>An error occurred: ${escHtml(e.message)}</p></div>`;
+            document.getElementById('tableBody').innerHTML = `<tr><td colspan="9">${errHTML}</td></tr>`;
             document.getElementById('cardList').innerHTML  = errHTML;
             document.getElementById('recordCount').textContent = 'Error';
         }
@@ -619,14 +607,23 @@
 
     function clearFilters() {
         document.getElementById('filterVendor').value   = '';
-        document.getElementById('filterProcess').value  = ''; 
+        document.getElementById('filterProcess').value  = '';
         document.getElementById('filterType').value     = '';
         document.getElementById('filterDateFrom').value = '';
         document.getElementById('filterDateTo').value   = '';
         loadData();
     }
 
+    function escHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
     loadVendors();
+    loadProcesses();
     loadData();
 </script>
 </body>
