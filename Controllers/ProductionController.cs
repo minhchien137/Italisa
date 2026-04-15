@@ -24,11 +24,14 @@ namespace ItalisaTools.Controllers
         }
 
         // POST
+        // POST
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] ProductionCreateDto dto)
         {
             if (dto == null)
                 return Json(new { success = false, message = "Invalid data." });
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
 
             try
             {
@@ -45,11 +48,25 @@ namespace ItalisaTools.Controllers
                 _context.SVN_Italisa_Production.Add(record);
                 await _context.SaveChangesAsync();
 
-                return Json(new { success = true, message = "Saved successfully!" });
+                // Gọi stored procedure sync
+                await _context.Database.ExecuteSqlRawAsync("EXEC SVN_Sync_Production_By_Hour_ITA");
+
+                // Commit transaction nếu mọi thứ thành công
+                await transaction.CommitAsync();
+
+                return Json(new { success = true, message = "Saved and synced successfully!" });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                // Rollback transaction nếu có lỗi
+                await transaction.RollbackAsync();
+
+                // Log chi tiết lỗi (nên dùng ILogger trong production)
+                Console.WriteLine($"Error in Create: {ex.Message}");
+                if (ex.InnerException != null)
+                    Console.WriteLine($"Inner error: {ex.InnerException.Message}");
+
+                return Json(new { success = false, message = $"Error: {ex.Message}" });
             }
         }
 
