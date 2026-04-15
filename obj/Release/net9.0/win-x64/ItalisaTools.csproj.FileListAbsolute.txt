@@ -533,3 +533,4 @@ C:\ItalisaTools\obj\Release\net9.0\win-x64\refint\ItalisaTools.dll
 C:\ItalisaTools\obj\Release\net9.0\win-x64\ItalisaTools.pdb
 C:\ItalisaTools\obj\Release\net9.0\win-x64\ItalisaTools.genruntimeconfig.cache
 C:\ItalisaTools\obj\Release\net9.0\win-x64\ref\ItalisaTools.dll
+C:\ItalisaTools\bin\Release\net9.0\win-x64\dotnet-tools.json

@@ -2,8 +2,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 
 
-
-namespace SVN_Italisa.Models
+namespace ItalisaTools.Models
 {
     
     [Table("SVN_ProductMapping")]

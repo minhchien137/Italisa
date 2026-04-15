@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
+
 namespace ItalisaTools.Models
 {
     public class ApplicationDbContext : DbContext
@@ -15,5 +16,13 @@ namespace ItalisaTools.Models
         public DbSet<SVN_Italisa_Process> SVN_Italisa_Process { get; set; }
 
         public DbSet<SVN_ProductMapping> SVN_ProductMapping { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<SVN_ProductMapping>().HasNoKey();
+        }
+
     } 
+
+    
 }

@@ -1,6 +1,8 @@
 using ItalisaTools.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
+using System.Data;
 
 namespace ItalisaTools.Controllers
 {
@@ -17,7 +19,6 @@ namespace ItalisaTools.Controllers
         public async Task<IActionResult> Create()
         {
             ViewBag.Vendors = await _context.SVN_Italisa_vendor.ToListAsync();
-            ViewBag.Codes = await _context.SVN_Italisa_Code.ToListAsync();
             ViewBag.Processes = await _context.SVN_Italisa_Process.ToListAsync();
             return View();
         }
@@ -37,7 +38,7 @@ namespace ItalisaTools.Controllers
                     product_id = dto.ProductId,
                     type_value = dto.TypeValue,
                     product_qty = dto.Quantity,
-                    process = dto.Process, 
+                    process = dto.Process,
                     date_finished = DateTime.Now
                 };
 
@@ -61,15 +62,15 @@ namespace ItalisaTools.Controllers
         public async Task<IActionResult> GetHistory(string? vendor, string? typeValue, string? process, string? dateFrom, string? dateTo)
         {
             var query = _context.SVN_Italisa_Production
-                .Join(_context.SVN_Italisa_Code,
+                .Join(_context.SVN_ProductMapping,
                     p => p.product_id,
-                    c => c.Italisa_no,
-                    (p, c) => new
+                    m => m.product_id,
+                    (p, m) => new
                     {
                         p.id,
                         p.vendor,
                         p.process,
-                        ItemCode = c.Italisa_no + " - " + c.Item_code,
+                        ItemCode = p.product_id + " - " + m.Operation_Name,
                         p.type_value,
                         p.product_qty,
                         p.date_finished
@@ -115,30 +116,74 @@ namespace ItalisaTools.Controllers
             return Json(processes);
         }
 
+
         [HttpGet]
         public async Task<IActionResult> GetCodesByProcess(string process)
         {
-            var mappings = await _context.SVN_ProductMapping
-                .Where(m => m.Operation_Name == process)
-                .Select(m => m.product_id)
-                .ToListAsync();
+            if (string.IsNullOrWhiteSpace(process))
+            {
+                return Json(new List<CodeItemDto>());
+            }
 
-            var codes = await _context.SVN_Italisa_Code
-                .Where(c => c.Italisa_no.HasValue && mappings.Contains(c.Italisa_no.Value))
-                .Select(c => new { value = c.Italisa_no, text = c.Italisa_no + " - " + c.Item_code })
-                .ToListAsync();
+            var codes = new List<CodeItemDto>();
 
-            return Json(codes);
+            try
+            {
+                var connectionString = _context.Database.GetConnectionString();
+
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    using (var command = new SqlCommand("sp_GetItemsByOperation", connection))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+                        command.Parameters.Add(new SqlParameter("@OperationKeyword", process.Trim()));
+
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                codes.Add(new CodeItemDto
+                                {
+                                    Value = reader.GetInt32(reader.GetOrdinal("product_id")),  // value = product_id
+                                    Text = reader.GetInt32(reader.GetOrdinal("Italisa_no")).ToString() + " - " +
+                                           reader.GetString(reader.GetOrdinal("Operation_Name"))  // text = "466 - Painting"
+                                });
+                            }
+                        }
+                    }
+                }
+
+                return Json(codes);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"GetCodesByProcess Error: {ex.Message}");
+                return Json(new List<CodeItemDto>());
+            }
         }
 
-    }
 
-    public class ProductionCreateDto
-    {
-        public string? Vendor { get; set; }
-        public int? ProductId { get; set; }
-        public string? TypeValue { get; set; }
-        public int? Quantity { get; set; }
-        public string? Process { get; set; } 
+        public class CodeItemDto
+        {
+            public int Value { get; set; }
+            public string Text { get; set; } = string.Empty;
+        }
+
+
+
+
+
+
+        public class ProductionCreateDto
+        {
+            public string? Vendor { get; set; }
+            public int? ProductId { get; set; }
+            public string? TypeValue { get; set; }
+            public int? Quantity { get; set; }
+            public string? Process { get; set; }
+        }
+
     }
 }

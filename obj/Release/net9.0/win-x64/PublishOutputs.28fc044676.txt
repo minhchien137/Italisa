@@ -1,6 +1,7 @@
 C:\ITA\ItalisaTools.exe
 C:\ITA\appsettings.Development.json
 C:\ITA\appsettings.json
+C:\ITA\dotnet-tools.json
 C:\ITA\ItalisaTools.dll
 C:\ITA\ItalisaTools.runtimeconfig.json
 C:\ITA\ItalisaTools.pdb

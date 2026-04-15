@@ -3,12 +3,24 @@
   "WorkspaceRootPath": "C:\\ItalisaTools\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{C45F0CBE-A53A-458F-83DA-CCCA7825BA56}|ItalisaTools.csproj|c:\\italisatools\\views\\home\\history.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{C45F0CBE-A53A-458F-83DA-CCCA7825BA56}|ItalisaTools.csproj|solutionrelative:views\\home\\history.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+      "AbsoluteMoniker": "D:0:0:{C2AEB0C4-70AD-D75B-939B-25C6D5DA6AE3}|ItalisaTools.csproj|c:\\italisatools\\views\\production\\create.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{C2AEB0C4-70AD-D75B-939B-25C6D5DA6AE3}|ItalisaTools.csproj|solutionrelative:views\\production\\create.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{C45F0CBE-A53A-458F-83DA-CCCA7825BA56}|ItalisaTools.csproj|c:\\italisatools\\views\\home\\create.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{C45F0CBE-A53A-458F-83DA-CCCA7825BA56}|ItalisaTools.csproj|solutionrelative:views\\home\\create.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+      "AbsoluteMoniker": "D:0:0:{C2AEB0C4-70AD-D75B-939B-25C6D5DA6AE3}|ItalisaTools.csproj|c:\\italisatools\\controllers\\productioncontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C2AEB0C4-70AD-D75B-939B-25C6D5DA6AE3}|ItalisaTools.csproj|solutionrelative:controllers\\productioncontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C2AEB0C4-70AD-D75B-939B-25C6D5DA6AE3}|ItalisaTools.csproj|c:\\italisatools\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{C2AEB0C4-70AD-D75B-939B-25C6D5DA6AE3}|ItalisaTools.csproj|solutionrelative:appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\ItalisaTools\\Views\\Home\\History.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Views\\Home\\History.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\ItalisaTools\\Views\\Home\\Create.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Views\\Home\\Create.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     }
   ],
   "DocumentGroupContainers": [
@@ -31,28 +43,63 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "History.cshtml",
-              "DocumentMoniker": "C:\\ItalisaTools\\Views\\Home\\History.cshtml",
-              "RelativeDocumentMoniker": "Views\\Home\\History.cshtml",
-              "ToolTip": "C:\\ItalisaTools\\Views\\Home\\History.cshtml",
-              "RelativeToolTip": "Views\\Home\\History.cshtml",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAAAAAAAAAAAA==",
+              "Title": "Create.cshtml",
+              "DocumentMoniker": "C:\\ItalisaTools\\Views\\Production\\Create.cshtml",
+              "RelativeDocumentMoniker": "Views\\Production\\Create.cshtml",
+              "ToolTip": "C:\\ItalisaTools\\Views\\Production\\Create.cshtml",
+              "RelativeToolTip": "Views\\Production\\Create.cshtml",
+              "ViewState": "AgIAAB8CAAAAAAAAAAAIwDgCAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-04-14T11:49:08.67Z",
+              "WhenOpened": "2026-04-15T07:26:51.524Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
+              "Title": "ProductionController.cs",
+              "DocumentMoniker": "C:\\ItalisaTools\\Controllers\\ProductionController.cs",
+              "RelativeDocumentMoniker": "Controllers\\ProductionController.cs",
+              "ToolTip": "C:\\ItalisaTools\\Controllers\\ProductionController.cs",
+              "RelativeToolTip": "Controllers\\ProductionController.cs",
+              "ViewState": "AgIAAHIAAAAAAAAAAAAswH0AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-15T07:12:09.176Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\ItalisaTools\\appsettings.json",
+              "RelativeDocumentMoniker": "appsettings.json",
+              "ToolTip": "C:\\ItalisaTools\\appsettings.json",
+              "RelativeToolTip": "appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAA0AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-04-15T07:25:14.524Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "History.cshtml",
+              "DocumentMoniker": "C:\\ItalisaTools\\Views\\Home\\History.cshtml",
+              "RelativeDocumentMoniker": "Views\\Home\\History.cshtml",
+              "ToolTip": "C:\\ItalisaTools\\Views\\Home\\History.cshtml",
+              "RelativeToolTip": "Views\\Home\\History.cshtml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T11:49:08.67Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
               "Title": "Create.cshtml",
               "DocumentMoniker": "C:\\ItalisaTools\\Views\\Home\\Create.cshtml",
               "RelativeDocumentMoniker": "Views\\Home\\Create.cshtml",
               "ToolTip": "C:\\ItalisaTools\\Views\\Home\\Create.cshtml",
               "RelativeToolTip": "Views\\Home\\Create.cshtml",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-04-14T11:48:52.192Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-04-14T11:48:52.192Z"
             }
           ]
         }
