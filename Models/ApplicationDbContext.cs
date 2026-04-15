@@ -11,5 +11,7 @@ namespace ItalisaTools.Models
         public DbSet<SVN_Italisa_Production> SVN_Italisa_Production { get; set; }
         public DbSet<SVN_Italisa_vendor> SVN_Italisa_vendor { get; set; }
         public DbSet<SVN_Italisa_Code> SVN_Italisa_Code { get; set; }
-    }
+
+        public DbSet<SVN_Italisa_Process> SVN_Italisa_Process { get; set; }
+    } 
 }

@@ -1,11 +1,12 @@
 @{
-    ViewData["Title"] = "Nhập Dữ Liệu Sản Xuất";
+    ViewData["Title"] = "Production Data Entry";
     var vendors = ViewBag.Vendors as List<ItalisaTools.Models.SVN_Italisa_vendor> ?? new();
     var codes = ViewBag.Codes as List<ItalisaTools.Models.SVN_Italisa_Code> ?? new();
+    var processes = ViewBag.Processes as List<ItalisaTools.Models.SVN_Italisa_Process> ?? new();
 }
 
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -450,20 +451,10 @@
 </head>
 <body>
 
-<nav>
-    <div class="nav-brand">
-        🏭 Italisa Tools <span>ERP</span>
-    </div>
-    <div class="nav-links">
-        <a href="/Production/Create" class="active">➕ <span class="nav-label">Nhập liệu</span></a>
-        <a href="/Production/History">📋 <span class="nav-label">Lịch sử</span></a>
-    </div>
-</nav>
-
 <div class="page-wrapper">
     <div class="page-header">
-        <h1>Nhập Dữ Liệu Sản Xuất</h1>
-        <p>Điền đầy đủ thông tin bên dưới để ghi nhận dữ liệu vào hệ thống.</p>
+        <h1>Production Data Entry</h1>
+        <p>Fill in all the information below to record data into the system.</p>
         <div class="header-line"></div>
     </div>
 
@@ -471,7 +462,7 @@
         <div class="card-header">
             <div class="card-header-icon">📝</div>
             <div>
-                <h2>Form Nhập Liệu</h2>
+                <h2>Entry Form</h2>
                 <p>SVN Italisa Production Entry</p>
             </div>
         </div>
@@ -480,7 +471,7 @@
                 <div class="form-group">
                     <label>Vendor <span class="required">*</span></label>
                     <select id="vendorSelect">
-                        <option value="">-- Chọn Vendor --</option>
+                        <option value="">-- Select Vendor --</option>
                         @foreach (var v in vendors)
                         {
                             <option value="@v.vendor_code">@v.vendor_code - @v.vendor</option>
@@ -488,10 +479,22 @@
                     </select>
                 </div>
 
+               <div class="form-group">
+                    <label>Process<span class="required">*</span></label>
+                    <select id="processSelect">
+                        <option value="">-- Select Process --</option>
+                        @foreach (var p in processes)
+                        {
+                            <option value="@p.process">@p.process</option>
+                        }
+                    </select>
+                </div>
+
+
                 <div class="form-group">
                     <label>Code (Italisa No - Item Code) <span class="required">*</span></label>
                     <select id="codeSelect">
-                        <option value="">-- Chọn Code --</option>
+                        <option value="">-- Select Code --</option>
                         @foreach (var c in codes)
                         {
                             <option value="@c.Italisa_no">@c.Italisa_no - @c.Item_code</option>
@@ -502,24 +505,24 @@
                 <div class="form-group">
                     <label>Type <span class="required">*</span></label>
                     <select id="typeSelect">
-                        <option value="">-- Chọn Type --</option>
-                        <option value="Production Quantity">Production Quantity</option>
-                        <option value="Man Power">Man Power</option>
+                        <option value="">-- Select Type --</option>
+                        <option value="Production Qty">Production Quantity</option>
+                        <option value="Man Q'ty">Man Power</option>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label>Quantity <span class="required">*</span></label>
-                    <input type="number" id="quantityInput" min="1" placeholder="Nhập số lượng..." inputmode="numeric" />
-                    <span class="input-hint">Nhập số nguyên dương</span>
+                    <input type="number" id="quantityInput" min="1" placeholder="Enter quantity..." inputmode="numeric" />
+                    <span class="input-hint">Enter a positive integer</span>
                 </div>
             </div>
 
             <hr class="form-divider" />
 
             <div class="btn-row">
-                <button class="btn btn-outline" onclick="resetForm()">🔄 Làm mới</button>
-                <button class="btn btn-primary" id="saveBtn" onclick="openConfirmModal()">💾 Lưu dữ liệu</button>
+                <button class="btn btn-outline" onclick="resetForm()">🔄 Reset</button>
+                <button class="btn btn-primary" id="saveBtn" onclick="openConfirmModal()">💾 Save Data</button>
             </div>
         </div>
     </div>
@@ -530,12 +533,12 @@
     <div class="modal-box">
         <div class="modal-handle"></div>
         <div class="modal-icon">💾</div>
-        <h3>Xác nhận lưu dữ liệu</h3>
-        <p>Vui lòng kiểm tra lại thông tin trước khi lưu vào hệ thống.</p>
+        <h3>Confirm Save</h3>
+        <p>Please review the information before saving to the system.</p>
         <div class="modal-summary" id="modalSummary"></div>
         <div class="modal-btn-row">
-            <button class="btn btn-outline" onclick="closeModal()">✖ Hủy bỏ</button>
-            <button class="btn btn-primary" id="confirmSaveBtn" onclick="submitForm()">✔ Xác nhận lưu</button>
+            <button class="btn btn-outline" onclick="closeModal()">✖ Cancel</button>
+            <button class="btn btn-primary" id="confirmSaveBtn" onclick="submitForm()">✔ Confirm</button>
         </div>
     </div>
 </div>
@@ -556,34 +559,42 @@
         const select2Config = {
             width: '100%',
             language: {
-                noResults: function () { return "Không tìm thấy kết quả"; },
-                searching: function () { return "Đang tìm..."; }
+                noResults: function () { return "No results found"; },
+                searching: function () { return "Searching..."; }
             }
         };
-        $('#vendorSelect').select2({ ...select2Config, placeholder: '-- Chọn Vendor --' });
-        $('#codeSelect').select2({ ...select2Config, placeholder: '-- Chọn Code --' });
-        $('#typeSelect').select2({ ...select2Config, placeholder: '-- Chọn Type --', minimumResultsForSearch: Infinity });
+        $('#vendorSelect').select2({ ...select2Config, placeholder: '-- Select Vendor --' });
+        $('#codeSelect').select2({ ...select2Config, placeholder: '-- Select Code --' });
+        $('#processSelect').select2({ ...select2Config, placeholder: '-- Select Process --' });
+        $('#typeSelect').select2({ ...select2Config, placeholder: '-- Select Type --', minimumResultsForSearch: Infinity });
     });
 
     function getFormData() {
-        const vendorSel = document.getElementById('vendorSelect');
-        const codeSel   = document.getElementById('codeSelect');
-        const typeSel   = document.getElementById('typeSelect');
-        return {
-            vendor:     vendorSel.value,
-            vendorText: vendorSel.options[vendorSel.selectedIndex]?.text,
-            productId:  parseInt(codeSel.value) || null,
-            codeText:   codeSel.options[codeSel.selectedIndex]?.text,
-            typeValue:  typeSel.value,
-            quantity:   parseInt(document.getElementById('quantityInput').value) || null
-        };
-    }
+    const vendorSel = document.getElementById('vendorSelect');
+    const codeSel = document.getElementById('codeSelect');
+    const typeSel = document.getElementById('typeSelect');
+    const processSel = document.getElementById('processSelect');
+
+    return {
+        vendor: vendorSel.value,
+        vendorText: vendorSel.options[vendorSel.selectedIndex]?.text,
+        process: processSel.value,
+        processText: processSel.options[processSel.selectedIndex]?.text,
+        productId: parseInt(codeSel.value) || null,
+        codeText: codeSel.options[codeSel.selectedIndex]?.text,
+        typeValue: typeSel.value,
+        quantity: parseInt(document.getElementById('quantityInput').value) || null
+    };
+}
+
+
 
     function validateForm(data) {
-        if (!data.vendor)                          return 'Vui lòng chọn Vendor.';
-        if (!data.productId)                       return 'Vui lòng chọn Code.';
-        if (!data.typeValue)                       return 'Vui lòng chọn Type.';
-        if (!data.quantity || data.quantity <= 0)  return 'Vui lòng nhập Quantity hợp lệ (> 0).';
+        if (!data.vendor)                          return 'Please select a Vendor.';
+        if (!data.productId)                       return 'Please select a Code.';
+        if (!data.process)                       return 'Please select a Process.';
+        if (!data.typeValue)                       return 'Please select a Type.';
+        if (!data.quantity || data.quantity <= 0)  return 'Please enter a valid Quantity (> 0).';
         return null;
     }
 
@@ -593,10 +604,11 @@
         if (error) { showToast(error, 'error'); return; }
         document.getElementById('modalSummary').innerHTML = `
             <div class="modal-summary-row"><span>Vendor Code</span><span>${data.vendor}</span></div>
+            <div class="modal-summary-row"><span>Process</span><span>${data.processText}</span></div>
             <div class="modal-summary-row"><span>Code</span><span>${data.codeText}</span></div>
             <div class="modal-summary-row"><span>Type</span><span>${data.typeValue}</span></div>
             <div class="modal-summary-row"><span>Quantity</span><span>${data.quantity}</span></div>
-            <div class="modal-summary-row"><span>Thời gian</span><span>${new Date().toLocaleString('vi-VN')}</span></div>
+            <div class="modal-summary-row"><span>Timestamp</span><span>${new Date().toLocaleString()}</span></div>
         `;
         document.getElementById('confirmModal').classList.add('show');
     }
@@ -609,12 +621,12 @@
         const data = getFormData();
         const btn  = document.getElementById('confirmSaveBtn');
         btn.disabled    = true;
-        btn.textContent = '⏳ Đang lưu...';
+        btn.textContent = '⏳ Saving...';
         try {
             const response = await fetch(`${pathBase}/Production/Create`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ vendor: data.vendor, productId: data.productId, typeValue: data.typeValue, quantity: data.quantity })
+                body: JSON.stringify({ vendor: data.vendor,process: data.process, productId: data.productId, typeValue: data.typeValue, quantity: data.quantity })
             });
             const result = await response.json();
             closeModal();
@@ -622,10 +634,10 @@
             else { showToast(result.message, 'error'); }
         } catch (e) {
             closeModal();
-            showToast('Có lỗi xảy ra khi kết nối server.', 'error');
+            showToast('An error occurred while connecting to the server.', 'error');
         } finally {
             btn.disabled  = false;
-            btn.innerHTML = '✔ Xác nhận lưu';
+            btn.innerHTML = '✔ Confirm';
         }
     }
 
@@ -638,6 +650,7 @@
         }
         $('#codeSelect').val('').trigger('change');
         $('#typeSelect').val('').trigger('change');
+        $('#processSelect').val('').trigger('change');
         document.getElementById('quantityInput').value = '';
     }
 

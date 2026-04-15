@@ -10,6 +10,7 @@ namespace ItalisaTools.Models
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int id { get; set; }
+        public string? process { get; set; }
         public int? product_qty { get; set; }
 
         public int? product_id { get; set; }

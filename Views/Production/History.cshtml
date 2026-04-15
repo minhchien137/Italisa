@@ -1,9 +1,9 @@
 @{
-    ViewData["Title"] = "Lịch Sử Sản Xuất";
+    ViewData["Title"] = "Production History";
 }
 
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -368,22 +368,22 @@
         🏭 Italisa Tools <span>ERP</span>
     </div>
     <div class="nav-links">
-        <a href="/Production/Create">➕ <span class="nav-label">Nhập liệu</span></a>
-        <a href="/Production/History" class="active">📋 <span class="nav-label">Lịch sử</span></a>
+        <a href="/Production/Create">➕ <span class="nav-label">Data Entry</span></a>
+        <a href="/Production/History" class="active">📋 <span class="nav-label">History</span></a>
     </div>
 </nav>
 
 <div class="page-wrapper">
     <div class="page-header">
-        <h1>Lịch Sử Sản Xuất</h1>
-        <p>Tất cả bản ghi đã được nhập vào hệ thống. Sử dụng bộ lọc để tìm kiếm.</p>
+        <h1>Production History</h1>
+        <p>All records entered into the system. Use filters to search.</p>
         <div class="header-line"></div>
     </div>
 
     <!-- FILTER -->
     <div class="filter-card">
         <div class="filter-header" onclick="toggleFilter()">
-            <h3>🔍 Bộ lọc tìm kiếm</h3>
+            <h3>🔍 Search Filters</h3>
             <span class="filter-toggle" id="filterToggle">▼</span>
         </div>
         <div class="filter-body" id="filterBody">
@@ -391,30 +391,36 @@
                 <div class="filter-group">
                     <label>Vendor</label>
                     <select id="filterVendor">
-                        <option value="">Tất cả Vendor</option>
+                        <option value="">All Vendors</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Process</label>
+                    <select id="filterProcess">
+                        <option value="">All Process</option>
                     </select>
                 </div>
                 <div class="filter-group">
                     <label>Type</label>
                     <select id="filterType">
-                        <option value="">Tất cả Type</option>
+                        <option value="">All Types</option>
                         <option value="Production Quantity">Production Quantity</option>
                         <option value="Man Power">Man Power</option>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>Từ ngày</label>
+                    <label>From Date</label>
                     <input type="date" id="filterDateFrom" />
                 </div>
                 <div class="filter-group">
-                    <label>Đến ngày</label>
+                    <label>To Date</label>
                     <input type="date" id="filterDateTo" />
                 </div>
                 <div class="filter-group btn-col">
                     <label style="visibility:hidden">‎</label>
                     <div class="btn-filter-row">
-                        <button class="btn btn-primary" onclick="loadData()">🔍 Tìm kiếm</button>
-                        <button class="btn btn-outline" onclick="clearFilters()">✖ Xóa lọc</button>
+                        <button class="btn btn-primary" onclick="loadData()">🔍 Search</button>
+                        <button class="btn btn-outline" onclick="clearFilters()">✖ Clear Filters</button>
                     </div>
                 </div>
             </div>
@@ -424,8 +430,8 @@
     <!-- TABLE -->
     <div class="table-card">
         <div class="table-toolbar">
-            <h3>📊 Danh sách bản ghi</h3>
-            <span class="record-count" id="recordCount">Đang tải...</span>
+            <h3>📊 Record List</h3>
+            <span class="record-count" id="recordCount">Loading...</span>
         </div>
 
         <!-- Desktop table -->
@@ -435,10 +441,11 @@
                     <tr>
                         <th>#ID</th>
                         <th>Vendor</th>
+                        <th>Process</th>
                         <th>Code (Italisa - Item)</th>
                         <th>Type</th>
                         <th>Quantity</th>
-                        <th>Ngày ghi nhận</th>
+                        <th>Record Date</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -446,7 +453,7 @@
                         <td colspan="6">
                             <div class="loading-state">
                                 <div class="spinner"></div>
-                                <p>Đang tải dữ liệu...</p>
+                                <p>Loading data...</p>
                             </div>
                         </td>
                     </tr>
@@ -458,7 +465,7 @@
         <div class="card-list" id="cardList">
             <div class="loading-state">
                 <div class="spinner"></div>
-                <p>Đang tải dữ liệu...</p>
+                <p>Loading data...</p>
             </div>
         </div>
     </div>
@@ -470,14 +477,14 @@
     /* ── Filter collapsible (mobile only) ── */
     let filterOpen = true;
     function toggleFilter() {
-        if (window.innerWidth >= 768) return;   /* desktop always open */
+        if (window.innerWidth >= 768) return;
         filterOpen = !filterOpen;
         const body   = document.getElementById('filterBody');
         const toggle = document.getElementById('filterToggle');
         body.classList.toggle('collapsed', !filterOpen);
         toggle.classList.toggle('collapsed', !filterOpen);
     }
-    /* collapse by default on mobile */
+
     window.addEventListener('DOMContentLoaded', () => {
         if (window.innerWidth < 768) {
             filterOpen = false;
@@ -495,26 +502,31 @@
             vendors.forEach(v => {
                 if (v) {
                     const opt = document.createElement('option');
-                    opt.value = v; opt.textContent = v;
+                    opt.value = v;
+                    opt.textContent = v;
                     sel.appendChild(opt);
                 }
             });
-        } catch (e) { console.error('Load vendors error:', e); }
+        } catch (e) {
+            console.error('Load vendors error:', e);
+        }
     }
 
     /* ── Data ── */
     async function loadData() {
         const vendor    = document.getElementById('filterVendor').value;
+        const process   = document.getElementById('filterProcess').value; // ✅ ADD
         const typeValue = document.getElementById('filterType').value;
         const dateFrom  = document.getElementById('filterDateFrom').value;
         const dateTo    = document.getElementById('filterDateTo').value;
 
-        const loadingHTML = `<div class="loading-state"><div class="spinner"></div><p>Đang tải dữ liệu...</p></div>`;
-        document.getElementById('tableBody').innerHTML = `<tr><td colspan="6">${loadingHTML}</td></tr>`;
+        const loadingHTML = `<div class="loading-state"><div class="spinner"></div><p>Loading data...</p></div>`;
+        document.getElementById('tableBody').innerHTML = `<tr><td colspan="7">${loadingHTML}</td></tr>`;
         document.getElementById('cardList').innerHTML  = loadingHTML;
 
         const params = new URLSearchParams();
         if (vendor)    params.append('vendor', vendor);
+        if (process)   params.append('process', process); // ✅ ADD
         if (typeValue) params.append('typeValue', typeValue);
         if (dateFrom)  params.append('dateFrom', dateFrom);
         if (dateTo)    params.append('dateTo', dateTo);
@@ -523,11 +535,11 @@
             const res  = await fetch(`${pathBase}/Production/GetHistory?` + params.toString());
             const data = await res.json();
 
-            document.getElementById('recordCount').textContent = `${data.length} bản ghi`;
+            document.getElementById('recordCount').textContent = `${data.length} records`;
 
             if (data.length === 0) {
-                const emptyHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><p>Không có bản ghi nào phù hợp với bộ lọc.</p></div>`;
-                document.getElementById('tableBody').innerHTML = `<tr><td colspan="6">${emptyHTML}</td></tr>`;
+                const emptyHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><p>No records match your filters.</p></div>`;
+                document.getElementById('tableBody').innerHTML = `<tr><td colspan="7">${emptyHTML}</td></tr>`;
                 document.getElementById('cardList').innerHTML  = emptyHTML;
                 return;
             }
@@ -537,10 +549,17 @@
                 <tr>
                     <td class="td-id">#${row.id}</td>
                     <td class="td-vendor">${row.vendor ?? '-'}</td>
+                    <td>${row.process ?? '-'}</td> <!-- ✅ ADD -->
                     <td>${row.itemCode ?? '-'}</td>
-                    <td><span class="badge ${row.type_value === 'Production Quantity' ? 'badge-blue' : 'badge-purple'}">${row.type_value ?? '-'}</span></td>
-                    <td class="td-qty">${row.product_qty?.toLocaleString('vi-VN') ?? '-'}</td>
-                    <td class="td-date">${row.date_finished ? new Date(row.date_finished).toLocaleString('vi-VN') : '-'}</td>
+                    <td>
+                        <span class="badge ${row.type_value === 'Production Quantity' ? 'badge-blue' : 'badge-purple'}">
+                            ${row.type_value ?? '-'}
+                        </span>
+                    </td>
+                    <td class="td-qty">${row.product_qty?.toLocaleString() ?? '-'}</td>
+                    <td class="td-date">
+                        ${row.date_finished ? new Date(row.date_finished).toLocaleString() : '-'}
+                    </td>
                 </tr>
             `).join('');
 
@@ -552,38 +571,55 @@
                         <span class="data-card-id">#${row.id}</span>
                     </div>
                     <div class="data-card-body">
+
+                        <div class="data-card-field">
+                            <span class="data-card-label">Process</span>
+                            <span class="data-card-value">${row.process ?? '-'}</span>
+                        </div>
+
                         <div class="data-card-field">
                             <span class="data-card-label">Code</span>
                             <span class="data-card-value">${row.itemCode ?? '-'}</span>
                         </div>
+
                         <div class="data-card-field">
                             <span class="data-card-label">Quantity</span>
-                            <span class="data-card-value data-card-qty">${row.product_qty?.toLocaleString('vi-VN') ?? '-'}</span>
+                            <span class="data-card-value data-card-qty">
+                                ${row.product_qty?.toLocaleString() ?? '-'}
+                            </span>
                         </div>
+
                         <div class="data-card-field">
                             <span class="data-card-label">Type</span>
                             <span class="data-card-value">
-                                <span class="badge ${row.type_value === 'Production Quantity' ? 'badge-blue' : 'badge-purple'}">${row.type_value ?? '-'}</span>
+                                <span class="badge ${row.type_value === 'Production Quantity' ? 'badge-blue' : 'badge-purple'}">
+                                    ${row.type_value ?? '-'}
+                                </span>
                             </span>
                         </div>
+
                         <div class="data-card-field">
-                            <span class="data-card-label">Ngày ghi nhận</span>
-                            <span class="data-card-value" style="font-size:0.8rem;color:var(--gray-600)">${row.date_finished ? new Date(row.date_finished).toLocaleDateString('vi-VN') : '-'}</span>
+                            <span class="data-card-label">Record Date</span>
+                            <span class="data-card-value" style="font-size:0.8rem;color:var(--gray-600)">
+                                ${row.date_finished ? new Date(row.date_finished).toLocaleDateString() : '-'}
+                            </span>
                         </div>
+
                     </div>
                 </div>
             `).join('');
 
         } catch (e) {
-            const errHTML = `<div class="empty-state"><div class="empty-state-icon">⚠️</div><p>Có lỗi khi tải dữ liệu. Vui lòng thử lại.</p></div>`;
-            document.getElementById('tableBody').innerHTML = `<tr><td colspan="6">${errHTML}</td></tr>`;
+            const errHTML = `<div class="empty-state"><div class="empty-state-icon">⚠️</div><p>An error occurred while loading data. Please try again.</p></div>`;
+            document.getElementById('tableBody').innerHTML = `<tr><td colspan="7">${errHTML}</td></tr>`;
             document.getElementById('cardList').innerHTML  = errHTML;
-            document.getElementById('recordCount').textContent = 'Lỗi';
+            document.getElementById('recordCount').textContent = 'Error';
         }
     }
 
     function clearFilters() {
         document.getElementById('filterVendor').value   = '';
+        document.getElementById('filterProcess').value  = ''; 
         document.getElementById('filterType').value     = '';
         document.getElementById('filterDateFrom').value = '';
         document.getElementById('filterDateTo').value   = '';
