@@ -1,0 +1,15 @@
+using Microsoft.EntityFrameworkCore;
+
+namespace ItalisaTools.Models
+{
+    public class ApplicationDbContext : DbContext
+    {
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+        {
+        }
+
+        public DbSet<SVN_Italisa_Production> SVN_Italisa_Production { get; set; }
+        public DbSet<SVN_Italisa_vendor> SVN_Italisa_vendor { get; set; }
+        public DbSet<SVN_Italisa_Code> SVN_Italisa_Code { get; set; }
+    }
+}

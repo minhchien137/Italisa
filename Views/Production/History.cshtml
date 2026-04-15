@@ -1,0 +1,597 @@
+@{
+    ViewData["Title"] = "Lịch Sử Sản Xuất";
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --denim: #1B4F8A;
+            --denim-dark: #0f2f52;
+            --denim-mid: #2563a8;
+            --denim-light: #dbeafe;
+            --denim-xlight: #eff6ff;
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-400: #94a3b8;
+            --gray-600: #475569;
+            --gray-800: #1e293b;
+            --shadow-sm: 0 1px 3px rgba(27,79,138,0.08);
+            --shadow-md: 0 4px 20px rgba(27,79,138,0.12);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--gray-50);
+            min-height: 100vh;
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(27,79,138,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(37,99,168,0.05) 0%, transparent 50%);
+        }
+
+        /* ── NAV ── */
+        nav {
+            background: var(--denim-dark);
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-brand {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--white);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .nav-brand span {
+            background: var(--denim-mid);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #a8d0f8;
+        }
+        @@media (max-width: 360px) { .nav-brand span { display: none; } }
+
+        .nav-links { display: flex; gap: 4px; }
+        .nav-links a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.84rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .nav-links a:hover { background: rgba(255,255,255,0.12); color: var(--white); }
+        .nav-links a.active { background: var(--denim-mid); color: var(--white); }
+        @@media (max-width: 480px) {
+            .nav-links a .nav-label { display: none; }
+            .nav-links a { padding: 6px 10px; font-size: 1rem; }
+        }
+
+        /* ── LAYOUT ── */
+        .page-wrapper { max-width: 1200px; margin: 0 auto; padding: 1.5rem 1rem; }
+        @@media (min-width: 600px) { .page-wrapper { padding: 2.5rem 1.5rem; } }
+
+        .page-header { margin-bottom: 1.5rem; }
+        .page-header h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--denim-dark);
+        }
+        @@media (min-width: 600px) { .page-header h1 { font-size: 1.75rem; } }
+        .page-header p { color: var(--gray-600); font-size: 0.9rem; margin-top: 6px; }
+        .header-line {
+            width: 48px; height: 4px;
+            background: linear-gradient(90deg, var(--denim), var(--denim-mid));
+            border-radius: 2px; margin-top: 12px;
+        }
+
+        /* ── FILTER CARD ── */
+        .filter-card {
+            background: var(--white);
+            border-radius: 14px;
+            border: 1px solid rgba(27,79,138,0.08);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 1.25rem;
+            overflow: hidden;
+        }
+        .filter-header {
+            background: var(--denim-xlight);
+            padding: 0.9rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(27,79,138,0.1);
+            cursor: pointer;         /* collapsible on mobile */
+            user-select: none;
+        }
+        .filter-header h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--denim-dark);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .filter-toggle {
+            font-size: 0.8rem;
+            color: var(--denim);
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        .filter-toggle.collapsed { transform: rotate(-90deg); }
+        @@media (min-width: 768px) { .filter-toggle { display: none; } }
+
+        .filter-body {
+            padding: 1rem 1.25rem;
+            transition: max-height 0.3s ease;
+        }
+        .filter-body.collapsed {
+            display: none;
+        }
+        @@media (min-width: 768px) { .filter-body { display: block !important; } }
+
+        /* ── FILTER FIELDS ── */
+        .filter-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;   /* 2-col on mobile */
+            gap: 0.75rem;
+        }
+        @@media (min-width: 600px) {
+            .filter-grid { grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        }
+        @@media (min-width: 900px) {
+            .filter-grid { grid-template-columns: repeat(5, 1fr); align-items: end; }
+        }
+
+        .filter-group { display: flex; flex-direction: column; gap: 5px; }
+        /* btn row spans both cols on mobile */
+        .filter-group.btn-col {
+            grid-column: 1 / -1;
+        }
+        @@media (min-width: 600px) { .filter-group.btn-col { grid-column: auto; } }
+
+        .filter-group label {
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: var(--denim-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .filter-group select,
+        .filter-group input {
+            padding: 0.65rem 0.85rem;
+            border: 1.5px solid var(--gray-200);
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.88rem;
+            color: var(--gray-800);
+            background: var(--white);
+            outline: none;
+            transition: all 0.2s;
+            appearance: none;
+            -webkit-appearance: none;
+            min-height: 42px;
+            width: 100%;
+        }
+        .filter-group select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%231B4F8A' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 30px;
+        }
+        .filter-group select:focus, .filter-group input:focus {
+            border-color: var(--denim);
+            box-shadow: 0 0 0 3px rgba(27,79,138,0.1);
+        }
+        .btn-filter-row { display: flex; gap: 8px; }
+        .btn {
+            padding: 0.65rem 1.1rem;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.86rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            white-space: nowrap;
+            min-height: 42px;
+            flex: 1;
+        }
+        @@media (min-width: 600px) { .btn { flex: none; } }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--denim) 0%, var(--denim-mid) 100%);
+            color: var(--white);
+            box-shadow: 0 3px 10px rgba(27,79,138,0.25);
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(27,79,138,0.35); }
+        .btn-outline {
+            background: var(--white);
+            border: 1.5px solid var(--gray-200);
+            color: var(--gray-600);
+        }
+        .btn-outline:hover { border-color: var(--denim); color: var(--denim); background: var(--denim-xlight); }
+
+        /* ── TABLE CARD ── */
+        .table-card {
+            background: var(--white);
+            border-radius: 14px;
+            border: 1px solid rgba(27,79,138,0.08);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+        .table-toolbar {
+            padding: 0.9rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--gray-100);
+        }
+        .table-toolbar h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--denim-dark);
+        }
+        .record-count { font-size: 0.8rem; color: var(--gray-400); }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 9px;
+            border-radius: 20px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .badge-blue   { background: var(--denim-light); color: var(--denim-dark); }
+        .badge-green  { background: #d1fae5; color: #065f46; }
+        .badge-purple { background: #ede9fe; color: #5b21b6; }
+
+        /* ── DESKTOP TABLE ── */
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+        thead { background: linear-gradient(135deg, var(--denim) 0%, var(--denim-mid) 100%); }
+        thead th {
+            padding: 0.85rem 1rem;
+            text-align: left;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.9);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        tbody tr { border-bottom: 1px solid var(--gray-100); transition: background 0.15s; }
+        tbody tr:hover { background: var(--denim-xlight); }
+        tbody tr:last-child { border-bottom: none; }
+        tbody td { padding: 0.8rem 1rem; color: var(--gray-800); vertical-align: middle; }
+        .td-id    { color: var(--gray-400); font-size: 0.78rem; font-weight: 600; }
+        .td-vendor{ font-weight: 600; color: var(--denim-dark); }
+        .td-qty   { font-weight: 700; color: var(--denim); font-size: 1rem; }
+        .td-date  { color: var(--gray-600); font-size: 0.81rem; white-space: nowrap; }
+
+        /* ── MOBILE CARD LIST (replaces table on small screens) ── */
+        .card-list { display: none; }
+
+        @@media (max-width: 640px) {
+            .table-wrapper table { display: none; }
+            .card-list { display: block; }
+        }
+
+        .data-card {
+            border-bottom: 1px solid var(--gray-100);
+            padding: 1rem 1.25rem;
+            transition: background 0.15s;
+        }
+        .data-card:last-child { border-bottom: none; }
+        .data-card:hover { background: var(--denim-xlight); }
+
+        .data-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.6rem;
+        }
+        .data-card-vendor {
+            font-weight: 700;
+            color: var(--denim-dark);
+            font-size: 0.95rem;
+        }
+        .data-card-id {
+            font-size: 0.75rem;
+            color: var(--gray-400);
+            font-weight: 600;
+        }
+        .data-card-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.4rem 0.75rem;
+        }
+        .data-card-field { display: flex; flex-direction: column; gap: 2px; }
+        .data-card-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--gray-400);
+            letter-spacing: 0.3px;
+        }
+        .data-card-value {
+            font-size: 0.86rem;
+            color: var(--gray-800);
+        }
+        .data-card-qty {
+            font-weight: 700;
+            color: var(--denim);
+            font-size: 1rem;
+        }
+
+        /* ── EMPTY / LOADING ── */
+        .empty-state { text-align: center; padding: 3rem 1.5rem; color: var(--gray-400); }
+        .empty-state-icon { font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.5; }
+        .empty-state p { font-size: 0.9rem; }
+        .loading-state { text-align: center; padding: 2.5rem; color: var(--denim); }
+        .spinner {
+            width: 34px; height: 34px;
+            border: 3px solid var(--denim-light);
+            border-top-color: var(--denim);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 0.9rem;
+        }
+        @@keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="nav-brand">
+        🏭 Italisa Tools <span>ERP</span>
+    </div>
+    <div class="nav-links">
+        <a href="/Production/Create">➕ <span class="nav-label">Nhập liệu</span></a>
+        <a href="/Production/History" class="active">📋 <span class="nav-label">Lịch sử</span></a>
+    </div>
+</nav>
+
+<div class="page-wrapper">
+    <div class="page-header">
+        <h1>Lịch Sử Sản Xuất</h1>
+        <p>Tất cả bản ghi đã được nhập vào hệ thống. Sử dụng bộ lọc để tìm kiếm.</p>
+        <div class="header-line"></div>
+    </div>
+
+    <!-- FILTER -->
+    <div class="filter-card">
+        <div class="filter-header" onclick="toggleFilter()">
+            <h3>🔍 Bộ lọc tìm kiếm</h3>
+            <span class="filter-toggle" id="filterToggle">▼</span>
+        </div>
+        <div class="filter-body" id="filterBody">
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label>Vendor</label>
+                    <select id="filterVendor">
+                        <option value="">Tất cả Vendor</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Type</label>
+                    <select id="filterType">
+                        <option value="">Tất cả Type</option>
+                        <option value="Production Quantity">Production Quantity</option>
+                        <option value="Man Power">Man Power</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Từ ngày</label>
+                    <input type="date" id="filterDateFrom" />
+                </div>
+                <div class="filter-group">
+                    <label>Đến ngày</label>
+                    <input type="date" id="filterDateTo" />
+                </div>
+                <div class="filter-group btn-col">
+                    <label style="visibility:hidden">‎</label>
+                    <div class="btn-filter-row">
+                        <button class="btn btn-primary" onclick="loadData()">🔍 Tìm kiếm</button>
+                        <button class="btn btn-outline" onclick="clearFilters()">✖ Xóa lọc</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-card">
+        <div class="table-toolbar">
+            <h3>📊 Danh sách bản ghi</h3>
+            <span class="record-count" id="recordCount">Đang tải...</span>
+        </div>
+
+        <!-- Desktop table -->
+        <div class="table-wrapper">
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th>#ID</th>
+                        <th>Vendor</th>
+                        <th>Code (Italisa - Item)</th>
+                        <th>Type</th>
+                        <th>Quantity</th>
+                        <th>Ngày ghi nhận</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr>
+                        <td colspan="6">
+                            <div class="loading-state">
+                                <div class="spinner"></div>
+                                <p>Đang tải dữ liệu...</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Mobile card list -->
+        <div class="card-list" id="cardList">
+            <div class="loading-state">
+                <div class="spinner"></div>
+                <p>Đang tải dữ liệu...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const pathBase = '@Context.Request.PathBase'.replace(/\/$/, '');
+
+    /* ── Filter collapsible (mobile only) ── */
+    let filterOpen = true;
+    function toggleFilter() {
+        if (window.innerWidth >= 768) return;   /* desktop always open */
+        filterOpen = !filterOpen;
+        const body   = document.getElementById('filterBody');
+        const toggle = document.getElementById('filterToggle');
+        body.classList.toggle('collapsed', !filterOpen);
+        toggle.classList.toggle('collapsed', !filterOpen);
+    }
+    /* collapse by default on mobile */
+    window.addEventListener('DOMContentLoaded', () => {
+        if (window.innerWidth < 768) {
+            filterOpen = false;
+            document.getElementById('filterBody').classList.add('collapsed');
+            document.getElementById('filterToggle').classList.add('collapsed');
+        }
+    });
+
+    /* ── Vendors ── */
+    async function loadVendors() {
+        try {
+            const res = await fetch(`${pathBase}/Production/GetVendors`);
+            const vendors = await res.json();
+            const sel = document.getElementById('filterVendor');
+            vendors.forEach(v => {
+                if (v) {
+                    const opt = document.createElement('option');
+                    opt.value = v; opt.textContent = v;
+                    sel.appendChild(opt);
+                }
+            });
+        } catch (e) { console.error('Load vendors error:', e); }
+    }
+
+    /* ── Data ── */
+    async function loadData() {
+        const vendor    = document.getElementById('filterVendor').value;
+        const typeValue = document.getElementById('filterType').value;
+        const dateFrom  = document.getElementById('filterDateFrom').value;
+        const dateTo    = document.getElementById('filterDateTo').value;
+
+        const loadingHTML = `<div class="loading-state"><div class="spinner"></div><p>Đang tải dữ liệu...</p></div>`;
+        document.getElementById('tableBody').innerHTML = `<tr><td colspan="6">${loadingHTML}</td></tr>`;
+        document.getElementById('cardList').innerHTML  = loadingHTML;
+
+        const params = new URLSearchParams();
+        if (vendor)    params.append('vendor', vendor);
+        if (typeValue) params.append('typeValue', typeValue);
+        if (dateFrom)  params.append('dateFrom', dateFrom);
+        if (dateTo)    params.append('dateTo', dateTo);
+
+        try {
+            const res  = await fetch(`${pathBase}/Production/GetHistory?` + params.toString());
+            const data = await res.json();
+
+            document.getElementById('recordCount').textContent = `${data.length} bản ghi`;
+
+            if (data.length === 0) {
+                const emptyHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><p>Không có bản ghi nào phù hợp với bộ lọc.</p></div>`;
+                document.getElementById('tableBody').innerHTML = `<tr><td colspan="6">${emptyHTML}</td></tr>`;
+                document.getElementById('cardList').innerHTML  = emptyHTML;
+                return;
+            }
+
+            /* desktop rows */
+            document.getElementById('tableBody').innerHTML = data.map(row => `
+                <tr>
+                    <td class="td-id">#${row.id}</td>
+                    <td class="td-vendor">${row.vendor ?? '-'}</td>
+                    <td>${row.itemCode ?? '-'}</td>
+                    <td><span class="badge ${row.type_value === 'Production Quantity' ? 'badge-blue' : 'badge-purple'}">${row.type_value ?? '-'}</span></td>
+                    <td class="td-qty">${row.product_qty?.toLocaleString('vi-VN') ?? '-'}</td>
+                    <td class="td-date">${row.date_finished ? new Date(row.date_finished).toLocaleString('vi-VN') : '-'}</td>
+                </tr>
+            `).join('');
+
+            /* mobile cards */
+            document.getElementById('cardList').innerHTML = data.map(row => `
+                <div class="data-card">
+                    <div class="data-card-top">
+                        <span class="data-card-vendor">${row.vendor ?? '-'}</span>
+                        <span class="data-card-id">#${row.id}</span>
+                    </div>
+                    <div class="data-card-body">
+                        <div class="data-card-field">
+                            <span class="data-card-label">Code</span>
+                            <span class="data-card-value">${row.itemCode ?? '-'}</span>
+                        </div>
+                        <div class="data-card-field">
+                            <span class="data-card-label">Quantity</span>
+                            <span class="data-card-value data-card-qty">${row.product_qty?.toLocaleString('vi-VN') ?? '-'}</span>
+                        </div>
+                        <div class="data-card-field">
+                            <span class="data-card-label">Type</span>
+                            <span class="data-card-value">
+                                <span class="badge ${row.type_value === 'Production Quantity' ? 'badge-blue' : 'badge-purple'}">${row.type_value ?? '-'}</span>
+                            </span>
+                        </div>
+                        <div class="data-card-field">
+                            <span class="data-card-label">Ngày ghi nhận</span>
+                            <span class="data-card-value" style="font-size:0.8rem;color:var(--gray-600)">${row.date_finished ? new Date(row.date_finished).toLocaleDateString('vi-VN') : '-'}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+        } catch (e) {
+            const errHTML = `<div class="empty-state"><div class="empty-state-icon">⚠️</div><p>Có lỗi khi tải dữ liệu. Vui lòng thử lại.</p></div>`;
+            document.getElementById('tableBody').innerHTML = `<tr><td colspan="6">${errHTML}</td></tr>`;
+            document.getElementById('cardList').innerHTML  = errHTML;
+            document.getElementById('recordCount').textContent = 'Lỗi';
+        }
+    }
+
+    function clearFilters() {
+        document.getElementById('filterVendor').value   = '';
+        document.getElementById('filterType').value     = '';
+        document.getElementById('filterDateFrom').value = '';
+        document.getElementById('filterDateTo').value   = '';
+        loadData();
+    }
+
+    loadVendors();
+    loadData();
+</script>
+</body>
+</html>

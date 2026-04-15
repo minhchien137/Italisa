@@ -1,0 +1,661 @@
+@{
+    ViewData["Title"] = "Nhập Dữ Liệu Sản Xuất";
+    var vendors = ViewBag.Vendors as List<ItalisaTools.Models.SVN_Italisa_vendor> ?? new();
+    var codes = ViewBag.Codes as List<ItalisaTools.Models.SVN_Italisa_Code> ?? new();
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet" />
+    <!-- Select2 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/css/select2.min.css" rel="stylesheet" />
+    <style>
+        :root {
+            --denim: #1B4F8A;
+            --denim-dark: #0f2f52;
+            --denim-mid: #2563a8;
+            --denim-light: #dbeafe;
+            --denim-xlight: #eff6ff;
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-400: #94a3b8;
+            --gray-600: #475569;
+            --gray-800: #1e293b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --shadow-sm: 0 1px 3px rgba(27,79,138,0.08);
+            --shadow-md: 0 4px 20px rgba(27,79,138,0.12);
+            --shadow-lg: 0 8px 40px rgba(27,79,138,0.18);
+            --nav-height: 60px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--gray-50);
+            min-height: 100vh;
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(27,79,138,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(37,99,168,0.05) 0%, transparent 50%);
+        }
+
+        /* ── NAV ── */
+        nav {
+            background: var(--denim-dark);
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: var(--nav-height);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-brand {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--white);
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-brand span {
+            background: var(--denim-mid);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #a8d0f8;
+        }
+        /* hide ERP badge on very small screens */
+        @@media (max-width: 360px) { .nav-brand span { display: none; } }
+
+        .nav-links { display: flex; gap: 4px; }
+        .nav-links a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.84rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .nav-links a:hover { background: rgba(255,255,255,0.12); color: var(--white); }
+        .nav-links a.active { background: var(--denim-mid); color: var(--white); }
+
+        /* hide text labels on mobile, keep icons */
+        @@media (max-width: 480px) {
+            .nav-links a .nav-label { display: none; }
+            .nav-links a { padding: 6px 10px; font-size: 1rem; }
+        }
+
+        /* ── LAYOUT ── */
+        .page-wrapper {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        @@media (min-width: 600px) { .page-wrapper { padding: 3rem 1.5rem; } }
+
+        .page-header { margin-bottom: 1.75rem; }
+        .page-header h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--denim-dark);
+            line-height: 1.2;
+        }
+        @@media (min-width: 600px) { .page-header h1 { font-size: 1.75rem; } }
+        .page-header p { color: var(--gray-600); font-size: 0.9rem; margin-top: 6px; }
+        .header-line {
+            width: 48px; height: 4px;
+            background: linear-gradient(90deg, var(--denim), var(--denim-mid));
+            border-radius: 2px; margin-top: 12px;
+        }
+
+        /* ── CARD ── */
+        .form-card {
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(27,79,138,0.08);
+            overflow: hidden;
+        }
+        .card-header {
+            background: linear-gradient(135deg, var(--denim) 0%, var(--denim-mid) 100%);
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        @@media (min-width: 600px) { .card-header { padding: 1.5rem 2rem; } }
+        .card-header-icon {
+            width: 38px; height: 38px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .card-header h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--white);
+        }
+        .card-header p { font-size: 0.78rem; color: rgba(255,255,255,0.7); margin-top: 2px; }
+        .card-body { padding: 1.25rem; }
+        @@media (min-width: 600px) { .card-body { padding: 2rem; } }
+
+        /* ── FORM ── */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;          /* mobile: single column */
+            gap: 1rem;
+        }
+        @@media (min-width: 540px) {
+            .form-grid { grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+        }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group.full { grid-column: 1 / -1; }
+
+        label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--denim-dark);
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+        label .required { color: var(--danger); margin-left: 2px; }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 0.72rem 1rem;
+            border: 1.5px solid var(--gray-200);
+            border-radius: 10px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            color: var(--gray-800);
+            background: var(--white);
+            transition: all 0.2s;
+            outline: none;
+            /* bigger tap target on mobile */
+            min-height: 44px;
+        }
+        input[type="number"]:focus {
+            border-color: var(--denim);
+            box-shadow: 0 0 0 3px rgba(27,79,138,0.1);
+        }
+        input[type="number"]:hover { border-color: var(--denim-mid); }
+
+        /* ── SELECT2 CUSTOM THEME ── */
+        .select2-container--default .select2-selection--single {
+            height: 44px !important;
+            border: 1.5px solid var(--gray-200) !important;
+            border-radius: 10px !important;
+            display: flex !important;
+            align-items: center !important;
+            padding: 0 0.75rem !important;
+            background: var(--white) !important;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .select2-container--default.select2-container--focus .select2-selection--single,
+        .select2-container--default.select2-container--open .select2-selection--single {
+            border-color: var(--denim) !important;
+            box-shadow: 0 0 0 3px rgba(27,79,138,0.1) !important;
+            outline: none !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: var(--gray-800) !important;
+            font-family: 'DM Sans', sans-serif !important;
+            font-size: 0.92rem !important;
+            line-height: 44px !important;
+            padding: 0 !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__placeholder {
+            color: var(--gray-400) !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 44px !important;
+            right: 8px !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow b {
+            border-color: var(--denim) transparent transparent transparent !important;
+        }
+        .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+            border-color: transparent transparent var(--denim) transparent !important;
+        }
+        .select2-dropdown {
+            border: 1.5px solid var(--denim-light) !important;
+            border-radius: 10px !important;
+            box-shadow: var(--shadow-md) !important;
+            font-family: 'DM Sans', sans-serif !important;
+            font-size: 0.92rem !important;
+            overflow: hidden;
+        }
+        .select2-container--default .select2-search--dropdown .select2-search__field {
+            border: 1.5px solid var(--gray-200) !important;
+            border-radius: 6px !important;
+            padding: 8px 10px !important;
+            font-family: 'DM Sans', sans-serif !important;
+            font-size: 0.9rem !important;
+            outline: none !important;
+        }
+        .select2-container--default .select2-search--dropdown .select2-search__field:focus {
+            border-color: var(--denim) !important;
+        }
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: var(--denim) !important;
+        }
+        .select2-container--default .select2-results__option[aria-selected=true] {
+            background-color: var(--denim-xlight) !important;
+            color: var(--denim-dark) !important;
+        }
+        .select2-results__option { padding: 10px 12px !important; }
+        .select2-container { width: 100% !important; }
+
+        .input-hint { font-size: 0.78rem; color: var(--gray-400); margin-top: 2px; }
+
+        /* ── DIVIDER ── */
+        .form-divider {
+            border: none;
+            border-top: 1px dashed var(--gray-200);
+            margin: 1.25rem 0;
+        }
+        @@media (min-width: 600px) { .form-divider { margin: 1.5rem 0; } }
+
+        /* ── BUTTONS ── */
+        .btn-row {
+            display: flex;
+            flex-direction: column-reverse;   /* mobile: stack, primary on top */
+            gap: 10px;
+        }
+        @@media (min-width: 480px) {
+            .btn-row {
+                flex-direction: row;
+                justify-content: flex-end;
+                gap: 12px;
+            }
+        }
+        .btn {
+            padding: 0.78rem 1.5rem;
+            border-radius: 10px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.93rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 46px;             /* comfortable tap target */
+            width: 100%;                  /* full width on mobile */
+        }
+        @@media (min-width: 480px) {
+            .btn { width: auto; }
+        }
+        .btn-outline {
+            background: var(--white);
+            border: 1.5px solid var(--gray-200);
+            color: var(--gray-600);
+        }
+        .btn-outline:hover { border-color: var(--denim); color: var(--denim); background: var(--denim-xlight); }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--denim) 0%, var(--denim-mid) 100%);
+            color: var(--white);
+            box-shadow: 0 4px 14px rgba(27,79,138,0.3);
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(27,79,138,0.4); }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        /* ── MODAL ── */
+        .modal-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(15,47,82,0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: flex-end;        /* mobile: slide up from bottom */
+            justify-content: center;
+            padding: 0;
+        }
+        @@media (min-width: 540px) {
+            .modal-overlay { align-items: center; padding: 1rem; }
+        }
+        .modal-overlay.show { display: flex; animation: fadeIn 0.2s; }
+        .modal-box {
+            background: var(--white);
+            border-radius: 20px 20px 0 0;   /* mobile: bottom sheet */
+            padding: 1.75rem 1.25rem;
+            width: 100%;
+            max-width: 100%;
+            box-shadow: var(--shadow-lg);
+            animation: slideUp 0.3s cubic-bezier(0.34,1.2,0.64,1);
+        }
+        @@media (min-width: 540px) {
+            .modal-box {
+                border-radius: 16px;
+                padding: 2rem;
+                max-width: 440px;
+            }
+        }
+        /* drag handle for bottom sheet feel */
+        .modal-handle {
+            width: 40px; height: 4px;
+            background: var(--gray-200);
+            border-radius: 2px;
+            margin: 0 auto 1.25rem;
+        }
+        @@media (min-width: 540px) { .modal-handle { display: none; } }
+
+        .modal-icon {
+            width: 52px; height: 52px;
+            background: var(--denim-xlight);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.5rem;
+        }
+        .modal-box h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--denim-dark);
+            text-align: center;
+        }
+        .modal-box p {
+            color: var(--gray-600);
+            font-size: 0.88rem;
+            text-align: center;
+            margin-top: 8px;
+            line-height: 1.6;
+        }
+        .modal-summary {
+            background: var(--denim-xlight);
+            border-radius: 10px;
+            padding: 0.9rem 1rem;
+            margin: 1.1rem 0;
+            font-size: 0.86rem;
+            color: var(--denim-dark);
+        }
+        .modal-summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(27,79,138,0.08);
+            gap: 8px;
+        }
+        .modal-summary-row:last-child { border-bottom: none; }
+        .modal-summary-row span:first-child { color: var(--gray-600); white-space: nowrap; }
+        .modal-summary-row span:last-child {
+            font-weight: 600;
+            color: var(--denim-dark);
+            text-align: right;
+            word-break: break-word;
+        }
+        .modal-btn-row { display: flex; gap: 10px; margin-top: 1.25rem; }
+        .modal-btn-row .btn { flex: 1; }
+
+        /* ── TOAST ── */
+        .toast {
+            position: fixed;
+            bottom: 1.25rem; left: 50%;
+            transform: translateX(-50%) translateY(120px);
+            padding: 0.85rem 1.25rem;
+            border-radius: 12px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            display: flex; align-items: center; gap: 10px;
+            box-shadow: var(--shadow-lg);
+            z-index: 9999;
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            width: calc(100% - 2rem);
+            max-width: 400px;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        /* on desktop, move to top-right */
+        @@media (min-width: 600px) {
+            .toast {
+                top: 1.5rem; right: 1.5rem;
+                bottom: auto; left: auto;
+                transform: translateX(120%);
+                width: auto; max-width: 360px;
+            }
+            .toast.show { transform: translateX(0); }
+        }
+        .toast.success { background: var(--success); color: white; }
+        .toast.error { background: var(--danger); color: white; }
+        .toast-icon { font-size: 1.2rem; flex-shrink: 0; }
+
+        @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @@keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="nav-brand">
+        🏭 Italisa Tools <span>ERP</span>
+    </div>
+    <div class="nav-links">
+        <a href="/Production/Create" class="active">➕ <span class="nav-label">Nhập liệu</span></a>
+        <a href="/Production/History">📋 <span class="nav-label">Lịch sử</span></a>
+    </div>
+</nav>
+
+<div class="page-wrapper">
+    <div class="page-header">
+        <h1>Nhập Dữ Liệu Sản Xuất</h1>
+        <p>Điền đầy đủ thông tin bên dưới để ghi nhận dữ liệu vào hệ thống.</p>
+        <div class="header-line"></div>
+    </div>
+
+    <div class="form-card">
+        <div class="card-header">
+            <div class="card-header-icon">📝</div>
+            <div>
+                <h2>Form Nhập Liệu</h2>
+                <p>SVN Italisa Production Entry</p>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Vendor <span class="required">*</span></label>
+                    <select id="vendorSelect">
+                        <option value="">-- Chọn Vendor --</option>
+                        @foreach (var v in vendors)
+                        {
+                            <option value="@v.vendor_code">@v.vendor_code - @v.vendor</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Code (Italisa No - Item Code) <span class="required">*</span></label>
+                    <select id="codeSelect">
+                        <option value="">-- Chọn Code --</option>
+                        @foreach (var c in codes)
+                        {
+                            <option value="@c.Italisa_no">@c.Italisa_no - @c.Item_code</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Type <span class="required">*</span></label>
+                    <select id="typeSelect">
+                        <option value="">-- Chọn Type --</option>
+                        <option value="Production Quantity">Production Quantity</option>
+                        <option value="Man Power">Man Power</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Quantity <span class="required">*</span></label>
+                    <input type="number" id="quantityInput" min="1" placeholder="Nhập số lượng..." inputmode="numeric" />
+                    <span class="input-hint">Nhập số nguyên dương</span>
+                </div>
+            </div>
+
+            <hr class="form-divider" />
+
+            <div class="btn-row">
+                <button class="btn btn-outline" onclick="resetForm()">🔄 Làm mới</button>
+                <button class="btn btn-primary" id="saveBtn" onclick="openConfirmModal()">💾 Lưu dữ liệu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CONFIRM MODAL (bottom sheet on mobile) -->
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-box">
+        <div class="modal-handle"></div>
+        <div class="modal-icon">💾</div>
+        <h3>Xác nhận lưu dữ liệu</h3>
+        <p>Vui lòng kiểm tra lại thông tin trước khi lưu vào hệ thống.</p>
+        <div class="modal-summary" id="modalSummary"></div>
+        <div class="modal-btn-row">
+            <button class="btn btn-outline" onclick="closeModal()">✖ Hủy bỏ</button>
+            <button class="btn btn-primary" id="confirmSaveBtn" onclick="submitForm()">✔ Xác nhận lưu</button>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+    <span class="toast-icon" id="toastIcon"></span>
+    <span id="toastMsg"></span>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/js/select2.min.js"></script>
+<script>
+    const pathBase = '@Context.Request.PathBase'.replace(/\/$/, '');
+
+    $(document).ready(function () {
+        const savedVendorInit = localStorage.getItem('lastVendor');
+        const select2Config = {
+            width: '100%',
+            language: {
+                noResults: function () { return "Không tìm thấy kết quả"; },
+                searching: function () { return "Đang tìm..."; }
+            }
+        };
+        $('#vendorSelect').select2({ ...select2Config, placeholder: '-- Chọn Vendor --' });
+        $('#codeSelect').select2({ ...select2Config, placeholder: '-- Chọn Code --' });
+        $('#typeSelect').select2({ ...select2Config, placeholder: '-- Chọn Type --', minimumResultsForSearch: Infinity });
+    });
+
+    function getFormData() {
+        const vendorSel = document.getElementById('vendorSelect');
+        const codeSel   = document.getElementById('codeSelect');
+        const typeSel   = document.getElementById('typeSelect');
+        return {
+            vendor:     vendorSel.value,
+            vendorText: vendorSel.options[vendorSel.selectedIndex]?.text,
+            productId:  parseInt(codeSel.value) || null,
+            codeText:   codeSel.options[codeSel.selectedIndex]?.text,
+            typeValue:  typeSel.value,
+            quantity:   parseInt(document.getElementById('quantityInput').value) || null
+        };
+    }
+
+    function validateForm(data) {
+        if (!data.vendor)                          return 'Vui lòng chọn Vendor.';
+        if (!data.productId)                       return 'Vui lòng chọn Code.';
+        if (!data.typeValue)                       return 'Vui lòng chọn Type.';
+        if (!data.quantity || data.quantity <= 0)  return 'Vui lòng nhập Quantity hợp lệ (> 0).';
+        return null;
+    }
+
+    function openConfirmModal() {
+        const data  = getFormData();
+        const error = validateForm(data);
+        if (error) { showToast(error, 'error'); return; }
+        document.getElementById('modalSummary').innerHTML = `
+            <div class="modal-summary-row"><span>Vendor Code</span><span>${data.vendor}</span></div>
+            <div class="modal-summary-row"><span>Code</span><span>${data.codeText}</span></div>
+            <div class="modal-summary-row"><span>Type</span><span>${data.typeValue}</span></div>
+            <div class="modal-summary-row"><span>Quantity</span><span>${data.quantity}</span></div>
+            <div class="modal-summary-row"><span>Thời gian</span><span>${new Date().toLocaleString('vi-VN')}</span></div>
+        `;
+        document.getElementById('confirmModal').classList.add('show');
+    }
+
+    function closeModal() {
+        document.getElementById('confirmModal').classList.remove('show');
+    }
+
+    async function submitForm() {
+        const data = getFormData();
+        const btn  = document.getElementById('confirmSaveBtn');
+        btn.disabled    = true;
+        btn.textContent = '⏳ Đang lưu...';
+        try {
+            const response = await fetch(`${pathBase}/Production/Create`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ vendor: data.vendor, productId: data.productId, typeValue: data.typeValue, quantity: data.quantity })
+            });
+            const result = await response.json();
+            closeModal();
+            if (result.success) { localStorage.setItem('lastVendor', data.vendor); showToast(result.message, 'success'); resetForm(); }
+            else { showToast(result.message, 'error'); }
+        } catch (e) {
+            closeModal();
+            showToast('Có lỗi xảy ra khi kết nối server.', 'error');
+        } finally {
+            btn.disabled  = false;
+            btn.innerHTML = '✔ Xác nhận lưu';
+        }
+    }
+
+    function resetForm() {
+        const savedVendor = localStorage.getItem('lastVendor');
+        if (savedVendor) {
+            $('#vendorSelect').val(savedVendor).trigger('change');
+        } else {
+            $('#vendorSelect').val('').trigger('change');
+        }
+        $('#codeSelect').val('').trigger('change');
+        $('#typeSelect').val('').trigger('change');
+        document.getElementById('quantityInput').value = '';
+    }
+
+    function showToast(msg, type) {
+        const toast = document.getElementById('toast');
+        toast.className = 'toast ' + type;
+        document.getElementById('toastIcon').textContent = type === 'success' ? '✅' : '❌';
+        document.getElementById('toastMsg').textContent  = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    document.getElementById('confirmModal').addEventListener('click', function (e) {
+        if (e.target === this) closeModal();
+            if (savedVendorInit) {
+            $('#vendorSelect').val(savedVendorInit).trigger('change');
+        }
+    });
+</script>
+</body>
+</html>
