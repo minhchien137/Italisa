@@ -50,7 +50,7 @@ namespace ItalisaTools.Controllers
                     using var stream = new FileStream(filePath, FileMode.Create);
                     await dto.ImageFile.CopyToAsync(stream);
 
-                    imagePath = $"/uploads/production/{fileName}";
+                   imagePath = $"{Request.PathBase}/uploads/production/{fileName}";
                 }
 
                 // ── Build record ──
@@ -74,7 +74,7 @@ namespace ItalisaTools.Controllers
 
                 await transaction.CommitAsync();
 
-                return Json(new { success = true, message = "Saved and synced successfully!" });
+                return Json(new { success = true, message = "Save successfully!" });
             }
             catch (Exception ex)
             {
@@ -185,7 +185,8 @@ namespace ItalisaTools.Controllers
                     codes.Add(new CodeItemDto
                     {
                         Value = reader.GetInt32(reader.GetOrdinal("product_id")),
-                        Text  = reader.GetInt32(reader.GetOrdinal("Italisa_no")).ToString()
+                        // === ĐÃ ĐỔI Ở ĐÂY ===
+                        Text = reader.GetInt32(reader.GetOrdinal("product_id")).ToString()
                                + " - "
                                + reader.GetString(reader.GetOrdinal("Operation_Name"))
                     });
@@ -199,6 +200,7 @@ namespace ItalisaTools.Controllers
                 return Json(new List<CodeItemDto>());
             }
         }
+
 
         // ── DTOs ──────────────────────────────────────────────────────────────
 
