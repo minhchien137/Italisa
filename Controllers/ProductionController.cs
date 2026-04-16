@@ -185,11 +185,9 @@ namespace ItalisaTools.Controllers
                     codes.Add(new CodeItemDto
                     {
                         Value = reader.GetInt32(reader.GetOrdinal("product_id")),
-                        // === ĐÃ ĐỔI Ở ĐÂY ===
-                        Text = reader.GetInt32(reader.GetOrdinal("product_id")).ToString()
-                               + " - "
-                               + reader.GetString(reader.GetOrdinal("Operation_Name"))
+                        Text = reader.GetString(reader.GetOrdinal("Operation"))
                     });
+
                 }
 
                 return Json(codes);

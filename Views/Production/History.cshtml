@@ -416,7 +416,6 @@
     <button class="lightbox-close" onclick="closeLightbox()">✕</button>
     <img id="lightboxImg" src="" alt="Full image" onclick="event.stopPropagation()" />
 </div>
-
 <script>
     const pathBase = '@Context.Request.PathBase'.replace(/\/$/, '');
 
@@ -444,6 +443,14 @@
     function closeLightbox() {
         document.getElementById('lightbox').classList.remove('show');
         document.getElementById('lightboxImg').src = '';
+    }
+
+    /* ── Helper: Fix image path (đảm bảo luôn có /italisa) ── */
+    function fixImagePath(imagePath) {
+        if (!imagePath) return '';
+        if (imagePath.startsWith('http')) return imagePath;
+        if (imagePath.startsWith('/italisa')) return imagePath;
+        return '/italisa' + (imagePath.startsWith('/') ? '' : '/') + imagePath;
     }
 
     /* ── Load Vendors ── */
@@ -515,14 +522,14 @@
             }
 
             /* ── Desktop rows ── */
-            // Các cột: id | process | product_id | vendor | type_value | product_qty | date_finished | description | image_path
             document.getElementById('tableBody').innerHTML = data.map(row => {
                 const descCell = row.description
                     ? `<td class="td-desc" title="${escHtml(row.description)}">${escHtml(row.description)}</td>`
                     : `<td class="no-val">—</td>`;
 
+                const imgSrc = fixImagePath(row.image_path);
                 const imgCell = row.image_path
-                    ? `<td class="td-img"><img class="thumb" src="${row.image_path}" alt="img" loading="lazy" onclick="openLightbox('${row.image_path}')" /></td>`
+                    ? `<td class="td-img"><img class="thumb" src="${imgSrc}" alt="img" loading="lazy" onclick="openLightbox('${imgSrc}')" /></td>`
                     : `<td class="td-img no-val">—</td>`;
 
                 return `
@@ -545,10 +552,11 @@
 
             /* ── Mobile cards ── */
             document.getElementById('cardList').innerHTML = data.map(row => {
+                const imgSrc = fixImagePath(row.image_path);
                 const imgSection = row.image_path
                     ? `<div class="data-card-field full">
                            <span class="data-card-label">Image</span>
-                           <img class="card-thumb" src="${row.image_path}" alt="img" loading="lazy" onclick="openLightbox('${row.image_path}')" />
+                           <img class="card-thumb" src="${imgSrc}" alt="img" loading="lazy" onclick="openLightbox('${imgSrc}')" />
                        </div>`
                     : '';
                 const descSection = row.description
