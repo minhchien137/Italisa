@@ -1,0 +1,1391 @@
+@{
+    ViewData["Title"] = "Production Report";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --denim: #1B4F8A;
+            --denim-dark: #0f2f52;
+            --denim-mid: #2563a8;
+            --denim-light: #dbeafe;
+            --denim-xlight: #eff6ff;
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-400: #94a3b8;
+            --gray-600: #475569;
+            --gray-800: #1e293b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --purple: #8b5cf6;
+            --teal: #0d9488;
+            --orange: #ea580c;
+            --shadow-sm: 0 1px 3px rgba(27,79,138,0.08);
+            --shadow-md: 0 4px 20px rgba(27,79,138,0.12);
+            --shadow-lg: 0 8px 40px rgba(27,79,138,0.18);
+            --nav-height: 60px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--gray-50);
+            min-height: 100vh;
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(27,79,138,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(37,99,168,0.05) 0%, transparent 50%);
+        }
+
+        /* ── NAV ── */
+        nav {
+            background: var(--denim-dark);
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: var(--nav-height);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-brand {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--white);
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-brand span {
+            background: var(--denim-mid);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #a8d0f8;
+        }
+        .nav-links { display: flex; gap: 4px; }
+        .nav-links a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.84rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .nav-links a:hover { background: rgba(255,255,255,0.12); color: var(--white); }
+        .nav-links a.active { background: var(--denim-mid); color: var(--white); }
+        @@media (max-width: 480px) {
+            .nav-links a .nav-label { display: none; }
+            .nav-links a { padding: 6px 10px; font-size: 1rem; }
+        }
+
+        /* ── LAYOUT ── */
+        .page-wrapper { max-width: 1400px; margin: 0 auto; padding: 1.5rem 1rem; }
+        @@media (min-width: 600px) { .page-wrapper { padding: 2.5rem 1.5rem; } }
+
+        .page-header { margin-bottom: 1.5rem; }
+        .page-header h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--denim-dark);
+        }
+        @@media (min-width: 600px) { .page-header h1 { font-size: 1.75rem; } }
+        .page-header p { color: var(--gray-600); font-size: 0.9rem; margin-top: 6px; }
+        .header-line {
+            width: 48px; height: 4px;
+            background: linear-gradient(90deg, var(--denim), var(--denim-mid));
+            border-radius: 2px; margin-top: 12px;
+        }
+
+        /* ── FILTER CARD ── */
+        .filter-card {
+            background: var(--white);
+            border-radius: 14px;
+            border: 1px solid rgba(27,79,138,0.08);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+        .filter-header {
+            background: var(--denim-xlight);
+            padding: 0.9rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(27,79,138,0.1);
+            cursor: pointer;
+            user-select: none;
+        }
+        .filter-header h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--denim-dark);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .filter-toggle { font-size: 0.8rem; color: var(--denim); font-weight: 600; transition: transform 0.3s; }
+        .filter-toggle.collapsed { transform: rotate(-90deg); }
+        @@media (min-width: 768px) { .filter-toggle { display: none; } }
+
+        .filter-body { padding: 1rem 1.25rem; }
+        .filter-body.collapsed { display: none; }
+        @@media (min-width: 768px) { .filter-body { display: block !important; } }
+
+        /* ── FILTER GRID: 5 inputs + auto button column on desktop ── */
+        .filter-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+        @@media (min-width: 600px) { .filter-grid { grid-template-columns: repeat(3, 1fr); gap: 1rem; } }
+        @@media (min-width: 900px) { .filter-grid { grid-template-columns: repeat(5, 1fr) auto; align-items: end; gap: 1rem; } }
+
+        .filter-group { display: flex; flex-direction: column; gap: 5px; }
+        .filter-group label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--denim-dark);
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+        .filter-group select,
+        .filter-group input[type="date"] {
+            width: 100%;
+            padding: 0.6rem 0.75rem;
+            border: 1.5px solid var(--gray-200);
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.88rem;
+            color: var(--gray-800);
+            background: var(--white);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            min-height: 40px;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+        .filter-group select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%231B4F8A' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 30px;
+        }
+        .filter-group select:focus,
+        .filter-group input[type="date"]:focus {
+            border-color: var(--denim);
+            box-shadow: 0 0 0 3px rgba(27,79,138,0.1);
+        }
+
+        /* Button group — no label, auto-sized column, aligns to bottom via grid align-items:end */
+        .filter-btn-group { justify-content: flex-end; }
+        .filter-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: nowrap;
+            align-items: stretch;
+        }
+        /* On mobile: full-width buttons */
+        @@media (max-width: 899px) {
+            .filter-btn-group { grid-column: 1 / -1; }
+            .filter-actions .btn { flex: 1; }
+        }
+
+        .btn {
+            padding: 0.6rem 1.1rem;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-height: 40px;
+            white-space: nowrap;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--denim) 0%, var(--denim-mid) 100%);
+            color: var(--white);
+            box-shadow: 0 4px 12px rgba(27,79,138,0.25);
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(27,79,138,0.35); }
+        .btn-outline {
+            background: var(--white);
+            border: 1.5px solid var(--gray-200);
+            color: var(--gray-600);
+        }
+        .btn-outline:hover { border-color: var(--denim); color: var(--denim); background: var(--denim-xlight); }
+        .btn-excel {
+            background: linear-gradient(135deg, #166534 0%, #15803d 100%);
+            color: var(--white);
+            box-shadow: 0 4px 12px rgba(22,101,52,0.25);
+        }
+        .btn-excel:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(22,101,52,0.35); }
+
+        /* ── SUMMARY STATS ── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        @@media (min-width: 640px) { .stats-row { grid-template-columns: repeat(4, 1fr); } }
+
+        .stat-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 1.1rem 1.25rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(27,79,138,0.07);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+        }
+        .stat-card.blue::before   { background: linear-gradient(90deg, var(--denim), var(--denim-mid)); }
+        .stat-card.green::before  { background: linear-gradient(90deg, var(--success), #34d399); }
+        .stat-card.purple::before { background: linear-gradient(90deg, var(--purple), #a78bfa); }
+        .stat-card.orange::before { background: linear-gradient(90deg, var(--orange), #fb923c); }
+
+        .stat-label {
+            font-size: 0.73rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--gray-400);
+        }
+        .stat-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--denim-dark);
+            line-height: 1;
+        }
+        .stat-sub { font-size: 0.78rem; color: var(--gray-400); }
+
+        /* ── CHART CARDS ROW ── */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        @@media (min-width: 768px) { .charts-row { grid-template-columns: repeat(3, 1fr); } }
+
+        .chart-card {
+            background: var(--white);
+            border-radius: 14px;
+            border: 1px solid rgba(27,79,138,0.08);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+        .chart-card-header {
+            padding: 1rem 1.25rem 0.75rem;
+            border-bottom: 1px solid var(--gray-100);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .chart-icon {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+        .chart-icon.blue   { background: var(--denim-xlight); }
+        .chart-icon.green  { background: #d1fae5; }
+        .chart-icon.purple { background: #ede9fe; }
+
+        .chart-card-header h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--denim-dark);
+        }
+        .chart-card-header p { font-size: 0.75rem; color: var(--gray-400); margin-top: 1px; }
+        .chart-body {
+            padding: 1rem;
+            position: relative;
+        }
+        .chart-body canvas { max-height: 220px; }
+
+        /* ── LINE CHART CARDS ── */
+        .line-chart-card {
+            background: var(--white);
+            border-radius: 14px;
+            border: 1px solid rgba(27,79,138,0.08);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+        .line-chart-card .chart-card-header {
+            padding: 1.1rem 1.5rem 0.9rem;
+        }
+        .line-chart-card .chart-body canvas { max-height: 300px; }
+
+        /* ── DETAIL SECTION ── */
+        .detail-section {
+            background: var(--white);
+            border-radius: 14px;
+            border: 1px solid rgba(27,79,138,0.08);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+        .detail-header {
+            background: linear-gradient(135deg, var(--denim) 0%, var(--denim-mid) 100%);
+            padding: 1.1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .detail-header-left { display: flex; align-items: center; gap: 10px; }
+        .detail-header h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--white);
+        }
+        .detail-header p { font-size: 0.76rem; color: rgba(255,255,255,0.7); margin-top: 2px; }
+        .record-count {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        /* ── VENDOR ACCORDION ── */
+        .vendor-block { border-bottom: 1px solid var(--gray-100); }
+        .vendor-block:last-child { border-bottom: none; }
+        .vendor-accordion-btn {
+            width: 100%;
+            background: var(--gray-50);
+            border: none;
+            padding: 0.9rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            transition: background 0.2s;
+            text-align: left;
+            gap: 12px;
+        }
+        .vendor-accordion-btn:hover { background: var(--denim-xlight); }
+        .vendor-accordion-btn.open { background: var(--denim-xlight); }
+        .vendor-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--denim-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .vendor-badge {
+            background: var(--denim);
+            color: white;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 20px;
+        }
+        .vendor-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.8rem;
+            color: var(--gray-600);
+        }
+        .vendor-qty {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            color: var(--denim);
+            font-size: 0.9rem;
+        }
+        .vendor-chevron {
+            font-size: 0.75rem;
+            color: var(--gray-400);
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+        .vendor-chevron.open { transform: rotate(180deg); }
+
+        .vendor-content { display: none; padding: 0 0 0.5rem; }
+        .vendor-content.open { display: block; }
+
+        /* ── TABLE ── */
+        .table-wrap { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.84rem;
+        }
+        thead th {
+            background: var(--gray-100);
+            padding: 0.65rem 1rem;
+            text-align: left;
+            font-size: 0.73rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: var(--gray-600);
+            border-bottom: 2px solid var(--gray-200);
+            white-space: nowrap;
+        }
+        tbody tr { transition: background 0.15s; }
+        tbody tr:hover { background: var(--denim-xlight); }
+        tbody td {
+            padding: 0.65rem 1rem;
+            color: var(--gray-800);
+            border-bottom: 1px solid var(--gray-100);
+            white-space: nowrap;
+        }
+        tbody tr:last-child td { border-bottom: none; }
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.73rem;
+            font-weight: 600;
+        }
+        .badge-process {
+            background: var(--denim-xlight);
+            color: var(--denim-dark);
+        }
+        .badge-type {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .badge-type.man {
+            background: #ede9fe;
+            color: #4c1d95;
+        }
+
+        /* ── LOADING ── */
+        .loading-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(15,47,82,0.35);
+            backdrop-filter: blur(2px);
+            z-index: 500;
+            align-items: center;
+            justify-content: center;
+        }
+        .loading-overlay.show { display: flex; }
+        .loading-box {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 2rem 2.5rem;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+        }
+        .loading-spinner {
+            width: 40px; height: 40px;
+            border: 4px solid var(--denim-light);
+            border-top-color: var(--denim);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        .loading-box p {
+            font-weight: 600;
+            color: var(--denim-dark);
+            font-size: 0.9rem;
+        }
+        @@keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── EMPTY STATE ── */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            color: var(--gray-400);
+        }
+        .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+        .empty-state p { font-size: 0.9rem; }
+
+        /* ── TOAST ── */
+        .toast {
+            position: fixed;
+            top: 1.5rem; right: 1.5rem;
+            transform: translateX(120%);
+            padding: 0.85rem 1.25rem;
+            border-radius: 12px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            display: flex; align-items: center; gap: 10px;
+            box-shadow: var(--shadow-lg);
+            z-index: 9999;
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            max-width: 380px;
+        }
+        .toast.show { transform: translateX(0); }
+        .toast.error { background: var(--danger); color: white; }
+        .toast.success { background: var(--success); color: white; }
+
+        /* ── NO DATA ── */
+        .no-data-chart {
+            display: flex; align-items: center; justify-content: center;
+            height: 180px;
+            color: var(--gray-400);
+            font-size: 0.85rem;
+            flex-direction: column;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-wrapper">
+
+    <!-- ── PAGE HEADER ── -->
+    <div class="page-header">
+        <h1>📈 Production Report</h1>
+        <div class="header-line"></div>
+    </div>
+
+    <!-- ── FILTER CARD ── -->
+    <div class="filter-card">
+        <div class="filter-header" onclick="toggleFilter()">
+            <h3>🔍 Filter &amp; Export</h3>
+            <span class="filter-toggle" id="filterToggle">▼</span>
+        </div>
+        <div class="filter-body" id="filterBody">
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label>Process</label>
+                    <select id="fProcess">
+                        <option value="">All Process</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Operation / Code</label>
+                    <select id="fProductId">
+                        <option value="">All Operations</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Vendor</label>
+                    <select id="fVendor">
+                        <option value="">All Vendors</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>From Date</label>
+                    <input type="date" id="fDateFrom" />
+                </div>
+                <div class="filter-group">
+                    <label>To Date</label>
+                    <input type="date" id="fDateTo" />
+                </div>
+                <!-- Button group: no hidden label, auto column, aligns to bottom -->
+                <div class="filter-group filter-btn-group">
+                    <div class="filter-actions">
+                        <button class="btn btn-primary" onclick="loadReport()">🔍 Apply</button>
+                        <button class="btn btn-outline" onclick="resetFilters()">↺ Reset</button>
+                        <button class="btn btn-excel" onclick="exportExcel()">⬇ Excel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── SUMMARY STATS ── -->
+    <div class="stats-row">
+        <div class="stat-card blue">
+            <div class="stat-label">Production Qty</div>
+            <div class="stat-value" id="statTotalQty">—</div>
+            <div class="stat-sub">Production Qty only</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-label">Records</div>
+            <div class="stat-value" id="statRecords">—</div>
+            <div class="stat-sub">All entries found</div>
+        </div>
+        <div class="stat-card purple">
+            <div class="stat-label">Vendors</div>
+            <div class="stat-value" id="statVendors">—</div>
+            <div class="stat-sub">Active vendors</div>
+        </div>
+        <div class="stat-card orange">
+            <div class="stat-label">Processes</div>
+            <div class="stat-value" id="statProcesses">—</div>
+            <div class="stat-sub">Active processes</div>
+        </div>
+    </div>
+
+    <!-- ── 3 DONUT/BAR CHARTS ROW ── -->
+    <div class="charts-row">
+        <!-- Chart 1: By Process -->
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <div class="chart-icon blue">⚙️</div>
+                <div>
+                    <h3>Qty by Process</h3>
+                    <p>Production Qty per operation</p>
+                </div>
+            </div>
+            <div class="chart-body">
+                <div id="chartProcessEmpty" class="no-data-chart" style="display:none;">
+                    <span style="font-size:1.5rem">📭</span><span>No data</span>
+                </div>
+                <canvas id="chartProcess"></canvas>
+            </div>
+        </div>
+
+        <!-- Chart 2: By Vendor -->
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <div class="chart-icon green">🏭</div>
+                <div>
+                    <h3>Qty by Vendor</h3>
+                    <p>Distribution across suppliers</p>
+                </div>
+            </div>
+            <div class="chart-body">
+                <div id="chartVendorEmpty" class="no-data-chart" style="display:none;">
+                    <span style="font-size:1.5rem">📭</span><span>No data</span>
+                </div>
+                <canvas id="chartVendor"></canvas>
+            </div>
+        </div>
+
+        <!-- Chart 3: By Operation -->
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <div class="chart-icon purple">🔢</div>
+                <div>
+                    <h3>Qty by Operation</h3>
+                    <p>Top operations by production qty</p>
+                </div>
+            </div>
+            <div class="chart-body">
+                <div id="chartCodeEmpty" class="no-data-chart" style="display:none;">
+                    <span style="font-size:1.5rem">📭</span><span>No data</span>
+                </div>
+                <canvas id="chartCode"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── LINE CHART: Daily Qty by Process ── -->
+    <div class="line-chart-card">
+        <div class="chart-card-header">
+            <div class="chart-icon blue">📅</div>
+            <div>
+                <h3>Daily Quantity Trend — by Process</h3>
+                <p>Production Qty per day for each operation</p>
+            </div>
+        </div>
+        <div class="chart-body">
+            <div id="chartDailyProcessEmpty" class="no-data-chart" style="display:none;">
+                <span style="font-size:1.5rem">📭</span><span>No data to display</span>
+            </div>
+            <canvas id="chartDailyProcess"></canvas>
+        </div>
+    </div>
+
+    <!-- ── LINE CHART: Daily Qty by Vendor ── -->
+    <div class="line-chart-card">
+        <div class="chart-card-header">
+            <div class="chart-icon green">🏭</div>
+            <div>
+                <h3>Daily Quantity Trend — by Vendor</h3>
+                <p>Production Qty per day for each supplier</p>
+            </div>
+        </div>
+        <div class="chart-body">
+            <div id="chartDailyVendorEmpty" class="no-data-chart" style="display:none;">
+                <span style="font-size:1.5rem">📭</span><span>No data to display</span>
+            </div>
+            <canvas id="chartDailyVendor"></canvas>
+        </div>
+    </div>
+
+    <!-- ── DETAIL BY VENDOR ── -->
+    <div class="detail-section">
+        <div class="detail-header">
+            <div class="detail-header-left">
+                <span style="font-size:1.2rem">🏭</span>
+                <div>
+                    <h3>Detail by Vendor</h3>
+                    <p>Expand each vendor to see production records</p>
+                </div>
+            </div>
+            <span class="record-count" id="detailCount">0 records</span>
+        </div>
+        <div id="vendorDetailContainer">
+            <div class="empty-state">
+                <div class="empty-icon">🔍</div>
+                <p>Apply a filter to load the report data.</p>
+            </div>
+        </div>
+    </div>
+
+</div><!-- /page-wrapper -->
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-box">
+        <div class="loading-spinner"></div>
+        <p>Loading report...</p>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+    <span id="toastIcon"></span>
+    <span id="toastMsg"></span>
+</div>
+
+@section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+    const pathBase = '@Context.Request.PathBase'.replace(/\/$/, '');
+
+    // ── Chart instances ────────────────────────────────────────────────────
+    let chartProcess = null, chartVendor = null, chartCode = null;
+    let chartDailyProcess = null, chartDailyVendor = null;
+
+    // ── Code map: product_id → Operation text ──────────────────────────────
+    let codeMap = {};
+
+    // ── Palette ────────────────────────────────────────────────────────────
+    const COLORS = [
+        '#1B4F8A','#2563a8','#0d9488','#8b5cf6','#ea580c','#10b981',
+        '#f59e0b','#ef4444','#06b6d4','#84cc16','#ec4899','#6366f1',
+        '#14b8a6','#f97316','#a855f7','#22c55e','#3b82f6','#e11d48'
+    ];
+
+    // ── Init ───────────────────────────────────────────────────────────────
+    window.addEventListener('DOMContentLoaded', async () => {
+        setDefaultDates();
+        await Promise.all([loadAllCodes(), loadVendors(), loadProcesses()]);
+        loadReport();
+    });
+
+    // ── Default Dates: From Date empty, To Date = today ────────────────────
+    function setDefaultDates() {
+        const now = new Date();
+        const y   = now.getFullYear();
+        const m   = String(now.getMonth() + 1).padStart(2, '0');
+        const d   = String(now.getDate()).padStart(2, '0');
+        document.getElementById('fDateFrom').value = ''; // no default From Date
+        document.getElementById('fDateTo').value   = `${y}-${m}-${d}`;
+    }
+
+    // ── Load All Code Mappings ─────────────────────────────────────────────
+    async function loadAllCodes() {
+        try {
+            const res   = await fetch(`${pathBase}/Production/GetAllCodes`);
+            const codes = await res.json();
+            codes.forEach(c => { codeMap[c.value] = c.text; });
+        } catch(e) { console.error('loadAllCodes', e); }
+    }
+
+    async function loadVendors() {
+        try {
+            const res  = await fetch(`${pathBase}/Production/GetVendors`);
+            const data = await res.json();
+            const sel  = document.getElementById('fVendor');
+            data.forEach(v => {
+                const o = new Option(v, v);
+                sel.appendChild(o);
+            });
+        } catch(e) { console.error('loadVendors', e); }
+    }
+
+    async function loadProcesses() {
+        try {
+            const res  = await fetch(`${pathBase}/Production/GetProcesses`);
+            const data = await res.json();
+            const sel  = document.getElementById('fProcess');
+            data.forEach(p => {
+                const o = new Option(p, p);
+                sel.appendChild(o);
+            });
+        } catch(e) { console.error('loadProcesses', e); }
+    }
+
+    // ── Filter toggle ──────────────────────────────────────────────────────
+    function toggleFilter() {
+        const body = document.getElementById('filterBody');
+        const icon = document.getElementById('filterToggle');
+        body.classList.toggle('collapsed');
+        icon.classList.toggle('collapsed');
+    }
+
+    function resetFilters() {
+        document.getElementById('fProcess').value   = '';
+        document.getElementById('fProductId').value = '';
+        document.getElementById('fVendor').value    = '';
+        document.getElementById('fDateFrom').value  = '';
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        document.getElementById('fDateTo').value = `${y}-${m}-${d}`;
+        loadReport();
+    }
+
+    // ── Resolve operation text from product_id ─────────────────────────────
+    function getOperation(productId) {
+        if (!productId) return '—';
+        return codeMap[productId] || `ID:${productId}`;
+    }
+
+    // ── Load Report ────────────────────────────────────────────────────────
+    async function loadReport() {
+        const params    = new URLSearchParams();
+        const vendor    = document.getElementById('fVendor').value;
+        const process   = document.getElementById('fProcess').value;
+        const productId = document.getElementById('fProductId').value;
+        const dateFrom  = document.getElementById('fDateFrom').value;
+        const dateTo    = document.getElementById('fDateTo').value;
+
+        if (vendor)   params.append('vendor',   vendor);
+        if (process)  params.append('process',  process);
+        if (dateFrom) params.append('dateFrom', dateFrom);
+        if (dateTo)   params.append('dateTo',   dateTo);
+
+        showLoading(true);
+        try {
+            const res  = await fetch(`${pathBase}/Production/GetHistory?` + params.toString());
+            const data = await res.json();
+
+            // client-side productId filter
+            let filtered = data;
+            if (productId) {
+                filtered = data.filter(x => String(x.product_id) === productId);
+            }
+
+            renderStats(filtered);
+            renderBarCharts(filtered);
+            renderLineCharts(filtered);
+            renderVendorDetail(filtered);
+            refreshProductIdFilter(filtered);
+        } catch(e) {
+            console.error('loadReport', e);
+            showToast('Failed to load report data.', 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // ── Stats: count only Production Quantity ──────────────────────────────
+    function renderStats(data) {
+        const prodData  = data.filter(x => x.type_value === 'Production Qty');
+        const totalQty  = prodData.reduce((s, x) => s + (x.product_qty || 0), 0);
+        const vendors   = new Set(data.map(x => x.vendor).filter(Boolean));
+        const processes = new Set(data.map(x => x.process).filter(Boolean));
+
+        document.getElementById('statTotalQty').textContent  = totalQty.toLocaleString();
+        document.getElementById('statRecords').textContent   = data.length.toLocaleString();
+        document.getElementById('statVendors').textContent   = vendors.size;
+        document.getElementById('statProcesses').textContent = processes.size;
+    }
+
+    // ── Populate operation filter ──────────────────────────────────────────
+    function refreshProductIdFilter(data) {
+        const current = document.getElementById('fProductId').value;
+        const ids     = [...new Set(data.map(x => x.product_id).filter(Boolean))].sort((a, b) => a - b);
+        const sel     = document.getElementById('fProductId');
+        sel.innerHTML = '<option value="">All Operations</option>';
+        ids.forEach(id => {
+            const label = codeMap[id] ? `${codeMap[id]}` : `ID:${id}`;
+            const o = new Option(label, id);
+            if (String(id) === current) o.selected = true;
+            sel.appendChild(o);
+        });
+    }
+
+    // ── Bar / Donut Charts: Production Qty only ────────────────────────────
+    function renderBarCharts(data) {
+        const prodData   = data.filter(x => x.type_value === 'Production Qty');
+        const byProcess  = groupAndSum(prodData, 'process');
+        const byVendor   = groupAndSum(prodData, 'vendor');
+        const byOperation = groupAndSumByOperation(prodData, 10);
+
+        renderDoughnut('chartProcess', 'chartProcessEmpty', byProcess);
+        renderDoughnut('chartVendor',  'chartVendorEmpty',  byVendor);
+        renderHBar    ('chartCode',    'chartCodeEmpty',    byOperation);
+    }
+
+    function groupAndSum(data, field, limit = null) {
+        const map = {};
+        data.forEach(x => {
+            const key = x[field] || '(unknown)';
+            map[key] = (map[key] || 0) + (x.product_qty || 0);
+        });
+        let entries = Object.entries(map).sort((a, b) => b[1] - a[1]);
+        if (limit) entries = entries.slice(0, limit);
+        return { labels: entries.map(e => e[0]), values: entries.map(e => e[1]) };
+    }
+
+    // Group by Operation text (via codeMap) instead of raw product_id
+    function groupAndSumByOperation(data, limit = null) {
+        const map = {};
+        data.forEach(x => {
+            const opName = codeMap[x.product_id] || (x.product_id ? `ID:${x.product_id}` : '(unknown)');
+            map[opName] = (map[opName] || 0) + (x.product_qty || 0);
+        });
+        let entries = Object.entries(map).sort((a, b) => b[1] - a[1]);
+        if (limit) entries = entries.slice(0, limit);
+        return { labels: entries.map(e => e[0]), values: entries.map(e => e[1]) };
+    }
+
+    function renderDoughnut(canvasId, emptyId, { labels, values }) {
+        const canvas = document.getElementById(canvasId);
+        const empty  = document.getElementById(emptyId);
+
+        if (chartProcess && canvasId === 'chartProcess') { chartProcess.destroy(); chartProcess = null; }
+        if (chartVendor  && canvasId === 'chartVendor')  { chartVendor.destroy();  chartVendor  = null; }
+
+        if (!labels.length) {
+            canvas.style.display = 'none';
+            empty.style.display  = 'flex';
+            return;
+        }
+        canvas.style.display = '';
+        empty.style.display  = 'none';
+
+        const bgColors = COLORS.slice(0, labels.length);
+        const chart = new Chart(canvas, {
+            type: 'doughnut',
+            data: {
+                labels,
+                datasets: [{ data: values, backgroundColor: bgColors, borderWidth: 2, borderColor: '#fff' }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { font: { size: 11, family: 'DM Sans' }, boxWidth: 12, padding: 8 }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ` ${ctx.label}: ${ctx.raw.toLocaleString()} (${Math.round(ctx.raw / values.reduce((a,b)=>a+b,0)*100)}%)`
+                        }
+                    }
+                },
+                cutout: '55%'
+            }
+        });
+        if (canvasId === 'chartProcess') chartProcess = chart;
+        if (canvasId === 'chartVendor')  chartVendor  = chart;
+    }
+
+    function renderHBar(canvasId, emptyId, { labels, values }) {
+        const canvas = document.getElementById(canvasId);
+        const empty  = document.getElementById(emptyId);
+        if (chartCode) { chartCode.destroy(); chartCode = null; }
+
+        if (!labels.length) {
+            canvas.style.display = 'none';
+            empty.style.display  = 'flex';
+            return;
+        }
+        canvas.style.display = '';
+        empty.style.display  = 'none';
+
+        chartCode = new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: COLORS.slice(0, labels.length),
+                    borderRadius: 4,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: ctx => ` ${ctx.raw.toLocaleString()}` } }
+                },
+                scales: {
+                    x: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10, family: 'DM Sans' } } },
+                    y: { grid: { display: false }, ticks: { font: { size: 10, family: 'DM Sans' }, maxRotation: 0 } }
+                }
+            }
+        });
+    }
+
+    // ── Line Charts: Production Qty only ──────────────────────────────────
+    function renderLineCharts(data) {
+        const prodData = data.filter(x => x.type_value === 'Production Qty');
+        renderDailyLine('chartDailyProcess', 'chartDailyProcessEmpty', prodData, 'process');
+        renderDailyLine('chartDailyVendor',  'chartDailyVendorEmpty',  prodData, 'vendor');
+    }
+
+    function renderDailyLine(canvasId, emptyId, data, groupField) {
+        const canvas = document.getElementById(canvasId);
+        const empty  = document.getElementById(emptyId);
+
+        if (canvasId === 'chartDailyProcess' && chartDailyProcess) { chartDailyProcess.destroy(); chartDailyProcess = null; }
+        if (canvasId === 'chartDailyVendor'  && chartDailyVendor)  { chartDailyVendor.destroy();  chartDailyVendor  = null; }
+
+        if (!data.length) {
+            canvas.style.display = 'none';
+            empty.style.display  = 'flex';
+            return;
+        }
+        canvas.style.display = '';
+        empty.style.display  = 'none';
+
+        const dateSet  = new Set();
+        const groupSet = new Set();
+        data.forEach(x => {
+            const d = x.date_finished ? x.date_finished.split('T')[0] : null;
+            if (d) dateSet.add(d);
+            if (x[groupField]) groupSet.add(x[groupField]);
+        });
+
+        const dates  = [...dateSet].sort();
+        const groups = [...groupSet].sort();
+
+        const map = {};
+        groups.forEach(g => { map[g] = {}; dates.forEach(d => { map[g][d] = 0; }); });
+        data.forEach(x => {
+            const d = x.date_finished ? x.date_finished.split('T')[0] : null;
+            const g = x[groupField];
+            if (d && g) map[g][d] = (map[g][d] || 0) + (x.product_qty || 0);
+        });
+
+        const datasets = groups.map((g, i) => ({
+            label: g,
+            data:  dates.map(d => map[g][d]),
+            borderColor:      COLORS[i % COLORS.length],
+            backgroundColor:  COLORS[i % COLORS.length] + '22',
+            tension:          0.35,
+            fill:             false,
+            pointRadius:      dates.length > 30 ? 2 : 4,
+            pointHoverRadius: 6,
+            borderWidth:      2
+        }));
+
+        const chart = new Chart(canvas, {
+            type: 'line',
+            data: { labels: dates, datasets },
+            options: {
+                responsive: true,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { font: { size: 11, family: 'DM Sans' }, boxWidth: 14, padding: 10 }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ` ${ctx.dataset.label}: ${ctx.raw.toLocaleString()}`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: '#f1f5f9' },
+                        ticks: { font: { size: 10, family: 'DM Sans' }, maxRotation: 45, maxTicksLimit: 20 }
+                    },
+                    y: {
+                        grid: { color: '#f1f5f9' },
+                        ticks: { font: { size: 10, family: 'DM Sans' } },
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        if (canvasId === 'chartDailyProcess') chartDailyProcess = chart;
+        if (canvasId === 'chartDailyVendor')  chartDailyVendor  = chart;
+    }
+
+    // ── Vendor Detail ──────────────────────────────────────────────────────
+    function renderVendorDetail(data) {
+        const container = document.getElementById('vendorDetailContainer');
+        document.getElementById('detailCount').textContent = `${data.length} records`;
+
+        if (!data.length) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">📭</div>
+                    <p>No records match the selected filters.</p>
+                </div>`;
+            return;
+        }
+
+        // Group by vendor
+        const vendorMap = {};
+        data.forEach(x => {
+            const v = x.vendor || '(unknown)';
+            if (!vendorMap[v]) vendorMap[v] = [];
+            vendorMap[v].push(x);
+        });
+
+        let html = '';
+        const vendors = Object.keys(vendorMap).sort();
+        vendors.forEach((vendor, vi) => {
+            const rows   = vendorMap[vendor];
+            // Total = Production Qty only
+            const total  = rows
+                .filter(x => x.type_value === 'Production Qty')
+                .reduce((s, x) => s + (x.product_qty || 0), 0);
+            const isFirst = vi === 0;
+
+            html += `
+            <div class="vendor-block">
+                <button class="vendor-accordion-btn ${isFirst ? 'open' : ''}"
+                        onclick="toggleVendor(this, 'vendor-body-${vi}')">
+                    <div class="vendor-title">
+                        🏭 ${vendor}
+                        <span class="vendor-badge">${rows.length}</span>
+                    </div>
+                    <div class="vendor-meta">
+                        <span>Prod Qty: <strong class="vendor-qty">${total.toLocaleString()}</strong></span>
+                        <span class="vendor-chevron ${isFirst ? 'open' : ''}">▼</span>
+                    </div>
+                </button>
+                <div class="vendor-content ${isFirst ? 'open' : ''}" id="vendor-body-${vi}">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Date &amp; Time</th>
+                                    <th>Process</th>
+                                    <th>Operation</th>
+                                    <th>Type</th>
+                                    <th>Qty</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+
+            rows.forEach((r, ri) => {
+                const dt      = r.date_finished ? new Date(r.date_finished).toLocaleString('vi-VN') : '—';
+                const desc    = r.description   ? (r.description.length > 40 ? r.description.substring(0, 40) + '…' : r.description) : '—';
+                const typeCls = (r.type_value || '').includes('Man') ? 'man' : '';
+                const opName  = getOperation(r.product_id);
+
+                html += `<tr>
+                    <td style="color:var(--gray-400)">${ri + 1}</td>
+                    <td>${dt}</td>
+                    <td><span class="badge badge-process">${r.process || '—'}</span></td>
+                    <td><strong>${opName}</strong></td>
+                    <td><span class="badge badge-type ${typeCls}">${r.type_value || '—'}</span></td>
+                    <td><strong style="color:var(--denim)">${(r.product_qty || 0).toLocaleString()}</strong></td>
+                    <td style="color:var(--gray-600)">${desc}</td>
+                </tr>`;
+            });
+
+            html += `</tbody></table></div></div></div>`;
+        });
+
+        container.innerHTML = html;
+    }
+
+    function toggleVendor(btn, bodyId) {
+        const body    = document.getElementById(bodyId);
+        const chevron = btn.querySelector('.vendor-chevron');
+        const isOpen  = body.classList.contains('open');
+        body.classList.toggle('open',    !isOpen);
+        btn.classList.toggle('open',     !isOpen);
+        chevron.classList.toggle('open', !isOpen);
+    }
+
+    // ── Comprehensive Excel Export ─────────────────────────────────────────
+    async function exportExcel() {
+        const vendor    = document.getElementById('fVendor').value;
+        const process   = document.getElementById('fProcess').value;
+        const dateFrom  = document.getElementById('fDateFrom').value;
+        const dateTo    = document.getElementById('fDateTo').value;
+        const productId = document.getElementById('fProductId').value;
+
+        const params = new URLSearchParams();
+        if (vendor)   params.append('vendor',   vendor);
+        if (process)  params.append('process',  process);
+        if (dateFrom) params.append('dateFrom', dateFrom);
+        if (dateTo)   params.append('dateTo',   dateTo);
+
+        showLoading(true);
+        try {
+            const res  = await fetch(`${pathBase}/Production/GetHistory?` + params.toString());
+            let   data = await res.json();
+            if (productId) data = data.filter(x => String(x.product_id) === productId);
+
+            if (!data.length) { showToast('No data to export.', 'error'); return; }
+
+            const wb       = XLSX.utils.book_new();
+            const prodData = data.filter(x => x.type_value === 'Production Qty');
+            const now      = new Date();
+
+            // ── Aggregations (Production Qty only) ──
+            const totalQty   = prodData.reduce((s, x) => s + (x.product_qty || 0), 0);
+            const vendors    = [...new Set(data.map(x => x.vendor).filter(Boolean))];
+            const processes  = [...new Set(data.map(x => x.process).filter(Boolean))];
+
+            const byProcessMap = {};
+            prodData.forEach(x => {
+                const k = x.process || '(unknown)';
+                byProcessMap[k] = (byProcessMap[k] || 0) + (x.product_qty || 0);
+            });
+            const byVendorMap = {};
+            prodData.forEach(x => {
+                const k = x.vendor || '(unknown)';
+                byVendorMap[k] = (byVendorMap[k] || 0) + (x.product_qty || 0);
+            });
+            const byOpMap = {};
+            prodData.forEach(x => {
+                const k = codeMap[x.product_id] || (x.product_id ? `ID:${x.product_id}` : '(unknown)');
+                byOpMap[k] = (byOpMap[k] || 0) + (x.product_qty || 0);
+            });
+
+            const sortDesc = obj => Object.entries(obj).sort((a, b) => b[1] - a[1]);
+
+            // ── SHEET 1: Summary ──
+            const summaryAOA = [
+                ['PRODUCTION REPORT'],
+                ['Generated at', now.toLocaleString('vi-VN')],
+                ['Period From', dateFrom || '(All time)'],
+                ['Period To',   dateTo   || now.toLocaleDateString('vi-VN')],
+                [],
+                ['=== SUMMARY STATISTICS (Production Qty only) ==='],
+                ['Total Production Qty', totalQty],
+                ['Total Records (all types)', data.length],
+                ['  → Production Qty records', prodData.length],
+                ['Active Vendors', vendors.length],
+                ['Active Processes', processes.length],
+                [],
+                ['=== QTY BY PROCESS ==='],
+                ['Process', 'Quantity'],
+                ...sortDesc(byProcessMap).map(([k, v]) => [k, v]),
+                [],
+                ['=== QTY BY VENDOR ==='],
+                ['Vendor', 'Quantity'],
+                ...sortDesc(byVendorMap).map(([k, v]) => [k, v]),
+                [],
+                ['=== QTY BY OPERATION ==='],
+                ['Operation', 'Quantity'],
+                ...sortDesc(byOpMap).map(([k, v]) => [k, v]),
+            ];
+            const ws1 = XLSX.utils.aoa_to_sheet(summaryAOA);
+            ws1['!cols'] = [{wch:35}, {wch:22}];
+            XLSX.utils.book_append_sheet(wb, ws1, 'Summary');
+
+            // ── SHEET 2: Daily Trend ──
+            const dateSet    = new Set(prodData.map(x => x.date_finished ? x.date_finished.split('T')[0] : null).filter(Boolean));
+            const procSet    = new Set(prodData.map(x => x.process).filter(Boolean));
+            const vendorSet  = new Set(prodData.map(x => x.vendor).filter(Boolean));
+            const dates      = [...dateSet].sort();
+            const procGrps   = [...procSet].sort();
+            const vendorGrps = [...vendorSet].sort();
+
+            // Process matrix
+            const procMx = {};
+            procGrps.forEach(g => { procMx[g] = {}; dates.forEach(d => { procMx[g][d] = 0; }); });
+            prodData.forEach(x => {
+                const d = x.date_finished ? x.date_finished.split('T')[0] : null;
+                if (d && x.process) procMx[x.process][d] = (procMx[x.process][d] || 0) + (x.product_qty || 0);
+            });
+            // Vendor matrix
+            const vendMx = {};
+            vendorGrps.forEach(g => { vendMx[g] = {}; dates.forEach(d => { vendMx[g][d] = 0; }); });
+            prodData.forEach(x => {
+                const d = x.date_finished ? x.date_finished.split('T')[0] : null;
+                if (d && x.vendor) vendMx[x.vendor][d] = (vendMx[x.vendor][d] || 0) + (x.product_qty || 0);
+            });
+
+            const dailyAOA = [
+                ['=== DAILY TREND BY PROCESS (Production Qty only) ==='],
+                ['Date', ...procGrps],
+                ...dates.map(d => [d, ...procGrps.map(g => procMx[g][d] || 0)]),
+                [],
+                ['=== DAILY TREND BY VENDOR (Production Qty only) ==='],
+                ['Date', ...vendorGrps],
+                ...dates.map(d => [d, ...vendorGrps.map(g => vendMx[g][d] || 0)]),
+            ];
+            const ws2 = XLSX.utils.aoa_to_sheet(dailyAOA);
+            ws2['!cols'] = [{wch:14}, ...Array(Math.max(procGrps.length, vendorGrps.length) + 1).fill({wch:14})];
+            XLSX.utils.book_append_sheet(wb, ws2, 'Daily Trend');
+
+            // ── SHEET 3: Detail Records (all types, sortable) ──
+            const detailRows = data.map((x, i) => ({
+                '#':           i + 1,
+                'Vendor':      x.vendor      || '',
+                'Process':     x.process     || '',
+                'Operation':   getOperation(x.product_id),
+                'Type':        x.type_value  || '',
+                'Quantity':    x.product_qty || 0,
+                'Date':        x.date_finished ? new Date(x.date_finished).toLocaleString('vi-VN') : '',
+                'Description': x.description || ''
+            }));
+            const ws3 = XLSX.utils.json_to_sheet(detailRows);
+            ws3['!cols'] = [{wch:5},{wch:14},{wch:18},{wch:28},{wch:20},{wch:12},{wch:22},{wch:40}];
+            XLSX.utils.book_append_sheet(wb, ws3, 'Detail Records');
+
+            const fname = `Production_Report_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.xlsx`;
+            XLSX.writeFile(wb, fname);
+            showToast(`Exported ${data.length} records (${prodData.length} Production Qty).`, 'success');
+        } catch(e) {
+            console.error('exportExcel', e);
+            showToast('Export failed.', 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // ── Helpers ────────────────────────────────────────────────────────────
+    function showLoading(show) {
+        document.getElementById('loadingOverlay').classList.toggle('show', show);
+    }
+
+    function showToast(msg, type) {
+        const toast = document.getElementById('toast');
+        toast.className = 'toast ' + type;
+        document.getElementById('toastIcon').textContent = type === 'success' ? '✅' : '❌';
+        document.getElementById('toastMsg').textContent  = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+</script>
+}
+</body>
+</html>

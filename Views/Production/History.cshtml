@@ -25,6 +25,7 @@
             --gray-800: #1e293b;
             --shadow-sm: 0 1px 3px rgba(27,79,138,0.08);
             --shadow-md: 0 4px 20px rgba(27,79,138,0.12);
+            --nav-height: 60px;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -34,6 +35,57 @@
             background-image:
                 radial-gradient(ellipse at 20% 50%, rgba(27,79,138,0.06) 0%, transparent 60%),
                 radial-gradient(ellipse at 80% 20%, rgba(37,99,168,0.05) 0%, transparent 50%);
+        }
+
+        /* ── NAV ── */
+        nav {
+            background: var(--denim-dark);
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: var(--nav-height);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-brand {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--white);
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-brand span {
+            background: var(--denim-mid);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #a8d0f8;
+        }
+        .nav-links { display: flex; gap: 4px; }
+        .nav-links a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.84rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .nav-links a:hover { background: rgba(255,255,255,0.12); color: var(--white); }
+        .nav-links a.active { background: var(--denim-mid); color: var(--white); }
+        @@media (max-width: 480px) {
+            .nav-links a .nav-label { display: none; }
+            .nav-links a { padding: 6px 10px; font-size: 1rem; }
         }
 
         /* ── LAYOUT ── */
@@ -95,7 +147,7 @@
             gap: 0.75rem;
         }
         @@media (min-width: 600px) { .filter-grid { grid-template-columns: repeat(3, 1fr); gap: 1rem; } }
-        @@media (min-width: 900px) { .filter-grid { grid-template-columns: repeat(5, 1fr); align-items: end; } }
+        @@media (min-width: 900px) { .filter-grid { grid-template-columns: repeat(5, 1fr) auto; align-items: end; gap: 1rem; } }
 
         .filter-group { display: flex; flex-direction: column; gap: 5px; }
         .filter-group.btn-col { grid-column: 1 / -1; }
@@ -134,7 +186,7 @@
             border-color: var(--denim);
             box-shadow: 0 0 0 3px rgba(27,79,138,0.1);
         }
-        .btn-filter-row { display: flex; gap: 8px; }
+        .btn-filter-row { display: flex; gap: 8px; flex-wrap: nowrap; }
         .btn {
             padding: 0.65rem 1.1rem;
             border-radius: 8px;
@@ -147,9 +199,7 @@
             display: inline-flex; align-items: center; justify-content: center; gap: 6px;
             white-space: nowrap;
             min-height: 42px;
-            flex: 1;
         }
-        @@media (min-width: 600px) { .btn { flex: none; } }
         .btn-primary {
             background: linear-gradient(135deg, var(--denim) 0%, var(--denim-mid) 100%);
             color: var(--white);
@@ -162,6 +212,12 @@
             color: var(--gray-600);
         }
         .btn-outline:hover { border-color: var(--denim); color: var(--denim); background: var(--denim-xlight); }
+        .btn-excel {
+            background: linear-gradient(135deg, #166534 0%, #15803d 100%);
+            color: var(--white);
+            box-shadow: 0 3px 10px rgba(22,101,52,0.2);
+        }
+        .btn-excel:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(22,101,52,0.35); }
 
         /* ── TABLE CARD ── */
         .table-card {
@@ -177,6 +233,8 @@
             align-items: center;
             justify-content: space-between;
             border-bottom: 1px solid var(--gray-100);
+            gap: 12px;
+            flex-wrap: wrap;
         }
         .table-toolbar h3 {
             font-family: 'Space Grotesk', sans-serif;
@@ -184,6 +242,7 @@
             font-weight: 600;
             color: var(--denim-dark);
         }
+        .toolbar-right { display: flex; align-items: center; gap: 12px; }
         .record-count { font-size: 0.8rem; color: var(--gray-400); }
 
         .badge {
@@ -220,6 +279,7 @@
         .td-vendor{ font-weight: 600; color: var(--denim-dark); }
         .td-qty   { font-weight: 700; color: var(--denim); font-size: 1rem; }
         .td-date  { color: var(--gray-600); font-size: 0.81rem; white-space: nowrap; }
+        .td-op    { font-size: 0.84rem; font-weight: 500; color: var(--gray-800); max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .td-desc {
             max-width: 200px;
             white-space: nowrap;
@@ -311,6 +371,7 @@
 </head>
 <body>
 
+
 <div class="page-wrapper">
     <div class="page-header">
         <h1>Production History</h1>
@@ -342,8 +403,8 @@
                     <label>Type</label>
                     <select id="filterType">
                         <option value="">All Types</option>
-                        <option value="Production Quantity">Production Quantity</option>
-                        <option value="Man Power">Man Power</option>
+                        <option value="Production Qty">Production Qty</option>
+                        <option value="Man Q'ty">Man Q'ty</option>
                     </select>
                 </div>
                 <div class="filter-group">
@@ -369,7 +430,12 @@
     <div class="table-card">
         <div class="table-toolbar">
             <h3>📊 Record List</h3>
-            <span class="record-count" id="recordCount">Loading...</span>
+            <div class="toolbar-right">
+                <span class="record-count" id="recordCount">Loading...</span>
+                <button class="btn btn-excel" onclick="exportExcel()" id="exportBtn" style="font-size:0.82rem;padding:0.5rem 0.9rem;min-height:36px;">
+                    ⬇ Export Excel
+                </button>
+            </div>
         </div>
 
         <!-- Desktop table -->
@@ -379,7 +445,7 @@
                     <tr>
                         <th>#ID</th>
                         <th>Process</th>
-                        <th>Product ID</th>
+                        <th>Product</th>
                         <th>Vendor</th>
                         <th>Type</th>
                         <th>Quantity</th>
@@ -416,8 +482,15 @@
     <button class="lightbox-close" onclick="closeLightbox()">✕</button>
     <img id="lightboxImg" src="" alt="Full image" onclick="event.stopPropagation()" />
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
     const pathBase = '@Context.Request.PathBase'.replace(/\/$/, '');
+
+    // product_id → Operation text lookup
+    let codeMap = {};
+    // Cache of current data for export
+    let currentData = [];
 
     /* ── Filter collapsible (mobile) ── */
     let filterOpen = true;
@@ -445,12 +518,23 @@
         document.getElementById('lightboxImg').src = '';
     }
 
-    /* ── Helper: Fix image path (đảm bảo luôn có /italisa) ── */
+    /* ── Fix image path ── */
     function fixImagePath(imagePath) {
         if (!imagePath) return '';
         if (imagePath.startsWith('http')) return imagePath;
         if (imagePath.startsWith('/italisa')) return imagePath;
         return '/italisa' + (imagePath.startsWith('/') ? '' : '/') + imagePath;
+    }
+
+    /* ── Load All Code Mappings (product_id → Operation text) ── */
+    async function loadAllCodes() {
+        try {
+            const res   = await fetch(`${pathBase}/Production/GetAllCodes`);
+            const codes = await res.json();
+            codes.forEach(c => { codeMap[c.value] = c.text; });
+        } catch (e) {
+            console.error('loadAllCodes error:', e);
+        }
     }
 
     /* ── Load Vendors ── */
@@ -485,6 +569,13 @@
         } catch (e) { console.error('Load processes error:', e); }
     }
 
+    /* ── Get Operation label ── */
+    function getOperation(row) {
+        if (row.product_id && codeMap[row.product_id]) return codeMap[row.product_id];
+        if (row.product_id) return `ID:${row.product_id}`;
+        return '—';
+    }
+
     /* ── Load Data ── */
     async function loadData() {
         const vendor    = document.getElementById('filterVendor').value;
@@ -511,6 +602,7 @@
                 throw new Error(err.error || `HTTP ${res.status}`);
             }
             const data = await res.json();
+            currentData = data; // cache for export
 
             document.getElementById('recordCount').textContent = `${data.length} records`;
 
@@ -523,6 +615,8 @@
 
             /* ── Desktop rows ── */
             document.getElementById('tableBody').innerHTML = data.map(row => {
+                const operation = getOperation(row);
+
                 const descCell = row.description
                     ? `<td class="td-desc" title="${escHtml(row.description)}">${escHtml(row.description)}</td>`
                     : `<td class="no-val">—</td>`;
@@ -536,10 +630,10 @@
                 <tr>
                     <td class="td-id">#${row.id}</td>
                     <td>${escHtml(row.process ?? '—')}</td>
-                    <td>${row.product_id ?? '<span class="no-val">—</span>'}</td>
+                    <td class="td-op" title="${escHtml(operation)}">${escHtml(operation)}</td>
                     <td class="td-vendor">${escHtml(row.vendor ?? '—')}</td>
                     <td>
-                        <span class="badge ${row.type_value === 'Production Quantity' ? 'badge-blue' : 'badge-purple'}">
+                        <span class="badge ${row.type_value === 'Production Qty' ? 'badge-blue' : 'badge-purple'}">
                             ${escHtml(row.type_value ?? '—')}
                         </span>
                     </td>
@@ -552,6 +646,7 @@
 
             /* ── Mobile cards ── */
             document.getElementById('cardList').innerHTML = data.map(row => {
+                const operation = getOperation(row);
                 const imgSrc = fixImagePath(row.image_path);
                 const imgSection = row.image_path
                     ? `<div class="data-card-field full">
@@ -577,8 +672,8 @@
                             <span class="data-card-value">${escHtml(row.process ?? '—')}</span>
                         </div>
                         <div class="data-card-field">
-                            <span class="data-card-label">Product ID</span>
-                            <span class="data-card-value">${row.product_id ?? '—'}</span>
+                            <span class="data-card-label">Operation</span>
+                            <span class="data-card-value">${escHtml(operation)}</span>
                         </div>
                         <div class="data-card-field">
                             <span class="data-card-label">Quantity</span>
@@ -587,7 +682,7 @@
                         <div class="data-card-field">
                             <span class="data-card-label">Type</span>
                             <span class="data-card-value">
-                                <span class="badge ${row.type_value === 'Production Quantity' ? 'badge-blue' : 'badge-purple'}">
+                                <span class="badge ${row.type_value === 'Production Qty' ? 'badge-blue' : 'badge-purple'}">
                                     ${escHtml(row.type_value ?? '—')}
                                 </span>
                             </span>
@@ -613,6 +708,37 @@
         }
     }
 
+    /* ── Export Excel ── */
+    function exportExcel() {
+        if (!currentData.length) {
+            alert('No data to export. Please search first.');
+            return;
+        }
+
+        const rows = currentData.map((x, i) => ({
+            '#':           i + 1,
+            'Vendor':      x.vendor      || '',
+            'Process':     x.process     || '',
+            'Operation':   getOperation(x),
+            'Type':        x.type_value  || '',
+            'Quantity':    x.product_qty || 0,
+            'Date':        x.date_finished ? new Date(x.date_finished).toLocaleString('vi-VN') : '',
+            'Description': x.description || ''
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Production History');
+
+        ws['!cols'] = [
+            {wch:5},{wch:14},{wch:18},{wch:28},{wch:20},{wch:10},{wch:22},{wch:40}
+        ];
+
+        const now  = new Date();
+        const fname = `Production_History_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.xlsx`;
+        XLSX.writeFile(wb, fname);
+    }
+
     function clearFilters() {
         document.getElementById('filterVendor').value   = '';
         document.getElementById('filterProcess').value  = '';
@@ -630,9 +756,9 @@
             .replace(/"/g, '&quot;');
     }
 
-    loadVendors();
-    loadProcesses();
-    loadData();
+    // Init: load all mappings first, then data
+    Promise.all([loadAllCodes(), loadVendors(), loadProcesses()])
+        .then(() => loadData());
 </script>
 </body>
 </html>

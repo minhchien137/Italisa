@@ -99,7 +99,6 @@ namespace ItalisaTools.Controllers
         {
             try
             {
-                // ── Lấy thẳng từ SVN_Italisa_Production, không Join ──
                 var query = _context.SVN_Italisa_Production.AsQueryable();
 
                 if (!string.IsNullOrEmpty(vendor))
@@ -198,6 +197,66 @@ namespace ItalisaTools.Controllers
                 return Json(new List<CodeItemDto>());
             }
         }
+
+        // ── NEW: Get all product_id → Operation mappings across all processes ──
+        [HttpGet]
+        public async Task<IActionResult> GetAllCodes()
+        {
+            var allCodes = new List<CodeItemDto>();
+            var seen     = new HashSet<int>();
+
+            try
+            {
+                var connectionString = _context.Database.GetConnectionString();
+                var processes = await _context.SVN_Italisa_Process
+                    .Select(p => p.process)
+                    .ToListAsync();
+
+                foreach (var proc in processes.Where(p => !string.IsNullOrWhiteSpace(p)))
+                {
+                    try
+                    {
+                        using var conn = new SqlConnection(connectionString);
+                        await conn.OpenAsync();
+
+                        using var cmd = new SqlCommand("sp_GetItemsByOperation", conn);
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new SqlParameter("@OperationKeyword", proc.Trim()));
+
+                        using var reader = await cmd.ExecuteReaderAsync();
+                        while (await reader.ReadAsync())
+                        {
+                            var id = reader.GetInt32(reader.GetOrdinal("product_id"));
+                            if (seen.Add(id))
+                            {
+                                allCodes.Add(new CodeItemDto
+                                {
+                                    Value = id,
+                                    Text  = reader.GetString(reader.GetOrdinal("Operation"))
+                                });
+                            }
+                        }
+                    }
+                    catch (Exception innerEx)
+                    {
+                        Console.WriteLine($"GetAllCodes inner error for '{proc}': {innerEx.Message}");
+                    }
+                }
+
+                return Json(allCodes);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"GetAllCodes Error: {ex.Message}");
+                return Json(new List<CodeItemDto>());
+            }
+        }
+
+        public IActionResult Report()
+        {
+            return View();
+        }
+
 
 
         // ── DTOs ──────────────────────────────────────────────────────────────
