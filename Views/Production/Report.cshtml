@@ -792,6 +792,7 @@
 
 @section Scripts {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
     const pathBase = '@Context.Request.PathBase'.replace(/\/$/, '');
 
@@ -810,6 +811,9 @@
         '#14b8a6','#f97316','#a855f7','#22c55e','#3b82f6','#e11d48'
     ];
 
+    // ── Tắt datalabels global, chỉ dùng per-chart ─────────────────────────
+    Chart.unregister(ChartDataLabels);
+
     // ── Init ───────────────────────────────────────────────────────────────
     window.addEventListener('DOMContentLoaded', async () => {
         setDefaultDates();
@@ -823,7 +827,7 @@
         const y   = now.getFullYear();
         const m   = String(now.getMonth() + 1).padStart(2, '0');
         const d   = String(now.getDate()).padStart(2, '0');
-        document.getElementById('fDateFrom').value = ''; // no default From Date
+        document.getElementById('fDateFrom').value = '';
         document.getElementById('fDateTo').value   = `${y}-${m}-${d}`;
     }
 
@@ -906,7 +910,6 @@
             const res  = await fetch(`${pathBase}/Production/GetHistory?` + params.toString());
             const data = await res.json();
 
-            // client-side productId filter
             let filtered = data;
             if (productId) {
                 filtered = data.filter(x => String(x.product_id) === productId);
@@ -925,7 +928,7 @@
         }
     }
 
-    // ── Stats: count only Production Quantity ──────────────────────────────
+    // ── Stats ──────────────────────────────────────────────────────────────
     function renderStats(data) {
         const prodData  = data.filter(x => x.type_value === 'Production Qty');
         const totalQty  = prodData.reduce((s, x) => s + (x.product_qty || 0), 0);
@@ -952,11 +955,11 @@
         });
     }
 
-    // ── Bar / Donut Charts: Production Qty only ────────────────────────────
+    // ── Bar / Donut Charts ─────────────────────────────────────────────────
     function renderBarCharts(data) {
-        const prodData   = data.filter(x => x.type_value === 'Production Qty');
-        const byProcess  = groupAndSum(prodData, 'process');
-        const byVendor   = groupAndSum(prodData, 'vendor');
+        const prodData    = data.filter(x => x.type_value === 'Production Qty');
+        const byProcess   = groupAndSum(prodData, 'process');
+        const byVendor    = groupAndSum(prodData, 'vendor');
         const byOperation = groupAndSumByOperation(prodData, 10);
 
         renderDoughnut('chartProcess', 'chartProcessEmpty', byProcess);
@@ -975,7 +978,6 @@
         return { labels: entries.map(e => e[0]), values: entries.map(e => e[1]) };
     }
 
-    // Group by Operation text (via codeMap) instead of raw product_id
     function groupAndSumByOperation(data, limit = null) {
         const map = {};
         data.forEach(x => {
@@ -987,6 +989,7 @@
         return { labels: entries.map(e => e[0]), values: entries.map(e => e[1]) };
     }
 
+    // ── Doughnut (Process & Vendor) — có datalabels ────────────────────────
     function renderDoughnut(canvasId, emptyId, { labels, values }) {
         const canvas = document.getElementById(canvasId);
         const empty  = document.getElementById(emptyId);
@@ -1002,7 +1005,9 @@
         canvas.style.display = '';
         empty.style.display  = 'none';
 
+        const total    = values.reduce((a, b) => a + b, 0);
         const bgColors = COLORS.slice(0, labels.length);
+
         const chart = new Chart(canvas, {
             type: 'doughnut',
             data: {
@@ -1018,17 +1023,30 @@
                     },
                     tooltip: {
                         callbacks: {
-                            label: ctx => ` ${ctx.label}: ${ctx.raw.toLocaleString()} (${Math.round(ctx.raw / values.reduce((a,b)=>a+b,0)*100)}%)`
+                            label: ctx => ` ${ctx.label}: ${ctx.raw.toLocaleString()} (${Math.round(ctx.raw / total * 100)}%)`
+                        }
+                    },
+                    datalabels: {
+                        color: '#fff',
+                        textAlign: 'center',
+                        font: { size: 11, weight: '700', family: 'DM Sans' },
+                        formatter: (value) => {
+                            const pct = Math.round(value / total * 100);
+                            if (pct < 5) return ''; // ẩn slice quá nhỏ
+                            return value.toLocaleString() + '\n' + pct + '%';
                         }
                     }
                 },
                 cutout: '55%'
-            }
+            },
+            plugins: [ChartDataLabels]
         });
+
         if (canvasId === 'chartProcess') chartProcess = chart;
         if (canvasId === 'chartVendor')  chartVendor  = chart;
     }
 
+    // ── Horizontal Bar (Qty by Product) — có datalabels ───────────────────
     function renderHBar(canvasId, emptyId, { labels, values }) {
         const canvas = document.getElementById(canvasId);
         const empty  = document.getElementById(emptyId);
@@ -1056,19 +1074,28 @@
             options: {
                 indexAxis: 'y',
                 responsive: true,
+                layout: { padding: { right: 55 } },
                 plugins: {
                     legend: { display: false },
-                    tooltip: { callbacks: { label: ctx => ` ${ctx.raw.toLocaleString()}` } }
+                    tooltip: { callbacks: { label: ctx => ` ${ctx.raw.toLocaleString()}` } },
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'end',
+                        color: '#1e293b',
+                        font: { size: 10, weight: '700', family: 'DM Sans' },
+                        formatter: value => value.toLocaleString()
+                    }
                 },
                 scales: {
                     x: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10, family: 'DM Sans' } } },
                     y: { grid: { display: false }, ticks: { font: { size: 10, family: 'DM Sans' }, maxRotation: 0 } }
                 }
-            }
+            },
+            plugins: [ChartDataLabels]
         });
     }
 
-    // ── Line Charts: Production Qty only ──────────────────────────────────
+    // ── Line Charts ────────────────────────────────────────────────────────
     function renderLineCharts(data) {
         const prodData = data.filter(x => x.type_value === 'Production Qty');
         renderAvgManPower(data);
@@ -1076,7 +1103,7 @@
         renderDailyLine('chartDailyVendor',  'chartDailyVendorEmpty',  prodData, 'vendor');
     }
 
-    // ── Avg Man Power by Process (Bar chart, ceil rounding) ───────────────
+    // ── Avg Man Power — có datalabels trên đầu cột ─────────────────────────
     function renderAvgManPower(data) {
         const canvas = document.getElementById('chartAvgManPower');
         const empty  = document.getElementById('chartAvgManPowerEmpty');
@@ -1114,7 +1141,7 @@
             data: {
                 labels,
                 datasets: [{
-                    label: 'Avg Man Q\'ty',
+                    label: "Avg Man Q'ty",
                     data: values,
                     backgroundColor: COLORS.slice(0, labels.length).map(c => c + 'cc'),
                     borderColor:     COLORS.slice(0, labels.length),
@@ -1125,12 +1152,20 @@
             },
             options: {
                 responsive: true,
+                layout: { padding: { top: 28 } },
                 plugins: {
                     legend: { display: false },
                     tooltip: {
                         callbacks: {
                             label: ctx => ` Avg Man Power: ${ctx.raw.toLocaleString()}`
                         }
+                    },
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        color: '#1e293b',
+                        font: { size: 14, weight: '700', family: 'DM Sans' },
+                        formatter: value => value.toLocaleString()
                     }
                 },
                 scales: {
@@ -1144,17 +1179,18 @@
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: 'Avg Man Q\'ty / record',
+                            text: "Avg Man Q'ty / record",
                             font: { size: 11, family: 'DM Sans' },
                             color: '#94a3b8'
                         }
                     }
                 }
-            }
+            },
+            plugins: [ChartDataLabels]
         });
     }
 
-
+    // ── Daily Line Charts (không dùng datalabels) ──────────────────────────
     function renderDailyLine(canvasId, emptyId, data, groupField) {
         const canvas = document.getElementById(canvasId);
         const empty  = document.getElementById(emptyId);
@@ -1230,7 +1266,9 @@
                     }
                 }
             }
+            // Không truyền plugins: [ChartDataLabels] → line chart không bị ảnh hưởng
         });
+
         if (canvasId === 'chartDailyProcess') chartDailyProcess = chart;
         if (canvasId === 'chartDailyVendor')  chartDailyVendor  = chart;
     }
@@ -1249,7 +1287,6 @@
             return;
         }
 
-        // Group by vendor
         const vendorMap = {};
         data.forEach(x => {
             const v = x.vendor || '(unknown)';
@@ -1261,7 +1298,6 @@
         const vendors = Object.keys(vendorMap).sort();
         vendors.forEach((vendor, vi) => {
             const rows   = vendorMap[vendor];
-            // Total = Production Qty only
             const total  = rows
                 .filter(x => x.type_value === 'Production Qty')
                 .reduce((s, x) => s + (x.product_qty || 0), 0);
@@ -1328,7 +1364,7 @@
         chevron.classList.toggle('open', !isOpen);
     }
 
-    // ── Comprehensive Excel Export ─────────────────────────────────────────
+    // ── Excel Export ───────────────────────────────────────────────────────
     async function exportExcel() {
         const vendor    = document.getElementById('fVendor').value;
         const process   = document.getElementById('fProcess').value;
@@ -1354,7 +1390,6 @@
             const prodData = data.filter(x => x.type_value === 'Production Qty');
             const now      = new Date();
 
-            // ── Aggregations (Production Qty only) ──
             const totalQty   = prodData.reduce((s, x) => s + (x.product_qty || 0), 0);
             const vendors    = [...new Set(data.map(x => x.vendor).filter(Boolean))];
             const processes  = [...new Set(data.map(x => x.process).filter(Boolean))];
@@ -1377,7 +1412,6 @@
 
             const sortDesc = obj => Object.entries(obj).sort((a, b) => b[1] - a[1]);
 
-            // ── SHEET 1: Summary ──
             const summaryAOA = [
                 ['PRODUCTION REPORT'],
                 ['Generated at', now.toLocaleString('vi-VN')],
@@ -1407,7 +1441,6 @@
             ws1['!cols'] = [{wch:35}, {wch:22}];
             XLSX.utils.book_append_sheet(wb, ws1, 'Summary');
 
-            // ── SHEET 2: Daily Trend ──
             const dateSet    = new Set(prodData.map(x => x.date_finished ? x.date_finished.split('T')[0] : null).filter(Boolean));
             const procSet    = new Set(prodData.map(x => x.process).filter(Boolean));
             const vendorSet  = new Set(prodData.map(x => x.vendor).filter(Boolean));
@@ -1415,14 +1448,12 @@
             const procGrps   = [...procSet].sort();
             const vendorGrps = [...vendorSet].sort();
 
-            // Process matrix
             const procMx = {};
             procGrps.forEach(g => { procMx[g] = {}; dates.forEach(d => { procMx[g][d] = 0; }); });
             prodData.forEach(x => {
                 const d = x.date_finished ? x.date_finished.split('T')[0] : null;
                 if (d && x.process) procMx[x.process][d] = (procMx[x.process][d] || 0) + (x.product_qty || 0);
             });
-            // Vendor matrix
             const vendMx = {};
             vendorGrps.forEach(g => { vendMx[g] = {}; dates.forEach(d => { vendMx[g][d] = 0; }); });
             prodData.forEach(x => {
@@ -1443,7 +1474,6 @@
             ws2['!cols'] = [{wch:14}, ...Array(Math.max(procGrps.length, vendorGrps.length) + 1).fill({wch:14})];
             XLSX.utils.book_append_sheet(wb, ws2, 'Daily Trend');
 
-            // ── SHEET 3: Detail Records (all types, sortable) ──
             const detailRows = data.map((x, i) => ({
                 '#':           i + 1,
                 'Vendor':      x.vendor      || '',
