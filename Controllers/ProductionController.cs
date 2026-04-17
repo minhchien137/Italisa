@@ -32,8 +32,6 @@ namespace ItalisaTools.Controllers
             if (dto == null)
                 return Json(new { success = false, message = "Invalid data." });
 
-            using var transaction = await _context.Database.BeginTransactionAsync();
-
             try
             {
                 // ── Save image file ──
@@ -50,7 +48,7 @@ namespace ItalisaTools.Controllers
                     using var stream = new FileStream(filePath, FileMode.Create);
                     await dto.ImageFile.CopyToAsync(stream);
 
-                   imagePath = $"{Request.PathBase}/uploads/production/{fileName}";
+                    imagePath = $"{Request.PathBase}/uploads/production/{fileName}";
                 }
 
                 // ── Build record ──
@@ -69,16 +67,13 @@ namespace ItalisaTools.Controllers
                 _context.SVN_Italisa_Production.Add(record);
                 await _context.SaveChangesAsync();
 
-                // ── Sync stored procedure ──
+                // ── Sync stored procedure (SP tự quản lý transaction bên trong) ──
                 await _context.Database.ExecuteSqlRawAsync("EXEC SVN_Sync_Production_By_Hour_ITA");
-
-                await transaction.CommitAsync();
 
                 return Json(new { success = true, message = "Save successfully!" });
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
                 Console.WriteLine($"Error in Create: {ex.Message}");
                 if (ex.InnerException != null)
                     Console.WriteLine($"Inner error: {ex.InnerException.Message}");
