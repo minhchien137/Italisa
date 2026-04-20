@@ -246,6 +246,7 @@ namespace ItalisaTools.Controllers
                 return Json(new List<CodeItemDto>());
             }
         }
+        
 
         public IActionResult Report()
         {

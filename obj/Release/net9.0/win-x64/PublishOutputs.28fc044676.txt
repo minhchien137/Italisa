@@ -332,6 +332,9 @@ C:\ITA\msquic.dll
 C:\ITA\aspnetcorev2_inprocess.dll
 C:\ITA\Azure.Core.dll
 C:\ITA\Azure.Identity.dll
+C:\ITA\EPPlus.dll
+C:\ITA\EPPlus.Interfaces.dll
+C:\ITA\EPPlus.System.Drawing.dll
 C:\ITA\Microsoft.Bcl.AsyncInterfaces.dll
 C:\ITA\Microsoft.Data.SqlClient.dll
 C:\ITA\Microsoft.EntityFrameworkCore.dll
@@ -346,6 +349,7 @@ C:\ITA\Microsoft.IdentityModel.Logging.dll
 C:\ITA\Microsoft.IdentityModel.Protocols.dll
 C:\ITA\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 C:\ITA\Microsoft.IdentityModel.Tokens.dll
+C:\ITA\Microsoft.IO.RecyclableMemoryStream.dll
 C:\ITA\Microsoft.SqlServer.Server.dll
 C:\ITA\Microsoft.Win32.SystemEvents.dll
 C:\ITA\System.ClientModel.dll
