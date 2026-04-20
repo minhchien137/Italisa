@@ -374,52 +374,52 @@
 
 <div class="page-wrapper">
     <div class="page-header">
-        <h1>Production History</h1>
-        <p>All records entered into the system. Use filters to search.</p>
+        <h1 data-i18n="hist.title">Production History</h1>
+        <p data-i18n="hist.subtitle">All records entered into the system. Use filters to search.</p>
         <div class="header-line"></div>
     </div>
 
     <!-- FILTER -->
     <div class="filter-card">
         <div class="filter-header" onclick="toggleFilter()">
-            <h3>🔍 Search Filters</h3>
+            <h3 data-i18n="hist.filter.title">🔍 Search Filters</h3>
             <span class="filter-toggle" id="filterToggle">▼</span>
         </div>
         <div class="filter-body" id="filterBody">
             <div class="filter-grid">
                 <div class="filter-group">
-                    <label>Vendor</label>
+                    <label data-i18n="hist.label.vendor">Vendor</label>
                     <select id="filterVendor">
-                        <option value="">All Vendors</option>
+                        <option value="" data-i18n="hist.all.vendors">All Vendors</option>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>Process</label>
+                    <label data-i18n="hist.label.process">Process</label>
                     <select id="filterProcess">
-                        <option value="">All Process</option>
+                        <option value="" data-i18n="hist.all.process">All Process</option>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>Type</label>
+                    <label data-i18n="hist.label.type">Type</label>
                     <select id="filterType">
-                        <option value="">All Types</option>
-                        <option value="Production Qty">Production Qty</option>
-                        <option value="Man Q'ty">Man Q'ty</option>
+                        <option value="" data-i18n="hist.all.types">All Types</option>
+                        <option value="Production Qty" data-i18n="type.production">Production Qty</option>
+                        <option value="Man Q'ty" data-i18n="type.manpower">Man Q'ty</option>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>From Date</label>
+                    <label data-i18n="hist.label.from">From Date</label>
                     <input type="date" id="filterDateFrom" />
                 </div>
                 <div class="filter-group">
-                    <label>To Date</label>
+                    <label data-i18n="hist.label.to">To Date</label>
                     <input type="date" id="filterDateTo" />
                 </div>
                 <div class="filter-group btn-col">
                     <label style="visibility:hidden">‎</label>
                     <div class="btn-filter-row">
-                        <button class="btn btn-primary" onclick="loadData()">🔍 Search</button>
-                        <button class="btn btn-outline" onclick="clearFilters()">✖ Clear</button>
+                        <button class="btn btn-primary" onclick="loadData()" data-i18n="hist.btn.search">🔍 Search</button>
+                        <button class="btn btn-outline" onclick="clearFilters()" data-i18n="hist.btn.clear">✖ Clear</button>
                     </div>
                 </div>
             </div>
@@ -429,10 +429,10 @@
     <!-- TABLE -->
     <div class="table-card">
         <div class="table-toolbar">
-            <h3>📊 Record List</h3>
+            <h3 data-i18n="hist.table.title">📊 Record List</h3>
             <div class="toolbar-right">
-                <span class="record-count" id="recordCount">Loading...</span>
-                <button class="btn btn-excel" onclick="exportExcel()" id="exportBtn" style="font-size:0.82rem;padding:0.5rem 0.9rem;min-height:36px;">
+                <span class="record-count" id="recordCount" data-i18n="hist.loading">Loading...</span>
+                <button class="btn btn-excel" onclick="exportExcel()" id="exportBtn" style="font-size:0.82rem;padding:0.5rem 0.9rem;min-height:36px;" data-i18n="hist.btn.export">
                     ⬇ Export Excel
                 </button>
             </div>
@@ -443,15 +443,15 @@
             <table id="dataTable">
                 <thead>
                     <tr>
-                        <th>#ID</th>
-                        <th>Process</th>
-                        <th>Product</th>
-                        <th>Vendor</th>
-                        <th>Type</th>
-                        <th>Quantity</th>
-                        <th>Date Finished</th>
-                        <th>Description</th>
-                        <th>Image</th>
+                        <th data-i18n="hist.col.id">#ID</th>
+                        <th data-i18n="hist.col.process">Process</th>
+                        <th data-i18n="hist.col.product">Product</th>
+                        <th data-i18n="hist.col.vendor">Vendor</th>
+                        <th data-i18n="hist.col.type">Type</th>
+                        <th data-i18n="hist.col.qty">Quantity</th>
+                        <th data-i18n="hist.col.date">Date Finished</th>
+                        <th data-i18n="hist.col.desc">Description</th>
+                        <th data-i18n="hist.col.image">Image</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">

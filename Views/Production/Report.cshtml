@@ -576,50 +576,50 @@
 
     <!-- ── PAGE HEADER ── -->
     <div class="page-header">
-        <h1>📈 Production Report</h1>
+        <h1 data-i18n="report.title">📈 Production Report</h1>
         <div class="header-line"></div>
     </div>
 
     <!-- ── FILTER CARD ── -->
     <div class="filter-card">
         <div class="filter-header" onclick="toggleFilter()">
-            <h3>🔍 Filter &amp; Export</h3>
+            <h3 data-i18n="report.filter.title">🔍 Filter &amp; Export</h3>
             <span class="filter-toggle" id="filterToggle">▼</span>
         </div>
         <div class="filter-body" id="filterBody">
             <div class="filter-grid">
                 <div class="filter-group">
-                    <label>Process</label>
+                    <label data-i18n="report.label.process">Process</label>
                     <select id="fProcess">
-                        <option value="">All Process</option>
+                        <option value="" data-i18n="report.all.process">All Process</option>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>Product</label>
+                    <label data-i18n="report.label.product">Product</label>
                     <select id="fProductId">
-                        <option value="">All Products</option>
+                        <option value="" data-i18n="report.all.product">All Products</option>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>Vendor</label>
+                    <label data-i18n="report.label.vendor">Vendor</label>
                     <select id="fVendor">
-                        <option value="">All Vendors</option>
+                        <option value="" data-i18n="report.all.vendor">All Vendors</option>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>From Date</label>
+                    <label data-i18n="report.label.from">From Date</label>
                     <input type="date" id="fDateFrom" />
                 </div>
                 <div class="filter-group">
-                    <label>To Date</label>
+                    <label data-i18n="report.label.to">To Date</label>
                     <input type="date" id="fDateTo" />
                 </div>
                 <!-- Button group: no hidden label, auto column, aligns to bottom -->
                 <div class="filter-group filter-btn-group">
                     <div class="filter-actions">
-                        <button class="btn btn-primary" onclick="loadReport()">🔍 Apply</button>
-                        <button class="btn btn-outline" onclick="resetFilters()">↺ Reset</button>
-                        <button class="btn btn-excel" onclick="exportExcel()">⬇ Excel</button>
+                        <button class="btn btn-primary" onclick="loadReport()" data-i18n="report.btn.apply">🔍 Apply</button>
+                        <button class="btn btn-outline" onclick="resetFilters()" data-i18n="report.btn.reset">↺ Reset</button>
+                        <button class="btn btn-excel" onclick="exportExcel()" data-i18n="report.btn.excel">⬇ Excel</button>
                     </div>
                 </div>
             </div>
@@ -629,41 +629,40 @@
     <!-- ── SUMMARY STATS ── -->
     <div class="stats-row">
         <div class="stat-card blue">
-            <div class="stat-label">Production Qty</div>
+            <div class="stat-label" data-i18n="report.stat.qty">Production Qty</div>
             <div class="stat-value" id="statTotalQty">—</div>
-            <div class="stat-sub">Production Qty only</div>
+            <div class="stat-sub" data-i18n="report.stat.qty.sub">Production Qty only</div>
         </div>
         <div class="stat-card green">
-            <div class="stat-label">Records</div>
+            <div class="stat-label" data-i18n="report.stat.records">Records</div>
             <div class="stat-value" id="statRecords">—</div>
-            <div class="stat-sub">All entries found</div>
+            <div class="stat-sub" data-i18n="report.stat.records.sub">All entries found</div>
         </div>
         <div class="stat-card purple">
-            <div class="stat-label">Vendors</div>
+            <div class="stat-label" data-i18n="report.stat.vendors">Vendors</div>
             <div class="stat-value" id="statVendors">—</div>
-            <div class="stat-sub">Active vendors</div>
+            <div class="stat-sub" data-i18n="report.stat.vendors.sub">Active vendors</div>
         </div>
         <div class="stat-card orange">
-            <div class="stat-label">Processes</div>
+            <div class="stat-label" data-i18n="report.stat.processes">Processes</div>
             <div class="stat-value" id="statProcesses">—</div>
-            <div class="stat-sub">Active processes</div>
+            <div class="stat-sub" data-i18n="report.stat.processes.sub">Active processes</div>
         </div>
     </div>
 
-    <!-- ── 3 DONUT/BAR CHARTS ROW ── -->
     <div class="charts-row">
         <!-- Chart 1: By Process -->
         <div class="chart-card">
             <div class="chart-card-header">
                 <div class="chart-icon blue">⚙️</div>
                 <div>
-                    <h3>Qty by Process</h3>
-                    <p>Production Qty Process</p>
+                    <h3 data-i18n="report.chart.by_process">Qty by Process</h3>
+                    <p data-i18n="report.chart.by_process.sub">Production Qty Process</p>
                 </div>
             </div>
             <div class="chart-body">
                 <div id="chartProcessEmpty" class="no-data-chart" style="display:none;">
-                    <span style="font-size:1.5rem">📭</span><span>No data</span>
+                    <span style="font-size:1.5rem">📭</span><span data-i18n="report.nodata">No data</span>
                 </div>
                 <canvas id="chartProcess"></canvas>
             </div>
@@ -674,13 +673,13 @@
             <div class="chart-card-header">
                 <div class="chart-icon green">🏭</div>
                 <div>
-                    <h3>Qty by Vendor</h3>
-                    <p>Distribution Across Suppliers</p>
+                    <h3 data-i18n="report.chart.by_vendor">Qty by Vendor</h3>
+                    <p data-i18n="report.chart.by_vendor.sub">Distribution Across Suppliers</p>
                 </div>
             </div>
             <div class="chart-body">
                 <div id="chartVendorEmpty" class="no-data-chart" style="display:none;">
-                    <span style="font-size:1.5rem">📭</span><span>No data</span>
+                    <span style="font-size:1.5rem">📭</span><span data-i18n="report.nodata">No data</span>
                 </div>
                 <canvas id="chartVendor"></canvas>
             </div>
@@ -691,13 +690,13 @@
             <div class="chart-card-header">
                 <div class="chart-icon purple">🔢</div>
                 <div>
-                    <h3>Qty by Product</h3>
-                    <p>Top Products By Production Qty</p>
+                    <h3 data-i18n="report.chart.by_product">Qty by Product</h3>
+                    <p data-i18n="report.chart.by_product.sub">Top Products By Production Qty</p>
                 </div>
             </div>
             <div class="chart-body">
                 <div id="chartCodeEmpty" class="no-data-chart" style="display:none;">
-                    <span style="font-size:1.5rem">📭</span><span>No data</span>
+                    <span style="font-size:1.5rem">📭</span><span data-i18n="report.nodata">No data</span>
                 </div>
                 <canvas id="chartCode"></canvas>
             </div>
@@ -709,12 +708,12 @@
         <div class="chart-card-header">
             <div class="chart-icon purple">👷</div>
             <div>
-                <h3>Average Man Power — by Process</h3>
+                <h3 data-i18n="report.chart.manpower">Average Man Power — by Process</h3>
             </div>
         </div>
         <div class="chart-body">
             <div id="chartAvgManPowerEmpty" class="no-data-chart" style="display:none;">
-                <span style="font-size:1.5rem">📭</span><span>No Man Power data</span>
+                <span style="font-size:1.5rem">📭</span><span data-i18n="report.nodata.manpower">No Man Power data</span>
             </div>
             <canvas id="chartAvgManPower"></canvas>
         </div>
@@ -725,13 +724,13 @@
         <div class="chart-card-header">
             <div class="chart-icon blue">📅</div>
             <div>
-                <h3>Daily Quantity Trend — by Process</h3>
-                <p>Production Qty per day by process</p>
+                <h3 data-i18n="report.chart.daily_process">Daily Quantity Trend — by Process</h3>
+                <p data-i18n="report.chart.daily_process.sub">Production Qty per day by process</p>
             </div>
         </div>
         <div class="chart-body">
             <div id="chartDailyProcessEmpty" class="no-data-chart" style="display:none;">
-                <span style="font-size:1.5rem">📭</span><span>No data to display</span>
+                <span style="font-size:1.5rem">📭</span><span data-i18n="report.nodata.display">No data to display</span>
             </div>
             <canvas id="chartDailyProcess"></canvas>
         </div>
@@ -742,13 +741,13 @@
         <div class="chart-card-header">
             <div class="chart-icon green">🏭</div>
             <div>
-                <h3>Daily Quantity Trend — by Vendor</h3>
-                <p>Production Qty per day for each supplier</p>
+                <h3 data-i18n="report.chart.daily_vendor">Daily Quantity Trend — by Vendor</h3>
+                <p data-i18n="report.chart.daily_vendor.sub">Production Qty per day for each supplier</p>
             </div>
         </div>
         <div class="chart-body">
             <div id="chartDailyVendorEmpty" class="no-data-chart" style="display:none;">
-                <span style="font-size:1.5rem">📭</span><span>No data to display</span>
+                <span style="font-size:1.5rem">📭</span><span data-i18n="report.nodata.display">No data to display</span>
             </div>
             <canvas id="chartDailyVendor"></canvas>
         </div>
@@ -760,8 +759,8 @@
             <div class="detail-header-left">
                 <span style="font-size:1.2rem">🏭</span>
                 <div>
-                    <h3>Detail by Vendor</h3>
-                    <p>Expand each vendor to see production records</p>
+                    <h3 data-i18n="report.detail.title">Detail by Vendor</h3>
+                    <p data-i18n="report.detail.sub">Expand each vendor to see production records</p>
                 </div>
             </div>
             <span class="record-count" id="detailCount">0 records</span>
@@ -769,7 +768,7 @@
         <div id="vendorDetailContainer">
             <div class="empty-state">
                 <div class="empty-icon">🔍</div>
-                <p>Apply a filter to load the report data.</p>
+                <p data-i18n="report.empty.hint">Apply a filter to load the report data.</p>
             </div>
         </div>
     </div>
@@ -780,7 +779,7 @@
 <div class="loading-overlay" id="loadingOverlay">
     <div class="loading-box">
         <div class="loading-spinner"></div>
-        <p>Loading report...</p>
+        <p data-i18n="report.loading">Loading report...</p>
     </div>
 </div>
 
@@ -922,7 +921,7 @@
             refreshProductIdFilter(filtered);
         } catch(e) {
             console.error('loadReport', e);
-            showToast('Failed to load report data.', 'error');
+            showToast(t('report.error.load'), 'error');
         } finally {
             showLoading(false);
         }
@@ -946,7 +945,7 @@
         const current = document.getElementById('fProductId').value;
         const ids     = [...new Set(data.map(x => x.product_id).filter(Boolean))].sort((a, b) => a - b);
         const sel     = document.getElementById('fProductId');
-        sel.innerHTML = '<option value="">All Operations</option>';
+        sel.innerHTML = `<option value="">${t('report.all.operations')}</option>`;
         ids.forEach(id => {
             const label = codeMap[id] ? `${codeMap[id]}` : `ID:${id}`;
             const o = new Option(label, id);
@@ -1276,13 +1275,15 @@
     // ── Vendor Detail ──────────────────────────────────────────────────────
     function renderVendorDetail(data) {
         const container = document.getElementById('vendorDetailContainer');
-        document.getElementById('detailCount').textContent = `${data.length} records`;
+        const countEl = document.getElementById('detailCount');
+        countEl.dataset.count = data.length;
+        countEl.textContent = t('report.detail.records', { n: data.length });
 
         if (!data.length) {
             container.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">📭</div>
-                    <p>No records match the selected filters.</p>
+                    <p>${t('report.empty.hint')}</p>
                 </div>`;
             return;
         }
@@ -1321,13 +1322,13 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>#</th>
-                                    <th>Date &amp; Time</th>
-                                    <th>Process</th>
-                                    <th>Product</th>
-                                    <th>Type</th>
-                                    <th>Qty</th>
-                                    <th>Description</th>
+                                    <th>${t('report.col.no')}</th>
+                                    <th>${t('label.datetime')}</th>
+                                    <th>${t('report.col.process')}</th>
+                                    <th>${t('report.col.product')}</th>
+                                    <th>${t('report.col.type')}</th>
+                                    <th>${t('report.col.qty')}</th>
+                                    <th>${t('report.col.desc')}</th>
                                 </tr>
                             </thead>
                             <tbody>`;
@@ -1384,7 +1385,7 @@
             let   data = await res.json();
             if (productId) data = data.filter(x => String(x.product_id) === productId);
 
-            if (!data.length) { showToast('No data to export.', 'error'); return; }
+            if (!data.length) { showToast(t('report.export.nodata'), 'error'); return; }
 
             const wb       = XLSX.utils.book_new();
             const prodData = data.filter(x => x.type_value === 'Production Qty');
@@ -1490,14 +1491,30 @@
 
             const fname = `Production_Report_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.xlsx`;
             XLSX.writeFile(wb, fname);
-            showToast(`Exported ${data.length} records (${prodData.length} Production Qty).`, 'success');
+            showToast(t('report.export.success', { n: data.length, p: prodData.length }), 'success');
         } catch(e) {
             console.error('exportExcel', e);
-            showToast('Export failed.', 'error');
+            showToast(t('report.export.fail'), 'error');
         } finally {
             showLoading(false);
         }
     }
+
+    // ── Re-render dynamic content on language change ───────────────────────
+    document.addEventListener('langChanged', () => {
+        // Re-render vendor detail table headers
+        const container = document.getElementById('vendorDetailContainer');
+        if (container && container.querySelector('table')) {
+            // Trigger a soft re-render by reloading report data
+            loadReport();
+        }
+        // Update detailCount label
+        const countEl = document.getElementById('detailCount');
+        if (countEl) {
+            const n = parseInt(countEl.dataset.count || '0');
+            countEl.textContent = t('report.detail.records', { n });
+        }
+    });
 
     // ── Helpers ────────────────────────────────────────────────────────────
     function showLoading(show) {

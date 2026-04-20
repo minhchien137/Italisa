@@ -8,31 +8,283 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ItalisaTools.styles.css" asp-append-version="true" />
+    <style>
+        /* ── Navbar override ── */
+        .navbar {
+            padding: 0 1rem !important;
+            min-height: 56px;
+        }
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.1rem;
+            white-space: nowrap;
+        }
+
+        /* ── Lang switcher ── */
+        .lang-switcher {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+        .lang-btn {
+            background: rgba(0,0,0,0.06);
+            border: 2px solid transparent;
+            border-radius: 50%;
+            width: 34px;
+            height: 34px;
+            padding: 3px;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s, transform 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .lang-btn img {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            object-fit: cover;
+            display: block;
+        }
+        .lang-btn.active {
+            border-color: #1b6ec2;
+            background: rgba(27,110,194,0.12);
+        }
+        .lang-btn:hover:not(.active) {
+            background: rgba(0,0,0,0.1);
+            transform: scale(1.08);
+        }
+
+        /* ── Mobile: custom side drawer ── */
+        @@media (max-width: 575px) {
+            /* Hide Bootstrap's default collapse toggle icon */
+            .navbar-toggler { display: none !important; }
+
+            /* Hamburger button we control */
+            #mobileMenuBtn {
+                background: none;
+                border: none;
+                cursor: pointer;
+                padding: 4px 6px;
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+                justify-content: center;
+                flex-shrink: 0;
+            }
+            #mobileMenuBtn span {
+                display: block;
+                width: 22px;
+                height: 2px;
+                background: #333;
+                border-radius: 2px;
+                transition: all 0.25s;
+            }
+            #mobileMenuBtn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+            #mobileMenuBtn.open span:nth-child(2) { opacity: 0; }
+            #mobileMenuBtn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+            /* Overlay */
+            #mobileOverlay {
+                display: none;
+                position: fixed; inset: 0;
+                background: rgba(0,0,0,0.4);
+                z-index: 1040;
+            }
+            #mobileOverlay.show { display: block; }
+
+            /* Drawer - full white background */
+            #mobileDrawer {
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                width: 280px;
+                background: #ffffff;
+                box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+                z-index: 1050;
+                transform: translateX(-100%);
+                transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+                display: flex;
+                flex-direction: column;
+            }
+            #mobileDrawer.open { transform: translateX(0); }
+
+            /* Drawer header - blue background */
+            .drawer-header {
+                background: #1b4f8a;
+                padding: 1rem 1.25rem;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+            .drawer-header .brand {
+                font-weight: 700;
+                font-size: 1.1rem;
+                color: #ffffff;
+                letter-spacing: 0.5px;
+            }
+            .drawer-close {
+                background: none;
+                border: none;
+                color: #ffffff;
+                font-size: 1.3rem;
+                cursor: pointer;
+                line-height: 1;
+                padding: 2px 6px;
+                opacity: 0.8;
+            }
+            .drawer-close:hover {
+                opacity: 1;
+            }
+
+            /* Drawer navigation */
+            .drawer-nav {
+                display: flex;
+                flex-direction: column;
+                background: #ffffff;
+                padding: 0.75rem 0;
+            }
+
+            .drawer-nav a:first-child {
+                     margin-top: 4.8rem;
+            }
+
+            .drawer-nav a {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 0.65rem 1.25rem;
+                color: #1a1a1a;
+                text-decoration: none;
+                font-size: 0.95rem;
+                font-weight: 500;
+                background: #ffffff;
+                transition: background 0.2s ease;
+            }
+            .drawer-nav a:hover {
+                background: #f0f4f8;
+            }
+            .drawer-icon {
+                width: 34px;
+                height: 34px;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 16px;
+                flex-shrink: 0;
+            }
+            .drawer-icon.icon-create  { background: #dbeafe; }
+            .drawer-icon.icon-history { background: #dcfce7; }
+            .drawer-icon.icon-report  { background: #fff3e0; }
+
+            /* Hide default nav on mobile */
+            .navbar-collapse { display: none !important; }
+
+            /* Navbar right side on mobile: lang + hamburger */
+            .navbar-right-mobile {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-left: auto;
+            }
+        }
+
+        @@media (min-width: 576px) {
+            #mobileMenuBtn,
+            #mobileOverlay,
+            #mobileDrawer,
+            .navbar-right-mobile { display: none !important; }
+        }
+    </style>
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Production" asp-action="Create">Italisa</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+                <a class="navbar-brand" asp-area="" asp-controller="Production" asp-action="Create">ITA</a>
+
+                <!-- Desktop nav -->
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Production" asp-action="Create">Create</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Production" asp-action="Create" data-i18n="nav.create">Create</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Production" asp-action="History">History</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Production" asp-action="History" data-i18n="nav.history">History</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Production" asp-action="Report">Report</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Production" asp-action="Report" data-i18n="nav.report">Report</a>
                         </li>
                     </ul>
+                    <div class="lang-switcher">
+                        <button class="lang-btn" data-lang="vi" onclick="setLang('vi')" title="Tiếng Việt">
+                            <img src="~/images/vn.png" alt="VI" />
+                        </button>
+                        <button class="lang-btn" data-lang="en" onclick="setLang('en')" title="English">
+                            <img src="~/images/en.png" alt="EN" />
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mobile right side: lang + hamburger -->
+                <div class="navbar-right-mobile">
+                    <button class="lang-btn" data-lang="vi" onclick="setLang('vi')" title="Tiếng Việt">
+                        <img src="~/images/vn.png" alt="VI" />
+                    </button>
+                    <button class="lang-btn" data-lang="en" onclick="setLang('en')" title="English">
+                        <img src="~/images/en.png" alt="EN" />
+                    </button>
+                    <button id="mobileMenuBtn" onclick="toggleDrawer()" aria-label="Menu">
+                        <span></span><span></span><span></span>
+                    </button>
                 </div>
             </div>
         </nav>
+
+        <!-- Mobile overlay + drawer -->
+        <div id="mobileOverlay" onclick="closeDrawer()"></div>
+        <div id="mobileDrawer">
+            <div class="drawer-header">
+                <span class="brand">Menu</span>
+                <button class="drawer-close" onclick="closeDrawer()">✕</button>
+            </div>
+            <nav class="drawer-nav">
+                <a asp-area="" asp-controller="Production" asp-action="Create">
+                    <span class="drawer-icon icon-create">📝</span>
+                    <span data-i18n="nav.create">Create</span>
+                </a>
+                <a asp-area="" asp-controller="Production" asp-action="History">
+                    <span class="drawer-icon icon-history">📋</span>
+                    <span data-i18n="nav.history">History</span>
+                </a>
+                <a asp-area="" asp-controller="Production" asp-action="Report">
+                    <span class="drawer-icon icon-report">📈</span>
+                    <span data-i18n="nav.report">Report</span>
+                </a>
+            </nav>
+        </div>
+
+        <script>
+            function toggleDrawer() {
+                const btn     = document.getElementById('mobileMenuBtn');
+                const drawer  = document.getElementById('mobileDrawer');
+                const overlay = document.getElementById('mobileOverlay');
+                const isOpen  = drawer.classList.contains('open');
+                btn.classList.toggle('open', !isOpen);
+                drawer.classList.toggle('open', !isOpen);
+                overlay.classList.toggle('show', !isOpen);
+                document.body.style.overflow = isOpen ? '' : 'hidden';
+            }
+            function closeDrawer() {
+                document.getElementById('mobileMenuBtn').classList.remove('open');
+                document.getElementById('mobileDrawer').classList.remove('open');
+                document.getElementById('mobileOverlay').classList.remove('show');
+                document.body.style.overflow = '';
+            }
+        </script>
     </header>
     <div class="container">
         <main role="main" class="pb-3">
@@ -41,6 +293,7 @@
     </div>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/i18n.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

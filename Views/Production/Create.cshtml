@@ -553,8 +553,8 @@
 
 <div class="page-wrapper">
     <div class="page-header">
-        <h1>Production Data Entry</h1>
-        <p>Fill in all the information below to record data into the system.</p>
+        <h1 data-i18n="create.title">Production Data Entry</h1>
+        <p data-i18n="create.subtitle">Fill in all the information below to record data into the system.</p>
         <div class="header-line"></div>
     </div>
 
@@ -562,7 +562,7 @@
         <div class="card-header">
             <div class="card-header-icon">📝</div>
             <div>
-                <h2>Entry Form</h2>
+                <h2 data-i18n="create.card.title">Entry Form</h2>
             </div>
         </div>
         <div class="card-body">
@@ -570,9 +570,9 @@
 
                 <!-- ── Core fields ── -->
                 <div class="form-group">
-                    <label>Vendor <span class="required">*</span></label>
+                    <label data-i18n="label.vendor">Vendor <span class="required">*</span></label>
                     <select id="vendorSelect">
-                        <option value="">-- Select Vendor --</option>
+                        <option value="" data-i18n="ph.vendor">-- Select Vendor --</option>
                         @foreach (var v in vendors)
                         {
                             <option value="@v.vendor_code">@v.vendor_code - @v.vendor</option>
@@ -581,9 +581,9 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Process <span class="required">*</span></label>
+                    <label data-i18n="label.process">Process <span class="required">*</span></label>
                     <select id="processSelect">
-                        <option value="">-- Select Process --</option>
+                        <option value="" data-i18n="ph.process">-- Select Process --</option>
                         @foreach (var p in processes)
                         {
                             <option value="@p.process">@p.process</option>
@@ -592,54 +592,54 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Code <span class="required">*</span></label>
+                    <label data-i18n="label.code">Code <span class="required">*</span></label>
                     <select id="codeSelect">
-                        <option value="">-- Select Process first --</option>
+                        <option value="" data-i18n="ph.code">-- Select Process first --</option>
                     </select>
                     <div class="code-loading-hint info" id="codeHint">
                         <span class="code-spinner" id="codeSpinner"></span>
-                        <span id="codeHintText">⬆ Select a Process to load matching codes</span>
+                        <span id="codeHintText" data-i18n="hint.code.default">⬆ Select a Process to load matching codes</span>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Type <span class="required">*</span></label>
+                    <label data-i18n="label.type">Type <span class="required">*</span></label>
                     <select id="typeSelect">
-                        <option value="">-- Select Type --</option>
-                        <option value="Production Qty">Production Quantity</option>
-                        <option value="Man Q'ty">Man Power</option>
+                        <option value="" data-i18n="ph.type">-- Select Type --</option>
+                        <option value="Production Qty" data-i18n="type.production">Production Quantity</option>
+                        <option value="Man Q'ty" data-i18n="type.manpower">Man Power</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label>Quantity <span class="required">*</span></label>
-                    <input type="number" id="quantityInput" min="1" placeholder="Enter quantity..." inputmode="numeric" />
-                    <span class="input-hint">Enter a positive integer</span>
+                    <label data-i18n="label.quantity">Quantity <span class="required">*</span></label>
+                    <input type="number" id="quantityInput" min="1" data-i18n-ph="ph.quantity" placeholder="Enter quantity..." inputmode="numeric" />
+                    <span class="input-hint" data-i18n="hint.quantity">Enter a positive integer</span>
                 </div>
 
                 <!-- ── Date / Time ── -->
                 <div class="form-group">
-                    <label>Date &amp; Time <span class="required">*</span></label>
+                    <label data-i18n="label.datetime">Date &amp; Time <span class="required">*</span></label>
                     <input type="datetime-local" id="dateFinishedInput" />
-                    <span class="input-hint">Default: current date/time</span>
+                    <span class="input-hint" data-i18n="hint.datetime">Default: current date/time</span>
                 </div>
 
                 <!-- ── Description ── -->
                 <div class="form-group full">
-                    <label>Description "optional"</label>
-                    <textarea id="descriptionInput" placeholder="Enter additional notes or description (optional)..."></textarea>
+                    <label data-i18n="label.description">Description "optional"</label>
+                    <textarea id="descriptionInput" data-i18n-ph="ph.description" placeholder="Enter additional notes or description (optional)..."></textarea>
                 </div>
 
                 <!-- ── Image ── -->
                 <div class="form-group full">
-                    <label>Image (Photo / Upload) "optional"</label>
+                    <label data-i18n="label.image">Image (Photo / Upload) "optional"</label>
                     <div class="image-upload-area" id="uploadArea">
                         <input type="file" id="imageInput"
                                accept="image/*"
                                capture="environment" />
                         <div class="upload-icon">📷</div>
-                        <div class="upload-text">Tap to upload or take a photo</div>
-                        <div class="upload-hint">Supports JPG, PNG, WEBP · Max 10 MB</div>
+                        <div class="upload-text" data-i18n="upload.text">Tap to upload or take a photo</div>
+                        <div class="upload-hint" data-i18n="upload.hint">Supports JPG, PNG, WEBP · Max 10 MB</div>
                     </div>
                     <div class="image-preview-wrap" id="previewWrap">
                         <img id="previewImg" src="" alt="Preview" />
@@ -652,8 +652,8 @@
             <hr class="form-divider" />
 
             <div class="btn-row">
-                <button class="btn btn-outline" onclick="resetForm()">🔄 Reset</button>
-                <button class="btn btn-primary" id="saveBtn" onclick="openConfirmModal()">💾 Save Data</button>
+                <button class="btn btn-outline" onclick="resetForm()" data-i18n="btn.reset">🔄 Reset</button>
+                <button class="btn btn-primary" id="saveBtn" onclick="openConfirmModal()" data-i18n="btn.save">💾 Save Data</button>
             </div>
         </div>
     </div>
@@ -664,12 +664,12 @@
     <div class="modal-box">
         <div class="modal-handle"></div>
         <div class="modal-icon">💾</div>
-        <h3>Confirm Save</h3>
-        <p>Please review the information before saving to the system.</p>
+        <h3 data-i18n="modal.title">Confirm Save</h3>
+        <p data-i18n="modal.subtitle">Please review the information before saving to the system.</p>
         <div class="modal-summary" id="modalSummary"></div>
         <div class="modal-btn-row">
-            <button class="btn btn-outline" onclick="closeModal()">✖ Cancel</button>
-            <button class="btn btn-primary" id="confirmSaveBtn" onclick="submitForm()">✔ Confirm</button>
+            <button class="btn btn-outline" onclick="closeModal()" data-i18n="btn.cancel">✖ Cancel</button>
+            <button class="btn btn-primary" id="confirmSaveBtn" onclick="submitForm()" data-i18n="btn.confirm">✔ Confirm</button>
         </div>
     </div>
 </div>
@@ -690,20 +690,39 @@
 <script>
     const pathBase = '@Context.Request.PathBase'.replace(/\/$/, '');
 
-    const select2Config = {
-        width: '100%',
-        language: {
-            noResults:  function () { return "No results found"; },
-            searching:  function () { return "Searching..."; }
-        }
-    };
+    // ── Select2 helpers ───────────────────────────────────────────────────────
+    function getSelect2Config(phKey, noSearch) {
+        return {
+            width: '100%',
+            placeholder: t(phKey),
+            language: {
+                noResults:  () => t('ph.vendor') === t('ph.vendor') ? "No results found" : "Không có kết quả",
+                searching:  () => "..."
+            },
+            ...(noSearch ? { minimumResultsForSearch: Infinity } : {})
+        };
+    }
+
+    function initSelect2() {
+        $('#vendorSelect') .select2(getSelect2Config('ph.vendor'));
+        $('#processSelect').select2(getSelect2Config('ph.process'));
+        $('#codeSelect')   .select2(getSelect2Config('ph.code'));
+        $('#typeSelect')   .select2(getSelect2Config('ph.type', true));
+    }
+
+    // Re-init Select2 on lang change so placeholders update
+    document.addEventListener('langChanged', () => {
+        ['#vendorSelect','#processSelect','#codeSelect','#typeSelect'].forEach(sel => {
+            if ($(sel).data('select2')) $(sel).select2('destroy');
+        });
+        initSelect2();
+        // Re-bind process change after re-init
+        $('#processSelect').on('change', function () { loadCodesByProcess($(this).val()); });
+    });
 
     // ── Init ──────────────────────────────────────────────────────────────────
     $(document).ready(function () {
-        $('#vendorSelect') .select2({ ...select2Config, placeholder: '-- Select Vendor --' });
-        $('#processSelect').select2({ ...select2Config, placeholder: '-- Select Process --' });
-        $('#codeSelect')   .select2({ ...select2Config, placeholder: '-- Select Process first --' });
-        $('#typeSelect')   .select2({ ...select2Config, placeholder: '-- Select Type --', minimumResultsForSearch: Infinity });
+        initSelect2();
 
         // Default datetime to now
         setDefaultDateTime();
@@ -778,39 +797,39 @@
         const hintEl      = document.getElementById('codeHint');
         const hintText    = document.getElementById('codeHintText');
 
-        $codeSelect.empty().append('<option value="">-- Loading... --</option>').trigger('change');
+        $codeSelect.empty().append(`<option value="">-- Loading... --</option>`).trigger('change');
 
         if (!processValue) {
-            $codeSelect.empty().append('<option value="">-- Select Process first --</option>').trigger('change');
+            $codeSelect.empty().append(`<option value="">${t('ph.code')}</option>`).trigger('change');
             hintEl.className     = 'code-loading-hint info';
-            hintText.textContent = '⬆ Select a Process to load matching codes';
+            hintText.textContent = t('hint.code.default');
             spinner.classList.remove('show');
             return;
         }
 
         spinner.classList.add('show');
         hintEl.className     = 'code-loading-hint info';
-        hintText.textContent = 'Loading matching codes...';
+        hintText.textContent = t('hint.code.loading');
 
         try {
             const res   = await fetch(`${pathBase}/Production/GetCodesByProcess?process=${encodeURIComponent(processValue)}`);
             const codes = await res.json();
 
-            $codeSelect.empty().append('<option value="">-- Select Code --</option>');
+            $codeSelect.empty().append(`<option value="">${t('ph.code')}</option>`);
 
             if (codes.length === 0) {
                 hintEl.className     = 'code-loading-hint warning';
-                hintText.textContent = `⚠ No codes found for process "${processValue}"`;
+                hintText.textContent = t('hint.code.empty', { v: processValue });
             } else {
                 codes.forEach(c => $codeSelect.append(new Option(c.text, c.value)));
                 hintEl.className     = 'code-loading-hint success';
-                hintText.textContent = `✔ ${codes.length} code(s) matched for "${processValue}"`;
+                hintText.textContent = t('hint.code.ok', { n: codes.length, v: processValue });
             }
             $codeSelect.trigger('change');
         } catch (e) {
-            $codeSelect.empty().append('<option value="">-- Error loading codes --</option>').trigger('change');
+            $codeSelect.empty().append(`<option value="">${t('hint.code.error')}</option>`).trigger('change');
             hintEl.className     = 'code-loading-hint warning';
-            hintText.textContent = '❌ Failed to load codes. Please try again.';
+            hintText.textContent = t('hint.code.error');
             console.error('GetCodesByProcess error:', e);
         } finally {
             spinner.classList.remove('show');
@@ -841,12 +860,12 @@
     }
 
     function validateForm(data) {
-        if (!data.vendor)                         return 'Please select a Vendor.';
-        if (!data.process)                        return 'Please select a Process.';
-        if (!data.productId)                      return 'Please select a Code.';
-        if (!data.typeValue)                      return 'Please select a Type.';
-        if (!data.quantity || data.quantity <= 0) return 'Please enter a valid Quantity (> 0).';
-        if (!data.dateFinished)                   return 'Please select a Date & Time.';
+        if (!data.vendor)                         return t('val.vendor');
+        if (!data.process)                        return t('val.process');
+        if (!data.productId)                      return t('val.code');
+        if (!data.typeValue)                      return t('val.type');
+        if (!data.quantity || data.quantity <= 0) return t('val.quantity');
+        if (!data.dateFinished)                   return t('val.datetime');
         return null;
     }
 
@@ -861,18 +880,18 @@
             : '—';
         const descLabel = data.description
             ? (data.description.length > 60 ? data.description.substring(0, 60) + '…' : data.description)
-            : '(none)';
-        const imgLabel = data.imageFile ? `📎 ${data.imageFile.name}` : '(none)';
+            : t('modal.none');
+        const imgLabel = data.imageFile ? `📎 ${data.imageFile.name}` : t('modal.none');
 
         document.getElementById('modalSummary').innerHTML = `
-            <div class="modal-summary-row"><span>Vendor Code</span><span>${data.vendor}</span></div>
-            <div class="modal-summary-row"><span>Process</span><span>${data.processText}</span></div>
-            <div class="modal-summary-row"><span>Code</span><span>${data.codeText}</span></div>
-            <div class="modal-summary-row"><span>Type</span><span>${data.typeValue}</span></div>
-            <div class="modal-summary-row"><span>Quantity</span><span>${data.quantity}</span></div>
-            <div class="modal-summary-row"><span>Date &amp; Time</span><span>${dtLabel}</span></div>
-            <div class="modal-summary-row"><span>Description</span><span>${descLabel}</span></div>
-            <div class="modal-summary-row"><span>Image</span><span>${imgLabel}</span></div>
+            <div class="modal-summary-row"><span>${t('modal.vendor')}</span><span>${data.vendor}</span></div>
+            <div class="modal-summary-row"><span>${t('modal.process')}</span><span>${data.processText}</span></div>
+            <div class="modal-summary-row"><span>${t('modal.code')}</span><span>${data.codeText}</span></div>
+            <div class="modal-summary-row"><span>${t('modal.type')}</span><span>${data.typeValue}</span></div>
+            <div class="modal-summary-row"><span>${t('modal.quantity')}</span><span>${data.quantity}</span></div>
+            <div class="modal-summary-row"><span>${t('modal.datetime')}</span><span>${dtLabel}</span></div>
+            <div class="modal-summary-row"><span>${t('modal.desc')}</span><span>${descLabel}</span></div>
+            <div class="modal-summary-row"><span>${t('modal.image')}</span><span>${imgLabel}</span></div>
         `;
         document.getElementById('confirmModal').classList.add('show');
     }
@@ -886,7 +905,7 @@
         const data = getFormData();
         const btn  = document.getElementById('confirmSaveBtn');
         btn.disabled    = true;
-        btn.textContent = '⏳ Saving...';
+        btn.textContent = t('btn.saving');
 
         try {
             const formData = new FormData();
@@ -916,10 +935,10 @@
             }
         } catch (e) {
             closeModal();
-            showToast('An error occurred while connecting to the server.', 'error');
+            showToast(t('toast.network_error'), 'error');
         } finally {
             btn.disabled  = false;
-            btn.innerHTML = '✔ Confirm';
+            btn.innerHTML = t('btn.confirm');
         }
     }
 
