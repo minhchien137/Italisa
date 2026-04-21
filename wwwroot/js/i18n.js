@@ -4,6 +4,7 @@ const I18N = {
         'nav.create'  : 'Nhập dữ liệu',
         'nav.history' : 'Lịch sử nhập',
         'nav.report'  : 'Báo cáo sản lượng',
+        'nav.reportsvn' : 'Báo cáo SVN',
         
         /* ── Create page ── */
         'create.title'        : 'Nhập Dữ Liệu Sản lượng Sản Xuất',
@@ -76,6 +77,15 @@ const I18N = {
         /* ── Toast ── */
         'toast.network_error' : 'Lỗi kết nối đến máy chủ.',
         'toast.code_loading_error' : 'Tải mã thất bại. Vui lòng thử lại.',
+        
+        /* ── Night shift modal ── */
+        'night.modal.title'      : 'Xác nhận & Chọn ca',
+        'night.modal.subtitle'   : 'Kiểm tra thông tin và chọn ca trước khi lưu.',
+        'night.banner'           : '🌙 Bạn đang nhập lúc {hh}:{mn} — Chọn ca để lưu đúng ngày',
+        'night.tab.night'        : '🌙 Ca đêm hôm qua',
+        'night.tab.night.sub'    : '23:00 — {date}',
+        'night.tab.now'          : '☀️ Giờ hiện tại',
+        'night.tab.now.sub'      : '{hh}:{mn} — hôm nay',
         
         /* ── Type options ── */
         'type.production' : 'Số lượng sản xuất',
@@ -168,6 +178,7 @@ const I18N = {
         'nav.create'  : 'Create',
         'nav.history' : 'History',
         'nav.report'  : 'Report',
+        'nav.reportsvn' : 'SVN Report',
         
         /* ── Create page ── */
         'create.title'        : 'Production Data Entry',
@@ -240,6 +251,15 @@ const I18N = {
         /* ── Toast ── */
         'toast.network_error'      : 'An error occurred while connecting to the server.',
         'toast.code_loading_error' : 'Failed to load codes. Please try again.',
+        
+        /* ── Night shift modal ── */
+        'night.modal.title'      : 'Confirm & Select Shift',
+        'night.modal.subtitle'   : 'Review information and select the correct shift before saving.',
+        'night.banner'           : '🌙 You are entering at {hh}:{mn} — Select shift to save to the correct date',
+        'night.tab.night'        : '🌙 Last night shift',
+        'night.tab.night.sub'    : '23:00 — {date}',
+        'night.tab.now'          : '☀️ Current time',
+        'night.tab.now.sub'      : '{hh}:{mn} — today',
         
         /* ── Type options ── */
         'type.production' : 'Production Quantity',

@@ -716,23 +716,16 @@
             if ($(sel).data('select2')) $(sel).select2('destroy');
         });
         initSelect2();
-        // Re-bind process change after re-init
         $('#processSelect').on('change', function () { loadCodesByProcess($(this).val()); });
     });
 
     // ── Init ──────────────────────────────────────────────────────────────────
     $(document).ready(function () {
         initSelect2();
-
-        // Default datetime to now
         setDefaultDateTime();
-
-        // Process change → load codes
         $('#processSelect').on('change', function () {
             loadCodesByProcess($(this).val());
         });
-
-        // Restore vendor
         const savedVendor = localStorage.getItem('lastVendor');
         if (savedVendor) $('#vendorSelect').val(savedVendor).trigger('change');
     });
@@ -740,7 +733,6 @@
     // ── Set default datetime to now ──
     function setDefaultDateTime() {
         const now = new Date();
-        // Format: YYYY-MM-DDTHH:MM  (datetime-local format)
         const pad = n => String(n).padStart(2, '0');
         const local = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
         document.getElementById('dateFinishedInput').value = local;
@@ -750,14 +742,11 @@
     document.getElementById('imageInput').addEventListener('change', function () {
         const file = this.files[0];
         if (!file) return;
-
-        // Size guard: 10 MB
         if (file.size > 10 * 1024 * 1024) {
             showToast('Image is too large (max 10 MB).', 'error');
             this.value = '';
             return;
         }
-
         const reader = new FileReader();
         reader.onload = e => {
             document.getElementById('previewImg').src = e.target.result;
@@ -767,7 +756,6 @@
         reader.readAsDataURL(file);
     });
 
-    // Drag-and-drop
     const uploadArea = document.getElementById('uploadArea');
     uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
     uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
@@ -838,24 +826,24 @@
 
     // ── Collect form data ─────────────────────────────────────────────────────
     function getFormData() {
-        const vendorSel   = document.getElementById('vendorSelect');
-        const codeSel     = document.getElementById('codeSelect');
-        const typeSel     = document.getElementById('typeSelect');
-        const processSel  = document.getElementById('processSelect');
-        const imageFile   = document.getElementById('imageInput').files[0] || null;
+        const vendorSel  = document.getElementById('vendorSelect');
+        const codeSel    = document.getElementById('codeSelect');
+        const typeSel    = document.getElementById('typeSelect');
+        const processSel = document.getElementById('processSelect');
+        const imageFile  = document.getElementById('imageInput').files[0] || null;
 
         return {
-            vendor:        vendorSel.value,
-            vendorText:    vendorSel.options[vendorSel.selectedIndex]?.text,
-            process:       processSel.value,
-            processText:   processSel.options[processSel.selectedIndex]?.text,
-            productId:     parseInt(codeSel.value) || null,
-            codeText:      codeSel.options[codeSel.selectedIndex]?.text,
-            typeValue:     typeSel.value,
-            quantity:      parseInt(document.getElementById('quantityInput').value) || null,
-            dateFinished:  document.getElementById('dateFinishedInput').value,
-            description:   document.getElementById('descriptionInput').value.trim(),
-            imageFile:     imageFile
+            vendor:       vendorSel.value,
+            vendorText:   vendorSel.options[vendorSel.selectedIndex]?.text,
+            process:      processSel.value,
+            processText:  processSel.options[processSel.selectedIndex]?.text,
+            productId:    parseInt(codeSel.value) || null,
+            codeText:     codeSel.options[codeSel.selectedIndex]?.text,
+            typeValue:    typeSel.value,
+            quantity:     parseInt(document.getElementById('quantityInput').value) || null,
+            dateFinished: document.getElementById('dateFinishedInput').value,
+            description:  document.getElementById('descriptionInput').value.trim(),
+            imageFile:    imageFile
         };
     }
 
@@ -869,30 +857,148 @@
         return null;
     }
 
-    // ── Confirm modal ─────────────────────────────────────────────────────────
+    // ── Helper: build summary rows ────────────────────────────────────────────
+    function buildSummaryRows(data, dtDisplay, dtColor) {
+        const descLabel = data.description
+            ? (data.description.length > 60 ? data.description.substring(0, 60) + '…' : data.description)
+            : '(none)';
+        const imgLabel = data.imageFile ? `📎 ${data.imageFile.name}` : '(none)';
+        const dtStyle  = dtColor ? `style="color:${dtColor};font-weight:700;"` : '';
+        return `
+            <div class="modal-summary-row"><span>Vendor</span><span>${data.vendor}</span></div>
+            <div class="modal-summary-row"><span>Process</span><span>${data.processText}</span></div>
+            <div class="modal-summary-row"><span>Code</span><span>${data.codeText}</span></div>
+            <div class="modal-summary-row"><span>Type</span><span>${data.typeValue}</span></div>
+            <div class="modal-summary-row"><span>Quantity</span><span>${data.quantity}</span></div>
+            <div class="modal-summary-row"><span>Date &amp; Time</span><span ${dtStyle}>${dtDisplay}</span></div>
+            <div class="modal-summary-row"><span>Description</span><span>${descLabel}</span></div>
+            <div class="modal-summary-row"><span>Image</span><span>${imgLabel}</span></div>
+        `;
+    }
+
+    // ── Tab switch trong modal ca đêm ─────────────────────────────────────────
+    function switchShiftTab(mode) {
+        const s = window._nightShiftState;
+        if (!s) return;
+        s.mode = mode;
+
+        const tabNight = document.getElementById('tabNight');
+        const tabNow   = document.getElementById('tabNow');
+
+        if (mode === 'night') {
+            tabNight.style.background = 'linear-gradient(135deg,#d97706,#f59e0b)';
+            tabNight.style.color      = 'white';
+            tabNow.style.background   = 'var(--gray-100)';
+            tabNow.style.color        = 'var(--gray-600)';
+            document.getElementById('shiftSummaryRows').innerHTML =
+                buildSummaryRows(s.data, `23:00 — ${s.dateLabel}`, '#d97706');
+        } else {
+            tabNow.style.background   = 'linear-gradient(135deg,var(--denim),var(--denim-mid))';
+            tabNow.style.color        = 'white';
+            tabNight.style.background = 'var(--gray-100)';
+            tabNight.style.color      = 'var(--gray-600)';
+            document.getElementById('shiftSummaryRows').innerHTML =
+                buildSummaryRows(s.data, new Date(s.nowDt).toLocaleString(), null);
+        }
+    }
+
+    // ── Confirm modal (tích hợp night shift) ──────────────────────────────────
     function openConfirmModal() {
         const data  = getFormData();
         const error = validateForm(data);
         if (error) { showToast(error, 'error'); return; }
 
-        const dtLabel = data.dateFinished
-            ? new Date(data.dateFinished).toLocaleString()
-            : '—';
-        const descLabel = data.description
-            ? (data.description.length > 60 ? data.description.substring(0, 60) + '…' : data.description)
-            : t('modal.none');
-        const imgLabel = data.imageFile ? `📎 ${data.imageFile.name}` : t('modal.none');
+        const now   = new Date();
+        const hours = now.getHours();
+        const mins  = now.getMinutes();
 
-        document.getElementById('modalSummary').innerHTML = `
-            <div class="modal-summary-row"><span>${t('modal.vendor')}</span><span>${data.vendor}</span></div>
-            <div class="modal-summary-row"><span>${t('modal.process')}</span><span>${data.processText}</span></div>
-            <div class="modal-summary-row"><span>${t('modal.code')}</span><span>${data.codeText}</span></div>
-            <div class="modal-summary-row"><span>${t('modal.type')}</span><span>${data.typeValue}</span></div>
-            <div class="modal-summary-row"><span>${t('modal.quantity')}</span><span>${data.quantity}</span></div>
-            <div class="modal-summary-row"><span>${t('modal.datetime')}</span><span>${dtLabel}</span></div>
-            <div class="modal-summary-row"><span>${t('modal.desc')}</span><span>${descLabel}</span></div>
-            <div class="modal-summary-row"><span>${t('modal.image')}</span><span>${imgLabel}</span></div>
-        `;
+        // ── Trước 7:30 sáng → hiện modal ca đêm ──
+        if (hours < 7 || (hours === 7 && mins < 30)) {
+            const yesterday = new Date(now);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            const dd        = String(yesterday.getDate()).padStart(2, '0');
+            const mm        = String(yesterday.getMonth() + 1).padStart(2, '0');
+            const yyyy      = yesterday.getFullYear();
+            const dateLabel = `${dd}/${mm}/${yyyy}`;
+            const hh        = String(hours).padStart(2, '0');
+            const mn        = String(mins).padStart(2, '0');
+            const nightDt   = `${yyyy}-${mm}-${dd}T23:00`;
+
+            // Lưu state để submitForm đọc
+            window._nightShiftState = {
+                mode:      'night',
+                data:      data,
+                nightDt:   nightDt,
+                nowDt:     data.dateFinished,
+                dateLabel: dateLabel
+            };
+
+            document.getElementById('modalSummary').innerHTML = `
+                <!-- Banner cảnh báo -->
+                <div style="
+                    background: linear-gradient(135deg,#d97706,#f59e0b);
+                    border-radius: 10px;
+                    padding: 0.7rem 1rem;
+                    margin-bottom: 0.85rem;
+                    text-align: center;
+                    color: white;
+                    font-size: 0.83rem;
+                    font-weight: 600;
+                ">
+                    ${t('night.banner', { hh, mn })}
+                </div>
+
+                <!-- Tab chọn ca -->
+                <div style="display:flex; border-radius:10px; overflow:hidden; border:1.5px solid var(--gray-200); margin-bottom:0.85rem;">
+                    <button id="tabNight" onclick="switchShiftTab('night')" style="
+                        flex:1; padding:0.6rem 0.4rem;
+                        border:none; cursor:pointer;
+                        font-family:'DM Sans',sans-serif;
+                        font-size:0.8rem; font-weight:600;
+                        background: linear-gradient(135deg,#d97706,#f59e0b);
+                        color: white;
+                        line-height:1.4;
+                        transition: all 0.2s;
+                    ">${t('night.tab.night')}<br><span style="font-size:0.72rem;font-weight:400;opacity:0.9;">${t('night.tab.night.sub', { date: dateLabel })}</span></button>
+                    <button id="tabNow" onclick="switchShiftTab('now')" style="
+                        flex:1; padding:0.6rem 0.4rem;
+                        border:none; cursor:pointer;
+                        font-family:'DM Sans',sans-serif;
+                        font-size:0.8rem; font-weight:600;
+                        background: var(--gray-100);
+                        color: var(--gray-600);
+                        line-height:1.4;
+                        transition: all 0.2s;
+                    ">${t('night.tab.now')}<br><span style="font-size:0.72rem;font-weight:400;">${t('night.tab.now.sub', { hh, mn })}</span></button>
+                </div>
+
+                <!-- Summary rows (reactive theo tab) -->
+                <div id="shiftSummaryRows">
+                    ${buildSummaryRows(data, `23:00 — ${dateLabel}`, '#d97706')}
+                </div>
+            `;
+
+            document.querySelector('#confirmModal .modal-icon').textContent = '🌙';
+            document.querySelector('#confirmModal h3').textContent          = t('night.modal.title');
+            document.querySelector('#confirmModal > .modal-box > p').textContent = t('night.modal.subtitle');
+
+        } else {
+            // ── Giờ bình thường → modal gốc ──
+            window._nightShiftState = null;
+
+            const dtLabel = data.dateFinished
+                ? new Date(data.dateFinished).toLocaleString()
+                : '—';
+
+            document.getElementById('modalSummary').innerHTML =
+                buildSummaryRows(data, dtLabel, null);
+
+            document.querySelector('#confirmModal .modal-icon').textContent = '💾';
+            document.querySelector('#confirmModal h3').textContent          = t('modal.title');
+            document.querySelector('#confirmModal > .modal-box > p').textContent = t('modal.subtitle');
+        }
+
         document.getElementById('confirmModal').classList.add('show');
     }
 
@@ -904,6 +1010,14 @@
     async function submitForm() {
         const data = getFormData();
         const btn  = document.getElementById('confirmSaveBtn');
+
+        // Override datetime nếu người dùng chọn ca đêm
+        if (window._nightShiftState) {
+            data.dateFinished = window._nightShiftState.mode === 'night'
+                ? window._nightShiftState.nightDt
+                : window._nightShiftState.nowDt;
+        }
+
         btn.disabled    = true;
         btn.textContent = t('btn.saving');
 
@@ -920,7 +1034,7 @@
 
             const response = await fetch(`${pathBase}/Production/Create`, {
                 method: 'POST',
-                body:   formData   // browser sets Content-Type with boundary automatically
+                body:   formData
             });
 
             const result = await response.json();
@@ -950,10 +1064,9 @@
         } else {
             $('#vendorSelect').val('').trigger('change');
         }
-
         $('#processSelect').val('').trigger('change');
         $('#typeSelect').val('').trigger('change');
-        document.getElementById('quantityInput').value   = '';
+        document.getElementById('quantityInput').value    = '';
         document.getElementById('descriptionInput').value = '';
         setDefaultDateTime();
         removeImage();
@@ -972,8 +1085,9 @@
     document.getElementById('confirmModal').addEventListener('click', function (e) {
         if (e.target === this) closeModal();
     });
-</script>
 
+</script>
 }
+
 </body>
 </html>

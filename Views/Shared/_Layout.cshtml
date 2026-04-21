@@ -218,6 +218,9 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Production" asp-action="Report" data-i18n="nav.report">Report</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Production" asp-action="ReportSVN" data-i18n="nav.reportsvn">SVN Report</a>
+                        </li>
                     </ul>
                     <div class="lang-switcher">
                         <button class="lang-btn" data-lang="vi" onclick="setLang('vi')" title="Tiếng Việt">
@@ -263,6 +266,10 @@
                 <a asp-area="" asp-controller="Production" asp-action="Report">
                     <span class="drawer-icon icon-report">📈</span>
                     <span data-i18n="nav.report">Report</span>
+                </a>
+                    <a asp-area="" asp-controller="Production" asp-action="ReportSVN">
+                    <span class="drawer-icon icon-report">📊</span>
+                    <span data-i18n="nav.reportsvn">SVN Report</span>
                 </a>
             </nav>
         </div>

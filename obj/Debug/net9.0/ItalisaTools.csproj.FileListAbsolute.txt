@@ -123,9 +123,6 @@ C:\ItalisaTools\bin\Debug\net9.0\runtimes\win-arm\native\Microsoft.Data.SqlClien
 C:\ItalisaTools\bin\Debug\net9.0\runtimes\win-arm64\native\Microsoft.Data.SqlClient.SNI.dll
 C:\ItalisaTools\bin\Debug\net9.0\runtimes\win-x64\native\Microsoft.Data.SqlClient.SNI.dll
 C:\ItalisaTools\bin\Debug\net9.0\runtimes\win-x86\native\Microsoft.Data.SqlClient.SNI.dll
-C:\ItalisaTools\bin\Debug\net9.0\runtimes\win\lib\net6.0\Microsoft.Win32.SystemEvents.dll
-C:\ItalisaTools\bin\Debug\net9.0\runtimes\unix\lib\net6.0\System.Drawing.Common.dll
-C:\ItalisaTools\bin\Debug\net9.0\runtimes\win\lib\net6.0\System.Drawing.Common.dll
 C:\ItalisaTools\bin\Debug\net9.0\runtimes\win\lib\net6.0\System.Runtime.Caching.dll
 C:\ItalisaTools\bin\Debug\net9.0\runtimes\win\lib\net6.0\System.Security.Cryptography.ProtectedData.dll
 C:\ItalisaTools\bin\Debug\net9.0\runtimes\win\lib\net6.0\System.Windows.Extensions.dll
@@ -220,4 +217,11 @@ C:\ItalisaTools\obj\Debug\net9.0\refint\ItalisaTools.dll
 C:\ItalisaTools\obj\Debug\net9.0\ItalisaTools.pdb
 C:\ItalisaTools\obj\Debug\net9.0\ItalisaTools.genruntimeconfig.cache
 C:\ItalisaTools\obj\Debug\net9.0\ref\ItalisaTools.dll
-C:\ItalisaTools\obj\Debug\net9.0\compressed\jsvhigdrt3-{0}-qi0djw3wx9-qi0djw3wx9.gz
+C:\ItalisaTools\bin\Debug\net9.0\EPPlus.dll
+C:\ItalisaTools\bin\Debug\net9.0\EPPlus.Interfaces.dll
+C:\ItalisaTools\bin\Debug\net9.0\EPPlus.System.Drawing.dll
+C:\ItalisaTools\bin\Debug\net9.0\Microsoft.IO.RecyclableMemoryStream.dll
+C:\ItalisaTools\bin\Debug\net9.0\runtimes\win\lib\net7.0\Microsoft.Win32.SystemEvents.dll
+C:\ItalisaTools\bin\Debug\net9.0\runtimes\win\lib\net7.0\System.Drawing.Common.dll
+C:\ItalisaTools\obj\Debug\net9.0\compressed\jsvhigdrt3-{0}-vyytxyniuc-vyytxyniuc.gz
+C:\ItalisaTools\obj\Debug\net9.0\compressed\jnmed1zxya-{0}-5aepywoza8-5aepywoza8.gz
