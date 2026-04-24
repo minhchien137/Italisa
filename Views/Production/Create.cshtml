@@ -1006,6 +1006,27 @@
         document.getElementById('confirmModal').classList.remove('show');
     }
 
+    // ── Compress image trước khi upload ──────────────────────────────────────
+    async function compressImageFile(file, maxWidth = 1280, quality = 0.82) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            const url = URL.createObjectURL(file);
+            img.onload = () => {
+                const scale   = Math.min(maxWidth / img.width, 1);
+                const canvas  = document.createElement('canvas');
+                canvas.width  = img.width  * scale;
+                canvas.height = img.height * scale;
+                canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                URL.revokeObjectURL(url);
+                canvas.toBlob(
+                    blob => resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' })),
+                    'image/jpeg', quality
+                );
+            };
+            img.src = url;
+        });
+    }
+
     // ── Submit (multipart/form-data) ──────────────────────────────────────────
     async function submitForm() {
         const data = getFormData();
@@ -1030,7 +1051,12 @@
             formData.append('quantity',     data.quantity);
             formData.append('dateFinished', data.dateFinished);
             formData.append('description',  data.description);
-            if (data.imageFile) formData.append('imageFile', data.imageFile);
+
+            // ── Compress ảnh trước khi gửi ──
+            if (data.imageFile) {
+                const compressed = await compressImageFile(data.imageFile);
+                formData.append('imageFile', compressed, compressed.name);
+            }
 
             const response = await fetch(`${pathBase}/Production/Create`, {
                 method: 'POST',
@@ -1087,6 +1113,7 @@
     });
 
 </script>
+}
 }
 
 </body>
