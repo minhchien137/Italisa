@@ -1,0 +1,1131 @@
+@{
+    ViewData["Title"] = "Production Overview";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --denim:        #1B4F8A;
+            --denim-dark:   #0f2f52;
+            --denim-mid:    #2563a8;
+            --denim-light:  #dbeafe;
+            --denim-xlight: #eff6ff;
+            --white:        #ffffff;
+            --gray-50:      #f8fafc;
+            --gray-100:     #f1f5f9;
+            --gray-200:     #e2e8f0;
+            --gray-400:     #94a3b8;
+            --gray-600:     #475569;
+            --gray-800:     #1e293b;
+            --success:      #10b981;
+            --warning:      #f59e0b;
+            --danger:       #ef4444;
+            --shadow-sm:    0 1px 3px rgba(27,79,138,0.08);
+            --shadow-md:    0 4px 20px rgba(27,79,138,0.12);
+            --nav-height:   60px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--gray-50);
+            min-height: 100vh;
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(27,79,138,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(37,99,168,0.05) 0%, transparent 50%);
+        }
+
+        /* ── NAV ── */
+        nav {
+            background: var(--denim-dark);
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: var(--nav-height);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-brand {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--white);
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-brand span {
+            background: var(--denim-mid);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #a8d0f8;
+        }
+        .nav-links { display: flex; gap: 4px; }
+        .nav-links a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.84rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .nav-links a:hover { background: rgba(255,255,255,0.12); color: var(--white); }
+        .nav-links a.active { background: var(--denim-mid); color: var(--white); }
+        @@media (max-width: 480px) {
+            .nav-links a .nav-label { display: none; }
+            .nav-links a { padding: 6px 10px; font-size: 1rem; }
+        }
+
+        /* ── LAYOUT ── */
+        .page-wrapper { max-width: 1600px; margin: 0 auto; padding: 1.5rem 1rem; }
+        @@media (min-width: 600px) { .page-wrapper { padding: 2.5rem 1.5rem; } }
+
+        .page-header { margin-bottom: 1.5rem; }
+        .page-header h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--denim-dark);
+        }
+        @@media (min-width: 600px) { .page-header h1 { font-size: 1.75rem; } }
+        .page-header p { color: var(--gray-600); font-size: 0.9rem; margin-top: 6px; }
+        .header-line {
+            width: 48px; height: 4px;
+            background: linear-gradient(90deg, var(--denim), var(--denim-mid));
+            border-radius: 2px; margin-top: 12px;
+        }
+
+        /* ── FILTER CARD ── */
+        .filter-card {
+            background: var(--white);
+            border-radius: 14px;
+            border: 1px solid rgba(27,79,138,0.08);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+        .filter-header {
+            background: var(--denim-xlight);
+            padding: 0.9rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(27,79,138,0.1);
+            cursor: pointer;
+            user-select: none;
+        }
+        .filter-header h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--denim-dark);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .filter-toggle { font-size: 0.8rem; color: var(--denim); font-weight: 600; transition: transform 0.3s; }
+        .filter-toggle.collapsed { transform: rotate(-90deg); }
+        @@media (min-width: 768px) { .filter-toggle { display: none; } }
+
+        .filter-body { padding: 1rem 1.25rem; }
+        .filter-body.collapsed { display: none; }
+        @@media (min-width: 768px) { .filter-body { display: block !important; } }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+        @@media (min-width: 600px) { .filter-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; } }
+        @@media (min-width: 768px) { .filter-grid { grid-template-columns: 1fr 1fr auto; align-items: end; gap: 1rem; } }
+
+        .filter-group { display: flex; flex-direction: column; gap: 5px; }
+        .filter-group label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--denim-dark);
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+        .filter-group input[type="date"] {
+            width: 100%;
+            padding: 0.6rem 0.75rem;
+            border: 1.5px solid var(--gray-200);
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.88rem;
+            color: var(--gray-800);
+            background: var(--white);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            min-height: 40px;
+            cursor: pointer;
+        }
+        .filter-group input[type="date"]:focus {
+            border-color: var(--denim);
+            box-shadow: 0 0 0 3px rgba(27,79,138,0.1);
+        }
+
+        .filter-btn-group { justify-content: flex-end; }
+        .filter-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: nowrap;
+            align-items: stretch;
+        }
+        @@media (max-width: 767px) {
+            .filter-btn-group { grid-column: 1 / -1; }
+            .filter-actions .btn { flex: 1; }
+        }
+
+        .btn {
+            padding: 0.6rem 1.1rem;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-height: 40px;
+            white-space: nowrap;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--denim) 0%, var(--denim-mid) 100%);
+            color: var(--white);
+            box-shadow: 0 4px 12px rgba(27,79,138,0.25);
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(27,79,138,0.35); }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-outline {
+            background: var(--white);
+            border: 1.5px solid var(--gray-200);
+            color: var(--gray-600);
+        }
+        .btn-outline:hover { border-color: var(--denim); color: var(--denim); background: var(--denim-xlight); }
+        .btn-excel {
+            background: linear-gradient(135deg, #166534 0%, #15803d 100%);
+            color: var(--white);
+            box-shadow: 0 4px 12px rgba(22,101,52,0.25);
+        }
+        .btn-excel:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(22,101,52,0.35); }
+        .btn-excel:active { transform: translateY(0); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
+
+        /* ── STATS ROW ── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        @@media (min-width: 640px) { .stats-row { grid-template-columns: repeat(4, 1fr); } }
+
+        .stat-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 1.1rem 1.25rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(27,79,138,0.07);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+        }
+        .stat-card.blue::before   { background: linear-gradient(90deg, var(--denim), var(--denim-mid)); }
+        .stat-card.green::before  { background: linear-gradient(90deg, var(--success), #34d399); }
+        .stat-card.purple::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+        .stat-card.orange::before { background: linear-gradient(90deg, #ea580c, #fb923c); }
+
+        .stat-label {
+            font-size: 0.73rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--gray-400);
+        }
+        .stat-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--denim-dark);
+            line-height: 1;
+        }
+        .stat-sub { font-size: 0.78rem; color: var(--gray-400); }
+
+        /* ── TABLE SECTION ── */
+        .table-section {
+            background: var(--white);
+            border-radius: 14px;
+            border: 1px solid rgba(27,79,138,0.08);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+        .table-section-header {
+            background: linear-gradient(135deg, var(--denim) 0%, var(--denim-mid) 100%);
+            padding: 1.1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .table-section-header h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .table-section-header p { font-size: 0.76rem; color: rgba(255,255,255,0.7); margin-top: 2px; }
+        .record-badge {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .table-scroll::-webkit-scrollbar { height: 6px; }
+        .table-scroll::-webkit-scrollbar-track { background: var(--gray-100); }
+        .table-scroll::-webkit-scrollbar-thumb { background: var(--denim-light); border-radius: 3px; }
+
+        /* ── DESKTOP TABLE ── */
+        table.pivot-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.84rem;
+            min-width: 900px;
+        }
+        table.pivot-table thead th {
+            background: var(--gray-50);
+            color: var(--denim-dark);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            padding: 0.7rem 0.9rem;
+            border-bottom: 2px solid var(--gray-200);
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        table.pivot-table thead th.col-fixed {
+            position: sticky;
+            left: 0;
+            z-index: 3;
+            background: var(--gray-100);
+            border-right: 2px solid var(--gray-200);
+        }
+        table.pivot-table thead th.col-fixed-2 {
+            position: sticky;
+            left: 64px;
+            z-index: 3;
+            background: var(--gray-100);
+            border-right: 1px solid var(--gray-200);
+        }
+        table.pivot-table thead th.col-min {
+            background: #fef9c3;
+            color: #854d0e;
+            border-left: 2px solid #fde68a;
+        }
+        table.pivot-table thead th:first-child { text-align: center; }
+
+        table.pivot-table tbody tr:hover { background: var(--denim-xlight); }
+        table.pivot-table tbody tr:nth-child(even) { background: var(--gray-50); }
+        table.pivot-table tbody tr:nth-child(even):hover { background: var(--denim-xlight); }
+
+        table.pivot-table tbody td {
+            padding: 0.62rem 0.9rem;
+            border-bottom: 1px solid var(--gray-100);
+            color: var(--gray-800);
+            vertical-align: middle;
+        }
+        table.pivot-table tbody td.col-fixed {
+            position: sticky;
+            left: 0;
+            background: inherit;
+            z-index: 1;
+            font-weight: 700;
+            color: var(--denim);
+            border-right: 2px solid var(--gray-200);
+            text-align: center;
+        }
+        table.pivot-table tbody td.col-fixed-2 {
+            position: sticky;
+            left: 64px;
+            background: inherit;
+            z-index: 1;
+            font-weight: 500;
+            border-right: 1px solid var(--gray-200);
+            white-space: nowrap;
+            max-width: 220px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        table.pivot-table tbody td.col-wc {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+            color: var(--gray-600);
+        }
+        table.pivot-table tbody td.col-wc.nonzero {
+            color: var(--denim);
+            font-weight: 600;
+        }
+        table.pivot-table tbody td.col-min {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+            font-weight: 700;
+            color: #854d0e;
+            background: #fefce8;
+            border-left: 2px solid #fde68a;
+        }
+        table.pivot-table tfoot td {
+            padding: 0.7rem 0.9rem;
+            background: var(--denim-xlight);
+            font-weight: 700;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.82rem;
+            color: var(--denim-dark);
+            border-top: 2px solid var(--denim-light);
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+        table.pivot-table tfoot td.col-fixed,
+        table.pivot-table tfoot td.col-fixed-2 {
+            position: sticky;
+            background: var(--denim-xlight);
+            text-align: left;
+            color: var(--denim-dark);
+            z-index: 1;
+        }
+        table.pivot-table tfoot td.col-fixed { left: 0; }
+        table.pivot-table tfoot td.col-fixed-2 { left: 64px; }
+        table.pivot-table tfoot td.col-min {
+            background: #fef9c3;
+            color: #854d0e;
+            border-left: 2px solid #fde68a;
+        }
+
+        /* ── MOBILE: disable sticky columns so they don't overlap on small screens ── */
+        .mobile-card-list { display: none; }
+
+        @@media (max-width: 639px) {
+            table.pivot-table thead th.col-fixed,
+            table.pivot-table thead th.col-fixed-2,
+            table.pivot-table tbody td.col-fixed,
+            table.pivot-table tbody td.col-fixed-2,
+            table.pivot-table tfoot td.col-fixed,
+            table.pivot-table tfoot td.col-fixed-2 {
+                position: static !important;
+            }
+            /* Smaller font + tighter padding on mobile table */
+            table.pivot-table { font-size: 0.78rem; }
+            table.pivot-table thead th { padding: 0.5rem 0.6rem; }
+            table.pivot-table tbody td { padding: 0.5rem 0.6rem; }
+            table.pivot-table tfoot td { padding: 0.5rem 0.6rem; }
+
+        }
+
+        /* ── EMPTY / LOADING STATES ── */
+        .state-box {
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+        .state-box .state-icon { font-size: 3rem; margin-bottom: 1rem; }
+        .state-box h4 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            margin-bottom: 6px;
+        }
+        .state-box p { font-size: 0.85rem; color: var(--gray-400); }
+
+        /* ── LOADING OVERLAY ── */
+        .loading-overlay {
+            position: fixed; inset: 0;
+            background: rgba(15,47,82,0.35);
+            backdrop-filter: blur(3px);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .loading-overlay.show { display: flex; }
+        .loading-spinner {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 2rem 2.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: var(--shadow-md);
+        }
+        .spinner-ring {
+            width: 44px; height: 44px;
+            border: 4px solid var(--denim-light);
+            border-top-color: var(--denim);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @@keyframes spin { to { transform: rotate(360deg); } }
+        .loading-spinner p { font-size: 0.9rem; font-weight: 500; color: var(--gray-600); }
+
+        /* ── TOAST ── */
+        .toast {
+            position: fixed; bottom: 1.5rem; right: 1.5rem;
+            background: var(--white);
+            border-radius: 10px;
+            padding: 0.85rem 1.25rem;
+            display: flex; align-items: center; gap: 10px;
+            box-shadow: var(--shadow-md);
+            font-size: 0.88rem; font-weight: 500;
+            transform: translateY(120%); opacity: 0;
+            transition: all 0.35s cubic-bezier(.34,1.56,.64,1);
+            z-index: 10000;
+            max-width: 340px;
+            border-left: 4px solid transparent;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { border-left-color: var(--success); }
+        .toast.error   { border-left-color: var(--danger);  }
+        .toast.info    { border-left-color: var(--denim);   }
+
+        /* ── TABLE TOOLBAR ── */
+        .table-toolbar {
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            border-bottom: 1px solid var(--gray-100);
+            flex-wrap: wrap;
+        }
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--gray-50);
+            border: 1.5px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 0.45rem 0.75rem;
+            flex: 1;
+            max-width: 320px;
+            transition: border-color 0.2s;
+        }
+        .search-box:focus-within { border-color: var(--denim); background: var(--white); }
+        .search-box input {
+            border: none; background: transparent;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.86rem;
+            color: var(--gray-800);
+            outline: none;
+            width: 100%;
+        }
+        .search-box span { color: var(--gray-400); font-size: 0.9rem; }
+        mark.hl {
+            background: #fef08a;
+            color: var(--gray-800);
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner">
+        <div class="spinner-ring"></div>
+        <p data-i18n="overview.loading">Loading report data…</p>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+    <span id="toastIcon">✅</span>
+    <span id="toastMsg"></span>
+</div>
+
+
+<div class="page-wrapper">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 data-i18n="overview.title">📊 Production Overview</h1>
+        <p data-i18n="overview.subtitle">Pivot report by item — qty produced per work-centre for a selected date range.</p>
+        <div class="header-line"></div>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="filter-card">
+        <div class="filter-header" id="filterToggleBtn">
+            <h3 data-i18n="overview.filter.title">🔎 Filter &amp; Export</h3>
+            <span class="filter-toggle" id="filterToggleIcon">▼</span>
+        </div>
+        <div class="filter-body" id="filterBody">
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label data-i18n="overview.label.from">From Date</label>
+                    <input type="date" id="fFromDate" />
+                </div>
+                <div class="filter-group">
+                    <label data-i18n="overview.label.to">To Date</label>
+                    <input type="date" id="fToDate" />
+                </div>
+                <div class="filter-group filter-btn-group">
+                    <div class="filter-actions">
+                        <button class="btn btn-primary" onclick="applyFilter()" id="btnApply" data-i18n="overview.btn.apply">
+                            🔍 Apply
+                        </button>
+                        <button class="btn btn-outline" onclick="resetFilter()" data-i18n="overview.btn.reset">
+                            ↺ Reset
+                        </button>
+                        <button class="btn btn-excel" onclick="exportExcel()" id="btnExcel" data-i18n="overview.btn.excel">
+                            ⬇ Excel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="stats-row">
+        <div class="stat-card blue">
+            <div class="stat-label" data-i18n="overview.stat.products">Total Products</div>
+            <div class="stat-value" id="statProducts">—</div>
+            <div class="stat-sub" data-i18n="overview.stat.products.sub">Distinct items</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-label" data-i18n="overview.stat.totalqty">Total Output Qty</div>
+            <div class="stat-value" id="statTotalQty">—</div>
+            <div class="stat-sub" data-i18n="overview.stat.totalqty.sub">Sum across all WC</div>
+        </div>
+        <div class="stat-card purple">
+            <div class="stat-label" data-i18n="overview.stat.wc">Work Centres</div>
+            <div class="stat-value" id="statWC">—</div>
+            <div class="stat-sub" data-i18n="overview.stat.wc.sub">Active columns</div>
+        </div>
+        <div class="stat-card orange">
+            <div class="stat-label" data-i18n="overview.stat.minqty">Min Output Total</div>
+            <div class="stat-value" id="statMinQty">—</div>
+            <div class="stat-sub" data-i18n="overview.stat.minqty.sub">Sum of Min Output Qty</div>
+        </div>
+    </div>
+
+    <!-- Pivot Table Section -->
+    <div class="table-section">
+        <div class="table-section-header">
+            <div>
+                <h3 data-i18n="overview.table.title">📋 Work-Centre Production Matrix</h3>
+                <p data-i18n="overview.table.sub">Qty produced per item per work centre</p>
+            </div>
+            <span class="record-badge" id="recordBadge">— rows</span>
+        </div>
+
+        <!-- Table Toolbar -->
+        <div class="table-toolbar">
+            <div class="search-box">
+                <span>🔍</span>
+                <input type="text" id="tableSearch" placeholder="Search product name or PN…" oninput="filterTable(this.value)" />
+            </div>
+            <span style="font-size:0.8rem;color:var(--gray-400)" id="rowCountLabel"></span>
+        </div>
+
+        <!-- Desktop Table -->
+        <div class="table-scroll">
+            <div id="tableContainer">
+                <div class="state-box">
+                    <div class="state-icon">📆</div>
+                    <h4>Select a date range and click Apply</h4>
+                    <p>The report will load production quantities per work-centre.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div><!-- /page-wrapper -->
+
+@section Scripts {
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script>
+    // ── Globals ──────────────────────────────────────────────────────────────
+    const pathBase  = document.querySelector('base')?.getAttribute('href')?.replace(/\/$/, '') || '';
+    let   reportData = [];
+    let   reportCols = [];
+    let   filteredRows = [];
+
+    // ── Init ─────────────────────────────────────────────────────────────────
+    (function initDates() {
+        const today = new Date();
+        const fmt   = d => d.toISOString().slice(0, 10);
+        document.getElementById('fFromDate').value = '';
+        document.getElementById('fToDate').value   = fmt(today);
+    })();
+
+    document.addEventListener('DOMContentLoaded', () => applyFilter());
+
+    // ── Filter toggle (mobile) ───────────────────────────────────────────────
+    document.getElementById('filterToggleBtn').addEventListener('click', () => {
+        const body = document.getElementById('filterBody');
+        const icon = document.getElementById('filterToggleIcon');
+        body.classList.toggle('collapsed');
+        icon.classList.toggle('collapsed');
+    });
+
+    // ── Apply filter ────────────────────────────────────────────────────────
+    async function applyFilter() {
+        const from = document.getElementById('fFromDate').value;
+        const to   = document.getElementById('fToDate').value;
+
+        if (!to) { showToast('Please select a To Date.', 'error'); return; }
+        if (from && from > to) { showToast('From Date must be before To Date.', 'error'); return; }
+
+        showLoading(true);
+        setButtons(false);
+
+        try {
+            const params = new URLSearchParams({ startDate: from, endDate: to });
+            const res    = await fetch(`${pathBase}/Production/GetOverviewReport?` + params.toString());
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+            const json = await res.json();
+            reportCols = json.columns || [];
+            reportData = json.rows    || [];
+            filteredRows = [...reportData];
+
+            renderStats(reportData, reportCols);
+            renderTable(filteredRows, reportCols);
+            document.getElementById('tableSearch').value = '';
+
+        } catch (err) {
+            console.error('applyFilter', err);
+            showToast('Failed to load report: ' + err.message, 'error');
+            document.getElementById('tableContainer').innerHTML = `<div class="state-box"><div class="state-icon">⚠️</div><h4>Error loading data</h4><p>${err.message}</p></div>`;
+        } finally {
+            showLoading(false);
+            setButtons(true);
+        }
+    }
+
+    // ── Reset ────────────────────────────────────────────────────────────────
+    function resetFilter() {
+        const today = new Date();
+        const fmt   = d => d.toISOString().slice(0, 10);
+        document.getElementById('fFromDate').value   = '';
+        document.getElementById('fToDate').value     = fmt(today);
+        document.getElementById('tableSearch').value = '';
+        applyFilter();
+    }
+
+    // ── Column metadata ──────────────────────────────────────────────────────
+    function getColMeta(cols) {
+        const pnCol   = cols[0]  || '';
+        const nameCol = cols[1]  || '';
+        const minCol  = cols[cols.length - 1] || '';
+        const wcCols  = cols.slice(2, cols.length - 1);
+        return { pnCol, nameCol, minCol, wcCols };
+    }
+
+    // ── Render summary stats ─────────────────────────────────────────────────
+    function renderStats(rows, cols) {
+        if (!rows.length) { clearStats(); return; }
+        const { wcCols, minCol } = getColMeta(cols);
+
+        const totalQty = rows.reduce((s, r) =>
+            s + wcCols.reduce((ws, c) => ws + (Number(r[c]) || 0), 0), 0);
+        const totalMin = rows.reduce((s, r) => s + (Number(r[minCol]) || 0), 0);
+
+        document.getElementById('statProducts').textContent = rows.length.toLocaleString();
+        document.getElementById('statTotalQty').textContent = totalQty.toLocaleString();
+        document.getElementById('statWC').textContent       = wcCols.length.toLocaleString();
+        document.getElementById('statMinQty').textContent   = totalMin.toLocaleString();
+    }
+
+    function clearStats() {
+        ['statProducts','statTotalQty','statWC','statMinQty'].forEach(id => {
+            document.getElementById(id).textContent = '—';
+        });
+    }
+
+    // ── Render desktop pivot table ───────────────────────────────────────────
+    function renderTable(rows, cols, highlight = '') {
+        const container = document.getElementById('tableContainer');
+        document.getElementById('recordBadge').textContent = rows.length + ' rows';
+        document.getElementById('rowCountLabel').textContent = rows.length + ' product(s) shown';
+
+        if (!rows.length) {
+            container.innerHTML = `<div class="state-box"><div class="state-icon">📭</div><h4>No data found</h4><p>Try adjusting the date range.</p></div>`;
+            return;
+        }
+
+        const { pnCol, nameCol, minCol, wcCols } = getColMeta(cols);
+        const pnWidth = 64;
+        const totals = {};
+        cols.forEach(c => { totals[c] = 0; });
+        rows.forEach(r => { cols.slice(2).forEach(c => { totals[c] += (Number(r[c]) || 0); }); });
+
+        let html = `<table class="pivot-table"><thead><tr>
+            <th class="col-fixed" style="min-width:${pnWidth}px">${escHtml(pnCol)}</th>
+            <th class="col-fixed-2" style="min-width:200px;left:${pnWidth}px">${escHtml(nameCol)}</th>`;
+
+        wcCols.forEach(c => { html += `<th style="min-width:90px">${escHtml(c)}</th>`; });
+        html += `<th class="col-min" style="min-width:110px">${escHtml(minCol)}</th></tr></thead><tbody>`;
+
+        rows.forEach(r => {
+            const pnVal   = r[pnCol]   ?? '';
+            const nameVal = r[nameCol] ?? '';
+            const pnDisp   = highlight ? hlText(String(pnVal),  highlight) : escHtml(String(pnVal));
+            const nameDisp = highlight ? hlText(String(nameVal), highlight) : escHtml(String(nameVal));
+
+            html += `<tr>
+                <td class="col-fixed">${pnDisp}</td>
+                <td class="col-fixed-2" style="left:${pnWidth}px" title="${escHtml(String(nameVal))}">${nameDisp}</td>`;
+
+            wcCols.forEach(c => {
+                const v = Number(r[c]) || 0;
+                html += `<td class="col-wc${v !== 0 ? ' nonzero' : ''}">${v !== 0 ? v.toLocaleString() : '0'}</td>`;
+            });
+            const minV = Number(r[minCol]) || 0;
+            html += `<td class="col-min">${minV.toLocaleString()}</td></tr>`;
+        });
+
+        html += `</tbody><tfoot><tr>
+            <td class="col-fixed" colspan="1">TOTAL</td>
+            <td class="col-fixed-2" style="left:${pnWidth}px;text-align:left"></td>`;
+        wcCols.forEach(c => { html += `<td style="text-align:right">${(totals[c] || 0).toLocaleString()}</td>`; });
+        html += `<td class="col-min">${(totals[minCol] || 0).toLocaleString()}</td></tr></tfoot></table>`;
+
+        container.innerHTML = html;
+    }
+
+    // ── Client-side search ───────────────────────────────────────────────────
+    function filterTable(term) {
+        if (!reportData.length) return;
+        const q = term.trim().toLowerCase();
+        if (!q) {
+            filteredRows = [...reportData];
+        } else {
+            const { pnCol, nameCol } = getColMeta(reportCols);
+            filteredRows = reportData.filter(r =>
+                String(r[pnCol]   ?? '').toLowerCase().includes(q) ||
+                String(r[nameCol] ?? '').toLowerCase().includes(q)
+            );
+        }
+        renderTable(filteredRows, reportCols, term.trim());
+    }
+
+    // ── Excel Export (styled) ────────────────────────────────────────────────
+    function exportExcel() {
+        if (!filteredRows.length) {
+            showToast('No data to export.', 'error');
+            return;
+        }
+
+        const fromVal = document.getElementById('fFromDate').value;
+        const toVal   = document.getElementById('fToDate').value || new Date().toISOString().slice(0,10);
+        const fromDisp = fromVal ? fromVal : 'All time';
+        const toDisp   = toVal;
+
+        const { pnCol, nameCol, minCol, wcCols } = getColMeta(reportCols);
+        const wb = XLSX.utils.book_new();
+
+        // ── Build array-of-arrays ──
+        // Row 0: Company / Report title (merged)
+        // Row 1: blank
+        // Row 2: Date range label
+        // Row 3: blank
+        // Row 4: Column headers
+        // Row 5+: Data rows
+        // Last+1: Total row
+
+        const dataHeader = [pnCol, nameCol, ...wcCols, minCol];
+        const numDataCols = dataHeader.length;
+
+        const aoa = [];
+
+        // Row 0 – Title
+        aoa.push(['PRODUCTION OVERVIEW REPORT', ...Array(numDataCols - 1).fill('')]);
+        // Row 1 – Date range
+        aoa.push([`Period: ${fromDisp}  →  ${toDisp}`, ...Array(numDataCols - 1).fill('')]);
+        // Row 2 – Generated
+        const genTime = new Date().toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+        aoa.push([`Generated: ${genTime}`, ...Array(numDataCols - 1).fill('')]);
+        // Row 3 – blank spacer
+        aoa.push(Array(numDataCols).fill(''));
+        // Row 4 – Column headers
+        aoa.push(dataHeader);
+
+        // Data rows
+        const totals = {};
+        dataHeader.forEach(c => { totals[c] = 0; });
+
+        filteredRows.forEach(r => {
+            const row = [
+                r[pnCol]   ?? '',
+                r[nameCol] ?? '',
+                ...wcCols.map(c => { const v = Number(r[c]) || 0; totals[c] += v; return v; }),
+                (() => { const v = Number(r[minCol]) || 0; totals[minCol] += v; return v; })()
+            ];
+            aoa.push(row);
+        });
+
+        // Total row
+        aoa.push(['TOTAL', '', ...wcCols.map(c => totals[c] || 0), totals[minCol] || 0]);
+
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+        // ── Column widths ──
+        ws['!cols'] = [
+            { wch: 12 },   // PN#
+            { wch: 30 },   // Item Name
+            ...wcCols.map(() => ({ wch: 14 })),
+            { wch: 18 }    // Min Output Qty
+        ];
+
+        // ── Row heights ──
+        ws['!rows'] = [
+            { hpt: 28 },  // title row
+            { hpt: 18 },  // date range
+            { hpt: 16 },  // generated
+            { hpt: 8  },  // spacer
+            { hpt: 22 },  // header row
+        ];
+
+        // ── Merge title/date/generated across all columns ──
+        const endCol = numDataCols - 1;
+        ws['!merges'] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: endCol } },  // title
+            { s: { r: 1, c: 0 }, e: { r: 1, c: endCol } },  // date range
+            { s: { r: 2, c: 0 }, e: { r: 2, c: endCol } },  // generated
+        ];
+
+        // ── Cell styles ──
+        // Helper to get cell address
+        const addr = (r, c) => XLSX.utils.encode_cell({ r, c });
+
+        // TITLE row (row 0) – dark blue bg, white bold text, large font, center
+        const titleStyle = {
+            font:      { name: 'Calibri', sz: 16, bold: true, color: { rgb: 'FFFFFF' } },
+            fill:      { fgColor: { rgb: '0F2F52' } },
+            alignment: { horizontal: 'center', vertical: 'center' },
+            border:    {}
+        };
+        ws[addr(0,0)] = { v: aoa[0][0], t: 's', s: titleStyle };
+
+        // DATE RANGE row (row 1)
+        const dateStyle = {
+            font:      { name: 'Calibri', sz: 11, italic: true, color: { rgb: 'FFFFFF' } },
+            fill:      { fgColor: { rgb: '1B4F8A' } },
+            alignment: { horizontal: 'center', vertical: 'center' },
+        };
+        ws[addr(1,0)] = { v: aoa[1][0], t: 's', s: dateStyle };
+
+        // GENERATED row (row 2)
+        const genStyle = {
+            font:      { name: 'Calibri', sz: 9, color: { rgb: 'C0D9F5' } },
+            fill:      { fgColor: { rgb: '1B4F8A' } },
+            alignment: { horizontal: 'center', vertical: 'center' },
+        };
+        ws[addr(2,0)] = { v: aoa[2][0], t: 's', s: genStyle };
+
+        // HEADER row (row 4) – blue header with white bold text
+        const headerRowIdx = 4;
+        const headerStylePN = {
+            font:      { name: 'Calibri', sz: 10, bold: true, color: { rgb: 'FFFFFF' } },
+            fill:      { fgColor: { rgb: '1B4F8A' } },
+            alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+            border: {
+                bottom: { style: 'medium', color: { rgb: 'FFFFFF' } }
+            }
+        };
+        const headerStyleName = { ...headerStylePN, alignment: { horizontal: 'left', vertical: 'center', wrapText: true } };
+        const headerStyleWC = { ...headerStylePN, alignment: { horizontal: 'center', vertical: 'center', wrapText: true } };
+        const headerStyleMin = {
+            font:      { name: 'Calibri', sz: 10, bold: true, color: { rgb: '854D0E' } },
+            fill:      { fgColor: { rgb: 'FEF9C3' } },
+            alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+            border: {
+                left:   { style: 'medium', color: { rgb: 'FDE68A' } },
+                bottom: { style: 'medium', color: { rgb: 'FDE68A' } }
+            }
+        };
+
+        ws[addr(headerRowIdx, 0)] = { v: pnCol, t: 's', s: headerStylePN };
+        ws[addr(headerRowIdx, 1)] = { v: nameCol, t: 's', s: headerStyleName };
+        wcCols.forEach((c, i) => {
+            ws[addr(headerRowIdx, 2 + i)] = { v: c, t: 's', s: headerStyleWC };
+        });
+        ws[addr(headerRowIdx, numDataCols - 1)] = { v: minCol, t: 's', s: headerStyleMin };
+
+        // DATA rows (rows 5 … 5+n-1)
+        const dataStartRow = 5;
+        const dataStylePN = {
+            font:      { name: 'Calibri', sz: 10, bold: true, color: { rgb: '1B4F8A' } },
+            alignment: { horizontal: 'center', vertical: 'center' },
+        };
+        const dataStyleNameEven = {
+            font:      { name: 'Calibri', sz: 10, color: { rgb: '1E293B' } },
+            fill:      { fgColor: { rgb: 'F8FAFC' } },
+            alignment: { horizontal: 'left', vertical: 'center' },
+        };
+        const dataStyleNameOdd = {
+            font:      { name: 'Calibri', sz: 10, color: { rgb: '1E293B' } },
+            alignment: { horizontal: 'left', vertical: 'center' },
+        };
+        const dataStyleNumZero = {
+            font:      { name: 'Calibri', sz: 10, color: { rgb: '94A3B8' } },
+            alignment: { horizontal: 'right', vertical: 'center' },
+            numFmt:    '#,##0',
+        };
+        const dataStyleNumNZ = {
+            font:      { name: 'Calibri', sz: 10, bold: true, color: { rgb: '1B4F8A' } },
+            alignment: { horizontal: 'right', vertical: 'center' },
+            numFmt:    '#,##0',
+        };
+        const dataStyleMin = {
+            font:      { name: 'Calibri', sz: 10, bold: true, color: { rgb: '854D0E' } },
+            fill:      { fgColor: { rgb: 'FEFCE8' } },
+            alignment: { horizontal: 'right', vertical: 'center' },
+            numFmt:    '#,##0',
+            border:    { left: { style: 'thin', color: { rgb: 'FDE68A' } } }
+        };
+
+        filteredRows.forEach((r, ri) => {
+            const rowIdx = dataStartRow + ri;
+            const isEven = ri % 2 === 1;
+            const evenFill = isEven ? { fgColor: { rgb: 'F8FAFC' } } : undefined;
+
+            ws[addr(rowIdx, 0)] = {
+                v: r[pnCol] ?? '', t: 's',
+                s: { ...dataStylePN, fill: isEven ? evenFill : undefined }
+            };
+            ws[addr(rowIdx, 1)] = {
+                v: r[nameCol] ?? '', t: 's',
+                s: isEven ? dataStyleNameEven : dataStyleNameOdd
+            };
+            wcCols.forEach((c, ci) => {
+                const v = Number(r[c]) || 0;
+                ws[addr(rowIdx, 2 + ci)] = {
+                    v, t: 'n',
+                    s: { ...(v > 0 ? dataStyleNumNZ : dataStyleNumZero), fill: isEven ? evenFill : undefined },
+                    z: '#,##0'
+                };
+            });
+            const minV = Number(r[minCol]) || 0;
+            ws[addr(rowIdx, numDataCols - 1)] = { v: minV, t: 'n', s: dataStyleMin, z: '#,##0' };
+        });
+
+        // TOTAL row
+        const totalRowIdx = dataStartRow + filteredRows.length;
+        const totalStyleLabel = {
+            font:      { name: 'Calibri', sz: 10, bold: true, color: { rgb: 'FFFFFF' } },
+            fill:      { fgColor: { rgb: '1B4F8A' } },
+            alignment: { horizontal: 'left', vertical: 'center' },
+            border:    { top: { style: 'medium', color: { rgb: 'DBEAFE' } } }
+        };
+        const totalStyleNum = {
+            font:      { name: 'Calibri', sz: 10, bold: true, color: { rgb: 'FFFFFF' } },
+            fill:      { fgColor: { rgb: '1B4F8A' } },
+            alignment: { horizontal: 'right', vertical: 'center' },
+            numFmt:    '#,##0',
+            border:    { top: { style: 'medium', color: { rgb: 'DBEAFE' } } }
+        };
+        const totalStyleMin = {
+            font:      { name: 'Calibri', sz: 10, bold: true, color: { rgb: '854D0E' } },
+            fill:      { fgColor: { rgb: 'FEF9C3' } },
+            alignment: { horizontal: 'right', vertical: 'center' },
+            numFmt:    '#,##0',
+            border:    { top: { style: 'medium', color: { rgb: 'FDE68A' } }, left: { style: 'medium', color: { rgb: 'FDE68A' } } }
+        };
+
+        ws[addr(totalRowIdx, 0)] = { v: 'TOTAL', t: 's', s: totalStyleLabel };
+        ws[addr(totalRowIdx, 1)] = { v: `${filteredRows.length} products`, t: 's', s: totalStyleLabel };
+        wcCols.forEach((c, ci) => {
+            ws[addr(totalRowIdx, 2 + ci)] = { v: totals[c] || 0, t: 'n', s: totalStyleNum, z: '#,##0' };
+        });
+        ws[addr(totalRowIdx, numDataCols - 1)] = { v: totals[minCol] || 0, t: 'n', s: totalStyleMin, z: '#,##0' };
+
+        XLSX.utils.book_append_sheet(wb, ws, 'Overview');
+
+        const now   = new Date();
+        const stamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+        const fromStr = fromVal || 'alltime';
+        XLSX.writeFile(wb, `Production_Overview_${fromStr}_${toVal}_${stamp}.xlsx`);
+        showToast(`Exported ${filteredRows.length} rows to Excel.`, 'success');
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    function escHtml(str) {
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function hlText(str, term) {
+        if (!term) return escHtml(str);
+        const escaped   = escHtml(str);
+        const escapedTm = escHtml(term);
+        const regex     = new RegExp(escapedTm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+        return escaped.replace(regex, m => `<mark class="hl">${m}</mark>`);
+    }
+
+    function showLoading(show) {
+        document.getElementById('loadingOverlay').classList.toggle('show', show);
+    }
+
+    function setButtons(enabled) {
+        ['btnApply','btnExcel'].forEach(id => {
+            document.getElementById(id).disabled = !enabled;
+        });
+    }
+
+    function showToast(msg, type = 'info') {
+        const toast = document.getElementById('toast');
+        toast.className = 'toast ' + type;
+        document.getElementById('toastIcon').textContent = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+        document.getElementById('toastMsg').textContent  = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+</script>
+}
+</body>
+</html>

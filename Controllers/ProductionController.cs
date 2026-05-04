@@ -246,12 +246,76 @@ namespace ItalisaTools.Controllers
                 return Json(new List<CodeItemDto>());
             }
         }
-        
+
 
         public IActionResult Report()
         {
             return View();
         }
+        
+        /* Overview*/
+        public IActionResult Overview()
+        {
+            return View();
+        }
+
+        // GET: /Production/GetOverviewReport?startDate=2026-05-01&endDate=2026-05-04
+        [HttpGet]
+        public async Task<IActionResult> GetOverviewReport(string? startDate, string? endDate)
+        {
+            try
+            {
+                // Parse dates; empty startDate = all time (use year 2000 as floor)
+                DateTime start = string.IsNullOrEmpty(startDate)
+                    ? new DateTime(2000, 1, 1)
+                    : DateTime.Parse(startDate);
+
+                DateTime end = string.IsNullOrEmpty(endDate)
+                    ? DateTime.Today
+                    : DateTime.Parse(endDate);
+
+                var connectionString = _context.Database.GetConnectionString();
+
+                using var conn = new SqlConnection(connectionString);
+                await conn.OpenAsync();
+
+                using var cmd = new SqlCommand("sp_Get_Italisa_Production_Report", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                // SP expects @StartDate and @EndDate as date type
+                cmd.Parameters.Add(new SqlParameter("@StartDate", SqlDbType.Date) { Value = start });
+                cmd.Parameters.Add(new SqlParameter("@EndDate", SqlDbType.Date) { Value = end });
+
+                using var reader = await cmd.ExecuteReaderAsync();
+
+                // Read column names dynamically (pivot columns vary)
+                var columns = Enumerable.Range(0, reader.FieldCount)
+                                        .Select(i => reader.GetName(i))
+                                        .ToList();
+
+                var rows = new List<Dictionary<string, object?>>();
+
+                while (await reader.ReadAsync())
+                {
+                    var row = new Dictionary<string, object?>();
+                    foreach (var col in columns)
+                    {
+                        var ordinal = reader.GetOrdinal(col);
+                        row[col] = reader.IsDBNull(ordinal) ? null : reader.GetValue(ordinal);
+                    }
+                    rows.Add(row);
+                }
+
+                return Json(new { columns, rows });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"GetOverviewReport Error: {ex.Message}");
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+
 
 
 
