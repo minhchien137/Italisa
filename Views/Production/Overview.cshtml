@@ -688,8 +688,9 @@
 @section Scripts {
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script>
-    // ── Globals ──────────────────────────────────────────────────────────────
-    const pathBase  = document.querySelector('base')?.getAttribute('href')?.replace(/\/$/, '') || '';
+    
+    const pathBase = '@Context.Request.PathBase'.replace(/\/$/, '');
+
     let   reportData = [];
     let   reportCols = [];
     let   filteredRows = [];
