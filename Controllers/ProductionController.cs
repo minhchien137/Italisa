@@ -32,7 +32,20 @@ namespace ItalisaTools.Controllers
         {
             if (dto == null)
                 return Json(new { success = false, message = "Invalid data." });
-
+                    // ── Server-side validation ──
+            if (string.IsNullOrWhiteSpace(dto.Vendor))
+                return Json(new { success = false, message = "Vendor is required." });
+            if (string.IsNullOrWhiteSpace(dto.Process))
+                return Json(new { success = false, message = "Process is required." });
+            if (dto.ProductId == null)
+                return Json(new { success = false, message = "Code (Product) is required." });
+            if (string.IsNullOrWhiteSpace(dto.Color))
+                return Json(new { success = false, message = "Color is required." });
+            if (string.IsNullOrWhiteSpace(dto.TypeValue))
+                return Json(new { success = false, message = "Type is required." });
+            if (dto.Quantity == null || dto.Quantity <= 0)
+                return Json(new { success = false, message = "Quantity must be a positive number." });
+                
             try
             {
                 // ── Save image file ──
