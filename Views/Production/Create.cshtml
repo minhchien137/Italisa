@@ -2,6 +2,7 @@
     ViewData["Title"] = "Production Data Entry";
     var vendors   = ViewBag.Vendors   as List<ItalisaTools.Models.SVN_Italisa_vendor>  ?? new();
     var processes = ViewBag.Processes as List<ItalisaTools.Models.SVN_Italisa_Process> ?? new();
+    var colors    = ViewBag.Colors    as List<ItalisaTools.Models.SVN_Italisa_Color>   ?? new();
 }
 
 <!DOCTYPE html>
@@ -603,6 +604,17 @@
                 </div>
 
                 <div class="form-group">
+                    <label data-i18n="label.color">Color <span class="required">*</span></label>
+                    <select id="colorSelect">
+                        <option value="" data-i18n="ph.color">-- Select Color --</option>
+                        @foreach (var c in colors)
+                        {
+                            <option value="@c.color">@c.color</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
                     <label data-i18n="label.type">Type <span class="required">*</span></label>
                     <select id="typeSelect">
                         <option value="" data-i18n="ph.type">-- Select Type --</option>
@@ -707,12 +719,13 @@
         $('#vendorSelect') .select2(getSelect2Config('ph.vendor'));
         $('#processSelect').select2(getSelect2Config('ph.process'));
         $('#codeSelect')   .select2(getSelect2Config('ph.code'));
+        $('#colorSelect')  .select2(getSelect2Config('ph.color'));
         $('#typeSelect')   .select2(getSelect2Config('ph.type', true));
     }
 
     // Re-init Select2 on lang change so placeholders update
     document.addEventListener('langChanged', () => {
-        ['#vendorSelect','#processSelect','#codeSelect','#typeSelect'].forEach(sel => {
+        ['#vendorSelect','#processSelect','#codeSelect','#colorSelect','#typeSelect'].forEach(sel => {
             if ($(sel).data('select2')) $(sel).select2('destroy');
         });
         initSelect2();
@@ -830,6 +843,7 @@
         const codeSel    = document.getElementById('codeSelect');
         const typeSel    = document.getElementById('typeSelect');
         const processSel = document.getElementById('processSelect');
+        const colorSel   = document.getElementById('colorSelect');
         const imageFile  = document.getElementById('imageInput').files[0] || null;
 
         return {
@@ -839,6 +853,8 @@
             processText:  processSel.options[processSel.selectedIndex]?.text,
             productId:    parseInt(codeSel.value) || null,
             codeText:     codeSel.options[codeSel.selectedIndex]?.text,
+            color:        colorSel.value,
+            colorText:    colorSel.options[colorSel.selectedIndex]?.text,
             typeValue:    typeSel.value,
             quantity:     parseInt(document.getElementById('quantityInput').value) || null,
             dateFinished: document.getElementById('dateFinishedInput').value,
@@ -851,6 +867,7 @@
         if (!data.vendor)                         return t('val.vendor');
         if (!data.process)                        return t('val.process');
         if (!data.productId)                      return t('val.code');
+        if (!data.color)                          return t('val.color');
         if (!data.typeValue)                      return t('val.type');
         if (!data.quantity || data.quantity <= 0) return t('val.quantity');
         if (!data.dateFinished)                   return t('val.datetime');
@@ -868,6 +885,7 @@
             <div class="modal-summary-row"><span>Vendor</span><span>${data.vendor}</span></div>
             <div class="modal-summary-row"><span>Process</span><span>${data.processText}</span></div>
             <div class="modal-summary-row"><span>Code</span><span>${data.codeText}</span></div>
+            <div class="modal-summary-row"><span>Color</span><span>${data.color || '(none)'}</span></div>
             <div class="modal-summary-row"><span>Type</span><span>${data.typeValue}</span></div>
             <div class="modal-summary-row"><span>Quantity</span><span>${data.quantity}</span></div>
             <div class="modal-summary-row"><span>Date &amp; Time</span><span ${dtStyle}>${dtDisplay}</span></div>
@@ -1048,6 +1066,7 @@
             formData.append('process',      data.process);
             formData.append('productId',    data.productId);
             formData.append('typeValue',    data.typeValue);
+            formData.append('color',        data.color);
             formData.append('quantity',     data.quantity);
             formData.append('dateFinished', data.dateFinished);
             formData.append('description',  data.description);
@@ -1091,6 +1110,7 @@
             $('#vendorSelect').val('').trigger('change');
         }
         $('#processSelect').val('').trigger('change');
+        $('#colorSelect').val('').trigger('change');
         $('#typeSelect').val('').trigger('change');
         document.getElementById('quantityInput').value    = '';
         document.getElementById('descriptionInput').value = '';

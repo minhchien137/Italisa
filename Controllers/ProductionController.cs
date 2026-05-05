@@ -22,6 +22,7 @@ namespace ItalisaTools.Controllers
         {
             ViewBag.Vendors   = await _context.SVN_Italisa_vendor.ToListAsync();
             ViewBag.Processes = await _context.SVN_Italisa_Process.ToListAsync();
+            ViewBag.Colors    = await _context.sVN_Italisa_Color.ToListAsync();
             return View();
         }
 
@@ -59,6 +60,7 @@ namespace ItalisaTools.Controllers
                     type_value    = dto.TypeValue,
                     product_qty   = dto.Quantity,
                     process       = dto.Process,
+                    color         = dto.Color,
                     date_finished = dto.DateFinished ?? DateTime.Now,
                     description   = dto.Description,
                     image_path    = imagePath
@@ -90,6 +92,7 @@ namespace ItalisaTools.Controllers
         [HttpGet]
         public async Task<IActionResult> GetHistory(
             string? vendor, string? typeValue, string? process,
+            string? color, int? productId,
             string? dateFrom, string? dateTo)
         {
             try
@@ -104,6 +107,12 @@ namespace ItalisaTools.Controllers
 
                 if (!string.IsNullOrEmpty(process))
                     query = query.Where(x => x.process == process);
+
+                if (!string.IsNullOrEmpty(color))
+                    query = query.Where(x => x.color == color);
+
+                if (productId.HasValue)
+                    query = query.Where(x => x.product_id == productId.Value);
 
                 if (!string.IsNullOrEmpty(dateFrom) && DateTime.TryParse(dateFrom, out var dfrom))
                     query = query.Where(x => x.date_finished >= dfrom);
@@ -121,6 +130,7 @@ namespace ItalisaTools.Controllers
                         x.product_id,
                         x.vendor,
                         x.type_value,
+                        x.color,
                         x.date_finished,
                         x.description,
                         x.image_path
@@ -152,6 +162,16 @@ namespace ItalisaTools.Controllers
                 .Select(p => p.process)
                 .ToListAsync();
             return Json(processes);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetColors()
+        {
+            var colors = await _context.sVN_Italisa_Color
+                .OrderBy(c => c.color)
+                .Select(c => c.color)
+                .ToListAsync();
+            return Json(colors);
         }
 
         [HttpGet]
@@ -316,9 +336,6 @@ namespace ItalisaTools.Controllers
         }
 
 
-
-
-
         // ── DTOs ──────────────────────────────────────────────────────────────
 
         public class CodeItemDto
@@ -332,6 +349,7 @@ namespace ItalisaTools.Controllers
             public string?   Vendor       { get; set; }
             public int?      ProductId    { get; set; }
             public string?   TypeValue    { get; set; }
+            public string?   Color        { get; set; }
             public int?      Quantity     { get; set; }
             public string?   Process      { get; set; }
             public DateTime? DateFinished { get; set; }

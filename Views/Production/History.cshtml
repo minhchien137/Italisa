@@ -89,7 +89,7 @@
         }
 
         /* ── LAYOUT ── */
-        .page-wrapper { max-width: 1300px; margin: 0 auto; padding: 1.5rem 1rem; }
+        .page-wrapper { max-width: 1400px; margin: 0 auto; padding: 1.5rem 1rem; }
         @@media (min-width: 600px) { .page-wrapper { padding: 2.5rem 1.5rem; } }
 
         .page-header { margin-bottom: 1.5rem; }
@@ -141,13 +141,18 @@
         .filter-body.collapsed { display: none; }
         @@media (min-width: 768px) { .filter-body { display: block !important; } }
 
+        /* ── FILTER GRID: 2 rows ── */
         .filter-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 0.75rem;
         }
-        @@media (min-width: 600px) { .filter-grid { grid-template-columns: repeat(3, 1fr); gap: 1rem; } }
-        @@media (min-width: 900px) { .filter-grid { grid-template-columns: repeat(5, 1fr) auto; align-items: end; gap: 1rem; } }
+        @@media (min-width: 600px) {
+            .filter-grid { grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        }
+        @@media (min-width: 1000px) {
+            .filter-grid { grid-template-columns: repeat(7, 1fr) auto; align-items: end; gap: 1rem; }
+        }
 
         .filter-group { display: flex; flex-direction: column; gap: 5px; }
         .filter-group.btn-col { grid-column: 1 / -1; }
@@ -255,6 +260,7 @@
         }
         .badge-blue   { background: var(--denim-light); color: var(--denim-dark); }
         .badge-purple { background: #ede9fe; color: #5b21b6; }
+        .badge-color  { background: #fef3c7; color: #92400e; }
 
         /* ── DESKTOP TABLE ── */
         .table-wrapper { overflow-x: auto; }
@@ -280,8 +286,9 @@
         .td-qty   { font-weight: 700; color: var(--denim); font-size: 1rem; }
         .td-date  { color: var(--gray-600); font-size: 0.81rem; white-space: nowrap; }
         .td-op    { font-size: 0.84rem; font-weight: 500; color: var(--gray-800); max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .td-color { font-size: 0.84rem; }
         .td-desc {
-            max-width: 200px;
+            max-width: 180px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -387,18 +394,36 @@
         </div>
         <div class="filter-body" id="filterBody">
             <div class="filter-grid">
+
+                <!-- Row 1: Vendor, Process, Product, Color, Type, From, To, Button -->
                 <div class="filter-group">
                     <label data-i18n="hist.label.vendor">Vendor</label>
                     <select id="filterVendor">
                         <option value="" data-i18n="hist.all.vendors">All Vendors</option>
                     </select>
                 </div>
+
                 <div class="filter-group">
                     <label data-i18n="hist.label.process">Process</label>
                     <select id="filterProcess">
                         <option value="" data-i18n="hist.all.process">All Process</option>
                     </select>
                 </div>
+
+                <div class="filter-group">
+                    <label data-i18n="hist.label.product">Product</label>
+                    <select id="filterProduct">
+                        <option value="" data-i18n="hist.all.products">All Products</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label data-i18n="hist.label.color">Color</label>
+                    <select id="filterColor">
+                        <option value="" data-i18n="hist.all.colors">All Colors</option>
+                    </select>
+                </div>
+
                 <div class="filter-group">
                     <label data-i18n="hist.label.type">Type</label>
                     <select id="filterType">
@@ -407,14 +432,17 @@
                         <option value="Man Q'ty" data-i18n="type.manpower">Man Q'ty</option>
                     </select>
                 </div>
+
                 <div class="filter-group">
                     <label data-i18n="hist.label.from">From Date</label>
                     <input type="date" id="filterDateFrom" />
                 </div>
+
                 <div class="filter-group">
                     <label data-i18n="hist.label.to">To Date</label>
                     <input type="date" id="filterDateTo" />
                 </div>
+
                 <div class="filter-group btn-col">
                     <label style="visibility:hidden">‎</label>
                     <div class="btn-filter-row">
@@ -422,6 +450,7 @@
                         <button class="btn btn-outline" onclick="clearFilters()" data-i18n="hist.btn.clear">✖ Clear</button>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
@@ -446,6 +475,7 @@
                         <th data-i18n="hist.col.id">#ID</th>
                         <th data-i18n="hist.col.process">Process</th>
                         <th data-i18n="hist.col.product">Product</th>
+                        <th data-i18n="hist.col.color">Color</th>
                         <th data-i18n="hist.col.vendor">Vendor</th>
                         <th data-i18n="hist.col.type">Type</th>
                         <th data-i18n="hist.col.qty">Quantity</th>
@@ -456,7 +486,7 @@
                 </thead>
                 <tbody id="tableBody">
                     <tr>
-                        <td colspan="9">
+                        <td colspan="10">
                             <div class="loading-state">
                                 <div class="spinner"></div>
                                 <p>Loading data...</p>
@@ -532,6 +562,15 @@
             const res   = await fetch(`${pathBase}/Production/GetAllCodes`);
             const codes = await res.json();
             codes.forEach(c => { codeMap[c.value] = c.text; });
+
+            // Populate Product filter dropdown
+            const sel = document.getElementById('filterProduct');
+            codes.sort((a, b) => a.text.localeCompare(b.text)).forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.value;
+                opt.textContent = c.text;
+                sel.appendChild(opt);
+            });
         } catch (e) {
             console.error('loadAllCodes error:', e);
         }
@@ -569,6 +608,22 @@
         } catch (e) { console.error('Load processes error:', e); }
     }
 
+    /* ── Load Colors ── */
+    async function loadColors() {
+        try {
+            const res    = await fetch(`${pathBase}/Production/GetColors`);
+            const colors = await res.json();
+            const sel    = document.getElementById('filterColor');
+            colors.forEach(c => {
+                if (c) {
+                    const opt = document.createElement('option');
+                    opt.value = c; opt.textContent = c;
+                    sel.appendChild(opt);
+                }
+            });
+        } catch (e) { console.error('Load colors error:', e); }
+    }
+
     /* ── Get Operation label ── */
     function getOperation(row) {
         if (row.product_id && codeMap[row.product_id]) return codeMap[row.product_id];
@@ -580,17 +635,21 @@
     async function loadData() {
         const vendor    = document.getElementById('filterVendor').value;
         const process   = document.getElementById('filterProcess').value;
+        const productId = document.getElementById('filterProduct').value;
+        const color     = document.getElementById('filterColor').value;
         const typeValue = document.getElementById('filterType').value;
         const dateFrom  = document.getElementById('filterDateFrom').value;
         const dateTo    = document.getElementById('filterDateTo').value;
 
         const loadingHTML = `<div class="loading-state"><div class="spinner"></div><p>Loading data...</p></div>`;
-        document.getElementById('tableBody').innerHTML = `<tr><td colspan="9">${loadingHTML}</td></tr>`;
+        document.getElementById('tableBody').innerHTML = `<tr><td colspan="10">${loadingHTML}</td></tr>`;
         document.getElementById('cardList').innerHTML  = loadingHTML;
 
         const params = new URLSearchParams();
         if (vendor)    params.append('vendor', vendor);
         if (process)   params.append('process', process);
+        if (productId) params.append('productId', productId);
+        if (color)     params.append('color', color);
         if (typeValue) params.append('typeValue', typeValue);
         if (dateFrom)  params.append('dateFrom', dateFrom);
         if (dateTo)    params.append('dateTo', dateTo);
@@ -608,7 +667,7 @@
 
             if (data.length === 0) {
                 const emptyHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><p>No records match your filters.</p></div>`;
-                document.getElementById('tableBody').innerHTML = `<tr><td colspan="9">${emptyHTML}</td></tr>`;
+                document.getElementById('tableBody').innerHTML = `<tr><td colspan="10">${emptyHTML}</td></tr>`;
                 document.getElementById('cardList').innerHTML  = emptyHTML;
                 return;
             }
@@ -616,6 +675,10 @@
             /* ── Desktop rows ── */
             document.getElementById('tableBody').innerHTML = data.map(row => {
                 const operation = getOperation(row);
+
+                const colorCell = row.color
+                    ? `<td class="td-color"><span class="badge badge-color">${escHtml(row.color)}</span></td>`
+                    : `<td class="no-val">—</td>`;
 
                 const descCell = row.description
                     ? `<td class="td-desc" title="${escHtml(row.description)}">${escHtml(row.description)}</td>`
@@ -631,6 +694,7 @@
                     <td class="td-id">#${row.id}</td>
                     <td>${escHtml(row.process ?? '—')}</td>
                     <td class="td-op" title="${escHtml(operation)}">${escHtml(operation)}</td>
+                    ${colorCell}
                     <td class="td-vendor">${escHtml(row.vendor ?? '—')}</td>
                     <td>
                         <span class="badge ${row.type_value === 'Production Qty' ? 'badge-blue' : 'badge-purple'}">
@@ -660,6 +724,15 @@
                            <span class="data-card-value" style="font-size:0.82rem;color:var(--gray-600)">${escHtml(row.description)}</span>
                        </div>`
                     : '';
+                const colorSection = row.color
+                    ? `<div class="data-card-field">
+                           <span class="data-card-label">Color</span>
+                           <span class="data-card-value"><span class="badge badge-color">${escHtml(row.color)}</span></span>
+                       </div>`
+                    : `<div class="data-card-field">
+                           <span class="data-card-label">Color</span>
+                           <span class="no-val">—</span>
+                       </div>`;
                 return `
                 <div class="data-card">
                     <div class="data-card-top">
@@ -675,6 +748,7 @@
                             <span class="data-card-label">Operation</span>
                             <span class="data-card-value">${escHtml(operation)}</span>
                         </div>
+                        ${colorSection}
                         <div class="data-card-field">
                             <span class="data-card-label">Quantity</span>
                             <span class="data-card-value data-card-qty">${row.product_qty != null ? row.product_qty.toLocaleString() : '—'}</span>
@@ -702,7 +776,7 @@
         } catch (e) {
             console.error('GetHistory error:', e);
             const errHTML = `<div class="empty-state"><div class="empty-state-icon">⚠️</div><p>An error occurred: ${escHtml(e.message)}</p></div>`;
-            document.getElementById('tableBody').innerHTML = `<tr><td colspan="9">${errHTML}</td></tr>`;
+            document.getElementById('tableBody').innerHTML = `<tr><td colspan="10">${errHTML}</td></tr>`;
             document.getElementById('cardList').innerHTML  = errHTML;
             document.getElementById('recordCount').textContent = 'Error';
         }
@@ -720,6 +794,7 @@
             'Vendor':      x.vendor      || '',
             'Process':     x.process     || '',
             'Operation':   getOperation(x),
+            'Color':       x.color       || '',
             'Type':        x.type_value  || '',
             'Quantity':    x.product_qty || 0,
             'Date':        x.date_finished ? new Date(x.date_finished).toLocaleString('vi-VN') : '',
@@ -731,7 +806,7 @@
         XLSX.utils.book_append_sheet(wb, ws, 'Production History');
 
         ws['!cols'] = [
-            {wch:5},{wch:14},{wch:18},{wch:28},{wch:20},{wch:10},{wch:22},{wch:40}
+            {wch:5},{wch:14},{wch:18},{wch:28},{wch:16},{wch:20},{wch:10},{wch:22},{wch:40}
         ];
 
         const now  = new Date();
@@ -742,6 +817,8 @@
     function clearFilters() {
         document.getElementById('filterVendor').value   = '';
         document.getElementById('filterProcess').value  = '';
+        document.getElementById('filterProduct').value  = '';
+        document.getElementById('filterColor').value    = '';
         document.getElementById('filterType').value     = '';
         document.getElementById('filterDateFrom').value = '';
         document.getElementById('filterDateTo').value   = '';
@@ -757,7 +834,7 @@
     }
 
     // Init: load all mappings first, then data
-    Promise.all([loadAllCodes(), loadVendors(), loadProcesses()])
+    Promise.all([loadAllCodes(), loadVendors(), loadProcesses(), loadColors()])
         .then(() => loadData());
 </script>
 </body>
