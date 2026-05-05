@@ -116,6 +116,7 @@ const I18N = {
         'hist.btn.export'     : '⬇ Xuất Excel',
         'hist.col.id'         : '#ID',
         'hist.col.process'    : 'Công đoạn',
+        'hist.col.color'      : 'Màu sắc',
         'hist.col.product'    : 'Sản phẩm',
         'hist.col.vendor'     : 'NCC',
         'hist.col.type'       : 'Loại',
@@ -124,6 +125,7 @@ const I18N = {
         'hist.col.desc'       : 'Mô tả',
         'hist.col.image'      : 'Hình ảnh',
         'hist.loading'        : 'Đang tải dữ liệu...',
+        'hist.empty'          : 'Không có bản ghi nào phù hợp với bộ lọc của bạn.',
         
         /* ── Report page ── */
         'report.title'    : 'Báo cáo Sản xuất',
@@ -331,9 +333,11 @@ const I18N = {
         'hist.table.title'    : '📊 Record List',
         'hist.btn.export'     : '⬇ Export Excel',
         'hist.col.id'         : '#ID',
+        'hist.empty'          : 'No records match your filters.',
         'hist.col.process'    : 'Process',
         'hist.col.product'    : 'Product',
         'hist.col.vendor'     : 'Vendor',
+        'hist.col.color'      : 'Color',
         'hist.col.type'       : 'Type',
         'hist.col.qty'        : 'Quantity',
         'hist.col.date'       : 'Date Finished',

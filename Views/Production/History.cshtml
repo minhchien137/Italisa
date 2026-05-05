@@ -556,24 +556,61 @@
         return '/italisa' + (imagePath.startsWith('/') ? '' : '/') + imagePath;
     }
 
-    /* ── Load All Code Mappings (product_id → Operation text) ── */
+    /* ── Load All Code Mappings (product_id → Operation text) — for codeMap only ── */
     async function loadAllCodes() {
         try {
             const res   = await fetch(`${pathBase}/Production/GetAllCodes`);
             const codes = await res.json();
             codes.forEach(c => { codeMap[c.value] = c.text; });
-
-            // Populate Product filter dropdown
-            const sel = document.getElementById('filterProduct');
-            codes.sort((a, b) => a.text.localeCompare(b.text)).forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c.value;
-                opt.textContent = c.text;
-                sel.appendChild(opt);
-            });
         } catch (e) {
             console.error('loadAllCodes error:', e);
         }
+    }
+
+    /* ── Populate Product dropdown by process (or all if process is empty) ── */
+    async function updateProductFilter(processValue) {
+        const sel = document.getElementById('filterProduct');
+        const prevVal = sel.value;
+
+        // Clear existing options except the first placeholder
+        sel.innerHTML = `<option value="">${t('hist.all.products')}</option>`;
+        sel.disabled  = true;
+        sel.style.opacity = '0.6';
+
+        if (!processValue) {
+            // No process selected → load all codes
+            try {
+                const res   = await fetch(`${pathBase}/Production/GetAllCodes`);
+                const codes = await res.json();
+                codes.sort((a, b) => a.text.localeCompare(b.text)).forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.value;
+                    opt.textContent = c.text;
+                    sel.appendChild(opt);
+                });
+                // Restore previous selection if still available
+                if (prevVal) sel.value = prevVal;
+            } catch (e) {
+                console.error('loadAllCodes error:', e);
+            }
+        } else {
+            // Process selected → load only codes for that process
+            try {
+                const res   = await fetch(`${pathBase}/Production/GetCodesByProcess?process=${encodeURIComponent(processValue)}`);
+                const codes = await res.json();
+                codes.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.value;
+                    opt.textContent = c.text;
+                    sel.appendChild(opt);
+                });
+            } catch (e) {
+                console.error('GetCodesByProcess error:', e);
+            }
+        }
+
+        sel.disabled  = false;
+        sel.style.opacity = '1';
     }
 
     /* ── Load Vendors ── */
@@ -666,7 +703,7 @@
             document.getElementById('recordCount').textContent = `${data.length} records`;
 
             if (data.length === 0) {
-                const emptyHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><p>No records match your filters.</p></div>`;
+                const emptyHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><p data-i18n="hist.empty">No records match your filters.</p></div>`;
                 document.getElementById('tableBody').innerHTML = `<tr><td colspan="10">${emptyHTML}</td></tr>`;
                 document.getElementById('cardList').innerHTML  = emptyHTML;
                 return;
@@ -817,11 +854,11 @@
     function clearFilters() {
         document.getElementById('filterVendor').value   = '';
         document.getElementById('filterProcess').value  = '';
-        document.getElementById('filterProduct').value  = '';
         document.getElementById('filterColor').value    = '';
         document.getElementById('filterType').value     = '';
         document.getElementById('filterDateFrom').value = '';
         document.getElementById('filterDateTo').value   = '';
+        updateProductFilter(''); // reload all products and reset selection
         loadData();
     }
 
@@ -833,9 +870,26 @@
             .replace(/"/g, '&quot;');
     }
 
-    // Init: load all mappings first, then data
-    Promise.all([loadAllCodes(), loadVendors(), loadProcesses(), loadColors()])
-        .then(() => loadData());
+    /* ── Process filter → reload Product dropdown ── */
+    document.getElementById('filterProcess').addEventListener('change', function () {
+        document.getElementById('filterProduct').value = '';
+        updateProductFilter(this.value);
+    });
+
+    /* ── Re-translate Product placeholder khi đổi ngôn ngữ ── */
+    document.addEventListener('langChanged', () => {
+        updateProductFilter(document.getElementById('filterProcess').value);
+    });
+
+    // Init bên trong DOMContentLoaded để applyLang() trong i18n.js
+    // đã set _currentLang đúng trước khi updateProductFilter() gọi t()
+    window.addEventListener('DOMContentLoaded', () => {
+        Promise.all([loadAllCodes(), loadVendors(), loadProcesses(), loadColors()])
+            .then(() => {
+                updateProductFilter('');
+                loadData();
+            });
+    });
 </script>
 </body>
 </html>
