@@ -334,7 +334,6 @@ C:\ITA\Azure.Core.dll
 C:\ITA\Azure.Identity.dll
 C:\ITA\EPPlus.dll
 C:\ITA\EPPlus.Interfaces.dll
-C:\ITA\EPPlus.System.Drawing.dll
 C:\ITA\Microsoft.Bcl.AsyncInterfaces.dll
 C:\ITA\Microsoft.Data.SqlClient.dll
 C:\ITA\Microsoft.EntityFrameworkCore.dll

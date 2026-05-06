@@ -126,6 +126,14 @@ const I18N = {
         'hist.col.image'      : 'Hình ảnh',
         'hist.loading'        : 'Đang tải dữ liệu...',
         'hist.empty'          : 'Không có bản ghi nào phù hợp với bộ lọc của bạn.',
+        'hist.page.show'        : 'Hiển thị',
+        'hist.page.showing'     : 'Đang hiển thị <strong>{from}–{to}</strong> / <strong>{total}</strong> bản ghi',
+        'hist.page.total_pages' : '{pages} trang',
+        'hist.page.no_records'  : 'Không có bản ghi',
+        'hist.page.first'       : 'Trang đầu',
+        'hist.page.prev'        : 'Trang trước',
+        'hist.page.next'        : 'Trang tiếp',
+        'hist.page.last'        : 'Trang cuối',
         
         /* ── Report page ── */
         'report.title'    : 'Báo cáo Sản xuất',
@@ -345,6 +353,14 @@ const I18N = {
         'hist.col.desc'       : 'Description',
         'hist.col.image'      : 'Image',
         'hist.loading'        : 'Loading data...',
+        'hist.page.show'        : 'Show',
+        'hist.page.showing'     : 'Showing <strong>{from}–{to}</strong> of <strong>{total}</strong> records',
+        'hist.page.total_pages' : '{pages} pages',
+        'hist.page.no_records'  : 'No records',
+        'hist.page.first'       : 'First page',
+        'hist.page.prev'        : 'Previous page',
+        'hist.page.next'        : 'Next page',
+        'hist.page.last'        : 'Last page',
         
         /* ── Report page ── */
         'report.title'    : 'Production Report',

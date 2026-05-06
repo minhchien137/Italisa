@@ -536,7 +536,6 @@ C:\ItalisaTools\obj\Release\net9.0\win-x64\ref\ItalisaTools.dll
 C:\ItalisaTools\bin\Release\net9.0\win-x64\dotnet-tools.json
 C:\ItalisaTools\bin\Release\net9.0\win-x64\EPPlus.dll
 C:\ItalisaTools\bin\Release\net9.0\win-x64\EPPlus.Interfaces.dll
-C:\ItalisaTools\bin\Release\net9.0\win-x64\EPPlus.System.Drawing.dll
 C:\ItalisaTools\bin\Release\net9.0\win-x64\Microsoft.IO.RecyclableMemoryStream.dll
 C:\ItalisaTools\obj\Release\net9.0\win-x64\compressed\jnmed1zxya-{0}-5aepywoza8-5aepywoza8.gz
-C:\ItalisaTools\obj\Release\net9.0\win-x64\compressed\jsvhigdrt3-{0}-6a89erfkmc-6a89erfkmc.gz
+C:\ItalisaTools\obj\Release\net9.0\win-x64\compressed\jsvhigdrt3-{0}-vk52yqi83a-vk52yqi83a.gz

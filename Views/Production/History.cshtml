@@ -141,7 +141,7 @@
         .filter-body.collapsed { display: none; }
         @@media (min-width: 768px) { .filter-body { display: block !important; } }
 
-        /* ── FILTER GRID: 2 rows ── */
+        /* ── FILTER GRID ── */
         .filter-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -247,8 +247,42 @@
             font-weight: 600;
             color: var(--denim-dark);
         }
-        .toolbar-right { display: flex; align-items: center; gap: 12px; }
+        .toolbar-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
         .record-count { font-size: 0.8rem; color: var(--gray-400); }
+
+        /* ── Page size selector (in toolbar) ── */
+        .page-size-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .page-size-wrap label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            white-space: nowrap;
+        }
+        .page-size-select {
+            padding: 0.35rem 1.6rem 0.35rem 0.65rem;
+            border: 1.5px solid var(--gray-200);
+            border-radius: 7px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.82rem;
+            color: var(--gray-800);
+            background: var(--white);
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%231B4F8A' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .page-size-select:focus {
+            border-color: var(--denim);
+            box-shadow: 0 0 0 3px rgba(27,79,138,0.1);
+        }
 
         .badge {
             display: inline-block;
@@ -352,6 +386,82 @@
         }
         @@keyframes spin { to { transform: rotate(360deg); } }
 
+        /* ── PAGINATION BAR ── */
+        .pagination-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 0.85rem 1.25rem;
+            border-top: 1px solid var(--gray-100);
+            background: var(--gray-50);
+            border-radius: 0 0 14px 14px;
+        }
+        .pagination-info {
+            font-size: 0.8rem;
+            color: var(--gray-600);
+            white-space: nowrap;
+        }
+        .pagination-info strong {
+            color: var(--denim-dark);
+            font-weight: 700;
+        }
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .pg-btn {
+            min-width: 34px;
+            height: 34px;
+            padding: 0 8px;
+            border-radius: 7px;
+            border: 1.5px solid var(--gray-200);
+            background: var(--white);
+            color: var(--gray-600);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.18s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+        .pg-btn:hover:not(:disabled):not(.pg-active) {
+            border-color: var(--denim);
+            color: var(--denim);
+            background: var(--denim-xlight);
+        }
+        .pg-btn.pg-active {
+            background: linear-gradient(135deg, var(--denim) 0%, var(--denim-mid) 100%);
+            border-color: var(--denim);
+            color: var(--white);
+            box-shadow: 0 2px 8px rgba(27,79,138,0.25);
+            cursor: default;
+        }
+        .pg-btn:disabled {
+            opacity: 0.38;
+            cursor: not-allowed;
+            background: var(--gray-100);
+        }
+        .pg-ellipsis {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 28px;
+            height: 34px;
+            color: var(--gray-400);
+            font-size: 0.85rem;
+            user-select: none;
+        }
+        @@media (max-width: 480px) {
+            .pagination-bar { flex-direction: column; align-items: flex-start; }
+        }
+
         /* ── LIGHTBOX ── */
         .lightbox {
             display: none;
@@ -395,7 +505,6 @@
         <div class="filter-body" id="filterBody">
             <div class="filter-grid">
 
-                <!-- Row 1: Vendor, Process, Product, Color, Type, From, To, Button -->
                 <div class="filter-group">
                     <label data-i18n="hist.label.vendor">Vendor</label>
                     <select id="filterVendor">
@@ -460,6 +569,17 @@
         <div class="table-toolbar">
             <h3 data-i18n="hist.table.title">📊 Record List</h3>
             <div class="toolbar-right">
+                <!-- Page size selector -->
+                <div class="page-size-wrap">
+                    <label data-i18n="hist.page.show">Show</label>
+                    <select class="page-size-select" id="pageSizeSelect" onchange="onPageSizeChange()">
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                    </select>
+                </div>
+
                 <span class="record-count" id="recordCount" data-i18n="hist.loading">Loading...</span>
                 <button class="btn btn-excel" onclick="exportExcel()" id="exportBtn" style="font-size:0.82rem;padding:0.5rem 0.9rem;min-height:36px;" data-i18n="hist.btn.export">
                     ⬇ Export Excel
@@ -489,7 +609,7 @@
                         <td colspan="10">
                             <div class="loading-state">
                                 <div class="spinner"></div>
-                                <p>Loading data...</p>
+                                <p data-i18n="hist.loading">Loading data...</p>
                             </div>
                         </td>
                     </tr>
@@ -501,9 +621,12 @@
         <div class="card-list" id="cardList">
             <div class="loading-state">
                 <div class="spinner"></div>
-                <p>Loading data...</p>
+                <p data-i18n="hist.loading">Loading data...</p>
             </div>
         </div>
+
+        <!-- ── PAGINATION ── -->
+        <div class="pagination-bar" id="paginationBar" style="display:none;"></div>
     </div>
 </div>
 
@@ -513,14 +636,17 @@
     <img id="lightboxImg" src="" alt="Full image" onclick="event.stopPropagation()" />
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
 <script>
     const pathBase = '@Context.Request.PathBase'.replace(/\/$/, '');
 
     // product_id → Operation text lookup
     let codeMap = {};
-    // Cache of current data for export
+    // Full fetched data (all pages)
     let currentData = [];
+    // Pagination state
+    let currentPage = 1;
+    let pageSize    = 25;
 
     /* ── Filter collapsible (mobile) ── */
     let filterOpen = true;
@@ -556,7 +682,7 @@
         return '/italisa' + (imagePath.startsWith('/') ? '' : '/') + imagePath;
     }
 
-    /* ── Load All Code Mappings (product_id → Operation text) — for codeMap only ── */
+    /* ── Load All Code Mappings ── */
     async function loadAllCodes() {
         try {
             const res   = await fetch(`${pathBase}/Production/GetAllCodes`);
@@ -567,18 +693,16 @@
         }
     }
 
-    /* ── Populate Product dropdown by process (or all if process is empty) ── */
+    /* ── Populate Product dropdown ── */
     async function updateProductFilter(processValue) {
         const sel = document.getElementById('filterProduct');
         const prevVal = sel.value;
 
-        // Clear existing options except the first placeholder
         sel.innerHTML = `<option value="">${t('hist.all.products')}</option>`;
         sel.disabled  = true;
         sel.style.opacity = '0.6';
 
         if (!processValue) {
-            // No process selected → load all codes
             try {
                 const res   = await fetch(`${pathBase}/Production/GetAllCodes`);
                 const codes = await res.json();
@@ -588,13 +712,11 @@
                     opt.textContent = c.text;
                     sel.appendChild(opt);
                 });
-                // Restore previous selection if still available
                 if (prevVal) sel.value = prevVal;
             } catch (e) {
                 console.error('loadAllCodes error:', e);
             }
         } else {
-            // Process selected → load only codes for that process
             try {
                 const res   = await fetch(`${pathBase}/Production/GetCodesByProcess?process=${encodeURIComponent(processValue)}`);
                 const codes = await res.json();
@@ -668,6 +790,219 @@
         return '—';
     }
 
+    /* ── escHtml ── */
+    function escHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+
+    /** Change handler for the page-size <select> */
+    function onPageSizeChange() {
+        pageSize    = parseInt(document.getElementById('pageSizeSelect').value, 10);
+        currentPage = 1;
+        renderPage(1);
+    }
+
+    function renderPage(page) {
+        const total     = currentData.length;
+        const totalPages = Math.ceil(total / pageSize);
+        currentPage     = Math.max(1, Math.min(page, totalPages || 1));
+
+        const start = (currentPage - 1) * pageSize;          // 0-based index
+        const end   = Math.min(start + pageSize, total);
+        const slice = currentData.slice(start, end);
+
+        /* ── Record count label ── */
+        if (total === 0) {
+            document.getElementById('recordCount').innerHTML =
+                t('hist.page.no_records');
+        } else {
+            document.getElementById('recordCount').innerHTML =
+                t('hist.page.showing', { from: start + 1, to: end, total });
+        }
+
+        /* ── Desktop rows ── */
+        if (slice.length === 0) {
+            const emptyHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><p data-i18n="hist.empty">${t('hist.empty')}</p></div>`;
+            document.getElementById('tableBody').innerHTML = `<tr><td colspan="10">${emptyHTML}</td></tr>`;
+            document.getElementById('cardList').innerHTML  = emptyHTML;
+            document.getElementById('paginationBar').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('tableBody').innerHTML = slice.map(row => {
+            const operation = getOperation(row);
+
+            const colorCell = row.color
+                ? `<td class="td-color"><span class="badge badge-color">${escHtml(row.color)}</span></td>`
+                : `<td class="no-val">—</td>`;
+
+            const descCell = row.description
+                ? `<td class="td-desc" title="${escHtml(row.description)}">${escHtml(row.description)}</td>`
+                : `<td class="no-val">—</td>`;
+
+            const imgSrc  = fixImagePath(row.image_path);
+            const imgCell = row.image_path
+                ? `<td class="td-img"><img class="thumb" src="${imgSrc}" alt="img" loading="lazy" onclick="openLightbox('${imgSrc}')" /></td>`
+                : `<td class="td-img no-val">—</td>`;
+
+            return `
+            <tr>
+                <td class="td-id">#${row.id}</td>
+                <td>${escHtml(row.process ?? '—')}</td>
+                <td class="td-op" title="${escHtml(operation)}">${escHtml(operation)}</td>
+                ${colorCell}
+                <td class="td-vendor">${escHtml(row.vendor ?? '—')}</td>
+                <td>
+                    <span class="badge ${row.type_value === 'Production Qty' ? 'badge-blue' : 'badge-purple'}">
+                        ${escHtml(row.type_value ?? '—')}
+                    </span>
+                </td>
+                <td class="td-qty">${row.product_qty != null ? row.product_qty.toLocaleString() : '<span class="no-val">—</span>'}</td>
+                <td class="td-date">${row.date_finished ? new Date(row.date_finished).toLocaleString() : '—'}</td>
+                ${descCell}
+                ${imgCell}
+            </tr>`;
+        }).join('');
+
+        /* ── Mobile cards ── */
+        document.getElementById('cardList').innerHTML = slice.map(row => {
+            const operation  = getOperation(row);
+            const imgSrc     = fixImagePath(row.image_path);
+            const imgSection = row.image_path
+                ? `<div class="data-card-field full">
+                       <span class="data-card-label">Image</span>
+                       <img class="card-thumb" src="${imgSrc}" alt="img" loading="lazy" onclick="openLightbox('${imgSrc}')" />
+                   </div>`
+                : '';
+            const descSection = row.description
+                ? `<div class="data-card-field full">
+                       <span class="data-card-label">Description</span>
+                       <span class="data-card-value" style="font-size:0.82rem;color:var(--gray-600)">${escHtml(row.description)}</span>
+                   </div>`
+                : '';
+            const colorSection = row.color
+                ? `<div class="data-card-field">
+                       <span class="data-card-label">Color</span>
+                       <span class="data-card-value"><span class="badge badge-color">${escHtml(row.color)}</span></span>
+                   </div>`
+                : `<div class="data-card-field">
+                       <span class="data-card-label">Color</span>
+                       <span class="no-val">—</span>
+                   </div>`;
+            return `
+            <div class="data-card">
+                <div class="data-card-top">
+                    <span class="data-card-vendor">${escHtml(row.vendor ?? '—')}</span>
+                    <span class="data-card-id">#${row.id}</span>
+                </div>
+                <div class="data-card-body">
+                    <div class="data-card-field">
+                        <span class="data-card-label">Process</span>
+                        <span class="data-card-value">${escHtml(row.process ?? '—')}</span>
+                    </div>
+                    <div class="data-card-field">
+                        <span class="data-card-label">Operation</span>
+                        <span class="data-card-value">${escHtml(operation)}</span>
+                    </div>
+                    ${colorSection}
+                    <div class="data-card-field">
+                        <span class="data-card-label">Quantity</span>
+                        <span class="data-card-value data-card-qty">${row.product_qty != null ? row.product_qty.toLocaleString() : '—'}</span>
+                    </div>
+                    <div class="data-card-field">
+                        <span class="data-card-label">Type</span>
+                        <span class="data-card-value">
+                            <span class="badge ${row.type_value === 'Production Qty' ? 'badge-blue' : 'badge-purple'}">
+                                ${escHtml(row.type_value ?? '—')}
+                            </span>
+                        </span>
+                    </div>
+                    <div class="data-card-field full">
+                        <span class="data-card-label">Date Finished</span>
+                        <span class="data-card-value" style="font-size:0.8rem;color:var(--gray-600)">
+                            ${row.date_finished ? new Date(row.date_finished).toLocaleString() : '—'}
+                        </span>
+                    </div>
+                    ${descSection}
+                    ${imgSection}
+                </div>
+            </div>`;
+        }).join('');
+
+        /* ── Render pagination controls ── */
+        renderPagination(total, totalPages);
+    }
+
+    /**
+     * Build and inject the pagination bar HTML.
+     */
+    function renderPagination(total, totalPages) {
+        const bar = document.getElementById('paginationBar');
+
+        if (total === 0 || totalPages <= 1) {
+            bar.style.display = 'none';
+            return;
+        }
+        bar.style.display = 'flex';
+
+        const start = (currentPage - 1) * pageSize + 1;
+        const end   = Math.min(currentPage * pageSize, total);
+
+        /* Info text */
+        const infoHtml = `
+            <div class="pagination-info">
+                ${t('hist.page.showing', { from: start, to: end, total })}
+                &nbsp;·&nbsp;
+                ${t('hist.page.total_pages', { pages: totalPages })}
+            </div>`;
+
+        /* Page buttons with ellipsis window */
+        const WING = 2;   // pages shown each side of current
+        let pages = [];
+
+        for (let p = 1; p <= totalPages; p++) {
+            if (
+                p === 1 ||
+                p === totalPages ||
+                (p >= currentPage - WING && p <= currentPage + WING)
+            ) {
+                pages.push(p);
+            } else if (
+                p === currentPage - WING - 1 ||
+                p === currentPage + WING + 1
+            ) {
+                pages.push('…');
+            }
+        }
+        // Remove duplicate ellipsis
+        pages = pages.filter((v, i, a) => !(v === '…' && a[i - 1] === '…'));
+
+        let btns = '';
+
+        /* First + Prev */
+        btns += `<button class="pg-btn" onclick="renderPage(1)" ${currentPage === 1 ? 'disabled' : ''} title="${t('hist.page.first')}">«</button>`;
+        btns += `<button class="pg-btn" onclick="renderPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} title="${t('hist.page.prev')}">‹</button>`;
+
+        pages.forEach(p => {
+            if (p === '…') {
+                btns += `<span class="pg-ellipsis">…</span>`;
+            } else {
+                btns += `<button class="pg-btn ${p === currentPage ? 'pg-active' : ''}" onclick="renderPage(${p})">${p}</button>`;
+            }
+        });
+
+        /* Next + Last */
+        btns += `<button class="pg-btn" onclick="renderPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} title="${t('hist.page.next')}">›</button>`;
+        btns += `<button class="pg-btn" onclick="renderPage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''} title="${t('hist.page.last')}">»</button>`;
+
+        bar.innerHTML = infoHtml + `<div class="pagination-controls">${btns}</div>`;
+    }
+
     /* ── Load Data ── */
     async function loadData() {
         const vendor    = document.getElementById('filterVendor').value;
@@ -678,9 +1013,11 @@
         const dateFrom  = document.getElementById('filterDateFrom').value;
         const dateTo    = document.getElementById('filterDateTo').value;
 
-        const loadingHTML = `<div class="loading-state"><div class="spinner"></div><p>Loading data...</p></div>`;
+        const loadingHTML = `<div class="loading-state"><div class="spinner"></div><p>${t('hist.loading')}</p></div>`;
         document.getElementById('tableBody').innerHTML = `<tr><td colspan="10">${loadingHTML}</td></tr>`;
         document.getElementById('cardList').innerHTML  = loadingHTML;
+        document.getElementById('paginationBar').style.display = 'none';
+        document.getElementById('recordCount').innerHTML = t('hist.loading');
 
         const params = new URLSearchParams();
         if (vendor)    params.append('vendor', vendor);
@@ -698,157 +1035,58 @@
                 throw new Error(err.error || `HTTP ${res.status}`);
             }
             const data = await res.json();
-            currentData = data; // cache for export
-
-            document.getElementById('recordCount').textContent = `${data.length} records`;
+            currentData = data;
+            currentPage = 1;    // reset to first page on new search
 
             if (data.length === 0) {
-                const emptyHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><p data-i18n="hist.empty">No records match your filters.</p></div>`;
+                const emptyHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><p>${t('hist.empty')}</p></div>`;
                 document.getElementById('tableBody').innerHTML = `<tr><td colspan="10">${emptyHTML}</td></tr>`;
                 document.getElementById('cardList').innerHTML  = emptyHTML;
+                document.getElementById('recordCount').innerHTML = t('hist.page.no_records');
+                document.getElementById('paginationBar').style.display = 'none';
                 return;
             }
 
-            /* ── Desktop rows ── */
-            document.getElementById('tableBody').innerHTML = data.map(row => {
-                const operation = getOperation(row);
-
-                const colorCell = row.color
-                    ? `<td class="td-color"><span class="badge badge-color">${escHtml(row.color)}</span></td>`
-                    : `<td class="no-val">—</td>`;
-
-                const descCell = row.description
-                    ? `<td class="td-desc" title="${escHtml(row.description)}">${escHtml(row.description)}</td>`
-                    : `<td class="no-val">—</td>`;
-
-                const imgSrc = fixImagePath(row.image_path);
-                const imgCell = row.image_path
-                    ? `<td class="td-img"><img class="thumb" src="${imgSrc}" alt="img" loading="lazy" onclick="openLightbox('${imgSrc}')" /></td>`
-                    : `<td class="td-img no-val">—</td>`;
-
-                return `
-                <tr>
-                    <td class="td-id">#${row.id}</td>
-                    <td>${escHtml(row.process ?? '—')}</td>
-                    <td class="td-op" title="${escHtml(operation)}">${escHtml(operation)}</td>
-                    ${colorCell}
-                    <td class="td-vendor">${escHtml(row.vendor ?? '—')}</td>
-                    <td>
-                        <span class="badge ${row.type_value === 'Production Qty' ? 'badge-blue' : 'badge-purple'}">
-                            ${escHtml(row.type_value ?? '—')}
-                        </span>
-                    </td>
-                    <td class="td-qty">${row.product_qty != null ? row.product_qty.toLocaleString() : '<span class="no-val">—</span>'}</td>
-                    <td class="td-date">${row.date_finished ? new Date(row.date_finished).toLocaleString() : '—'}</td>
-                    ${descCell}
-                    ${imgCell}
-                </tr>`;
-            }).join('');
-
-            /* ── Mobile cards ── */
-            document.getElementById('cardList').innerHTML = data.map(row => {
-                const operation = getOperation(row);
-                const imgSrc = fixImagePath(row.image_path);
-                const imgSection = row.image_path
-                    ? `<div class="data-card-field full">
-                           <span class="data-card-label">Image</span>
-                           <img class="card-thumb" src="${imgSrc}" alt="img" loading="lazy" onclick="openLightbox('${imgSrc}')" />
-                       </div>`
-                    : '';
-                const descSection = row.description
-                    ? `<div class="data-card-field full">
-                           <span class="data-card-label">Description</span>
-                           <span class="data-card-value" style="font-size:0.82rem;color:var(--gray-600)">${escHtml(row.description)}</span>
-                       </div>`
-                    : '';
-                const colorSection = row.color
-                    ? `<div class="data-card-field">
-                           <span class="data-card-label">Color</span>
-                           <span class="data-card-value"><span class="badge badge-color">${escHtml(row.color)}</span></span>
-                       </div>`
-                    : `<div class="data-card-field">
-                           <span class="data-card-label">Color</span>
-                           <span class="no-val">—</span>
-                       </div>`;
-                return `
-                <div class="data-card">
-                    <div class="data-card-top">
-                        <span class="data-card-vendor">${escHtml(row.vendor ?? '—')}</span>
-                        <span class="data-card-id">#${row.id}</span>
-                    </div>
-                    <div class="data-card-body">
-                        <div class="data-card-field">
-                            <span class="data-card-label">Process</span>
-                            <span class="data-card-value">${escHtml(row.process ?? '—')}</span>
-                        </div>
-                        <div class="data-card-field">
-                            <span class="data-card-label">Operation</span>
-                            <span class="data-card-value">${escHtml(operation)}</span>
-                        </div>
-                        ${colorSection}
-                        <div class="data-card-field">
-                            <span class="data-card-label">Quantity</span>
-                            <span class="data-card-value data-card-qty">${row.product_qty != null ? row.product_qty.toLocaleString() : '—'}</span>
-                        </div>
-                        <div class="data-card-field">
-                            <span class="data-card-label">Type</span>
-                            <span class="data-card-value">
-                                <span class="badge ${row.type_value === 'Production Qty' ? 'badge-blue' : 'badge-purple'}">
-                                    ${escHtml(row.type_value ?? '—')}
-                                </span>
-                            </span>
-                        </div>
-                        <div class="data-card-field full">
-                            <span class="data-card-label">Date Finished</span>
-                            <span class="data-card-value" style="font-size:0.8rem;color:var(--gray-600)">
-                                ${row.date_finished ? new Date(row.date_finished).toLocaleString() : '—'}
-                            </span>
-                        </div>
-                        ${descSection}
-                        ${imgSection}
-                    </div>
-                </div>`;
-            }).join('');
+            renderPage(1);
 
         } catch (e) {
             console.error('GetHistory error:', e);
             const errHTML = `<div class="empty-state"><div class="empty-state-icon">⚠️</div><p>An error occurred: ${escHtml(e.message)}</p></div>`;
             document.getElementById('tableBody').innerHTML = `<tr><td colspan="10">${errHTML}</td></tr>`;
             document.getElementById('cardList').innerHTML  = errHTML;
-            document.getElementById('recordCount').textContent = 'Error';
+            document.getElementById('recordCount').innerHTML = 'Error';
+            document.getElementById('paginationBar').style.display = 'none';
         }
     }
 
-    /* ── Export Excel ── */
+    /* ── Export Excel — server-side (with embedded images via EPPlus) ── */
     function exportExcel() {
         if (!currentData.length) {
-            alert('No data to export. Please search first.');
+            alert(t('hist.page.no_records'));
             return;
         }
 
-        const rows = currentData.map((x, i) => ({
-            '#':           i + 1,
-            'Vendor':      x.vendor      || '',
-            'Process':     x.process     || '',
-            'Operation':   getOperation(x),
-            'Color':       x.color       || '',
-            'Type':        x.type_value  || '',
-            'Quantity':    x.product_qty || 0,
-            'Date':        x.date_finished ? new Date(x.date_finished).toLocaleString('vi-VN') : '',
-            'Description': x.description || ''
-        }));
+        /* Pass the same filter values that were used for the current search,
+           so the server re-queries the exact same dataset and embeds images. */
+        const params = new URLSearchParams();
+        const vendor    = document.getElementById('filterVendor').value;
+        const process   = document.getElementById('filterProcess').value;
+        const productId = document.getElementById('filterProduct').value;
+        const color     = document.getElementById('filterColor').value;
+        const typeValue = document.getElementById('filterType').value;
+        const dateFrom  = document.getElementById('filterDateFrom').value;
+        const dateTo    = document.getElementById('filterDateTo').value;
 
-        const ws = XLSX.utils.json_to_sheet(rows);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Production History');
+        if (vendor)    params.append('vendor',    vendor);
+        if (process)   params.append('process',   process);
+        if (productId) params.append('productId', productId);
+        if (color)     params.append('color',     color);
+        if (typeValue) params.append('typeValue', typeValue);
+        if (dateFrom)  params.append('dateFrom',  dateFrom);
+        if (dateTo)    params.append('dateTo',    dateTo);
 
-        ws['!cols'] = [
-            {wch:5},{wch:14},{wch:18},{wch:28},{wch:16},{wch:20},{wch:10},{wch:22},{wch:40}
-        ];
-
-        const now  = new Date();
-        const fname = `Production_History_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.xlsx`;
-        XLSX.writeFile(wb, fname);
+        /* Open in same tab — browser will treat the xlsx response as a download */
+        window.location.href = `${pathBase}/Production/ExportHistoryExcel?${params.toString()}`;
     }
 
     function clearFilters() {
@@ -858,16 +1096,8 @@
         document.getElementById('filterType').value     = '';
         document.getElementById('filterDateFrom').value = '';
         document.getElementById('filterDateTo').value   = '';
-        updateProductFilter(''); // reload all products and reset selection
+        updateProductFilter('');
         loadData();
-    }
-
-    function escHtml(str) {
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
     }
 
     /* ── Process filter → reload Product dropdown ── */
@@ -876,13 +1106,21 @@
         updateProductFilter(this.value);
     });
 
-    /* ── Re-translate Product placeholder khi đổi ngôn ngữ ── */
+    /* ── Re-translate Product placeholder on language change ── */
     document.addEventListener('langChanged', () => {
         updateProductFilter(document.getElementById('filterProcess').value);
+        // Re-render pagination labels if data already loaded
+        if (currentData.length > 0) {
+            const totalPages = Math.ceil(currentData.length / pageSize);
+            renderPagination(currentData.length, totalPages);
+            /* also refresh record-count text */
+            const start = (currentPage - 1) * pageSize + 1;
+            const end   = Math.min(currentPage * pageSize, currentData.length);
+            document.getElementById('recordCount').innerHTML =
+                t('hist.page.showing', { from: start, to: end, total: currentData.length });
+        }
     });
 
-    // Init bên trong DOMContentLoaded để applyLang() trong i18n.js
-    // đã set _currentLang đúng trước khi updateProductFilter() gọi t()
     window.addEventListener('DOMContentLoaded', () => {
         Promise.all([loadAllCodes(), loadVendors(), loadProcesses(), loadColors()])
             .then(() => {

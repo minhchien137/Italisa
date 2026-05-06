@@ -2,7 +2,10 @@ using ItalisaTools.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.SqlClient;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
 using System.Data;
+using System.Drawing;
 
 namespace ItalisaTools.Controllers
 {
@@ -32,7 +35,6 @@ namespace ItalisaTools.Controllers
         {
             if (dto == null)
                 return Json(new { success = false, message = "Invalid data." });
-                    // ── Server-side validation ──
             if (string.IsNullOrWhiteSpace(dto.Vendor))
                 return Json(new { success = false, message = "Vendor is required." });
             if (string.IsNullOrWhiteSpace(dto.Process))
@@ -45,10 +47,9 @@ namespace ItalisaTools.Controllers
                 return Json(new { success = false, message = "Type is required." });
             if (dto.Quantity == null || dto.Quantity <= 0)
                 return Json(new { success = false, message = "Quantity must be a positive number." });
-                
+
             try
             {
-                // ── Save image file ──
                 string? imagePath = null;
                 if (dto.ImageFile != null && dto.ImageFile.Length > 0)
                 {
@@ -65,7 +66,6 @@ namespace ItalisaTools.Controllers
                     imagePath = $"{Request.PathBase}/uploads/production/{fileName}";
                 }
 
-                // ── Build record ──
                 var record = new SVN_Italisa_Production
                 {
                     vendor        = dto.Vendor,
@@ -82,7 +82,6 @@ namespace ItalisaTools.Controllers
                 _context.SVN_Italisa_Production.Add(record);
                 await _context.SaveChangesAsync();
 
-                // ── Sync stored procedure (SP tự quản lý transaction bên trong) ──
                 await _context.Database.ExecuteSqlRawAsync("EXEC SVN_Sync_Production_By_Hour_ITA");
 
                 return Json(new { success = true, message = "Save successfully!" });
@@ -97,10 +96,9 @@ namespace ItalisaTools.Controllers
             }
         }
 
-        public IActionResult History()
-        {
-            return View();
-        }
+        // ── History page ────────────────────────────────────────────────────
+
+        public IActionResult History() => View();
 
         [HttpGet]
         public async Task<IActionResult> GetHistory(
@@ -110,43 +108,12 @@ namespace ItalisaTools.Controllers
         {
             try
             {
-                var query = _context.SVN_Italisa_Production.AsQueryable();
-
-                if (!string.IsNullOrEmpty(vendor))
-                    query = query.Where(x => x.vendor == vendor);
-
-                if (!string.IsNullOrEmpty(typeValue))
-                    query = query.Where(x => x.type_value == typeValue);
-
-                if (!string.IsNullOrEmpty(process))
-                    query = query.Where(x => x.process == process);
-
-                if (!string.IsNullOrEmpty(color))
-                    query = query.Where(x => x.color == color);
-
-                if (productId.HasValue)
-                    query = query.Where(x => x.product_id == productId.Value);
-
-                if (!string.IsNullOrEmpty(dateFrom) && DateTime.TryParse(dateFrom, out var dfrom))
-                    query = query.Where(x => x.date_finished >= dfrom);
-
-                if (!string.IsNullOrEmpty(dateTo) && DateTime.TryParse(dateTo, out var dto2))
-                    query = query.Where(x => x.date_finished <= dto2.AddDays(1));
-
-                var data = await query
-                    .OrderByDescending(x => x.date_finished)
+                var data = await BuildHistoryQuery(vendor, typeValue, process, color, productId, dateFrom, dateTo)
                     .Select(x => new
                     {
-                        x.id,
-                        x.process,
-                        x.product_qty,
-                        x.product_id,
-                        x.vendor,
-                        x.type_value,
-                        x.color,
-                        x.date_finished,
-                        x.description,
-                        x.image_path
+                        x.id, x.process, x.product_qty, x.product_id,
+                        x.vendor, x.type_value, x.color,
+                        x.date_finished, x.description, x.image_path
                     })
                     .ToListAsync();
 
@@ -158,6 +125,234 @@ namespace ItalisaTools.Controllers
                 return StatusCode(500, new { error = ex.Message });
             }
         }
+
+        // ── Export Excel with embedded images ───────────────────────────────
+
+        [HttpGet]
+        public async Task<IActionResult> ExportHistoryExcel(
+            string? vendor, string? typeValue, string? process,
+            string? color, int? productId,
+            string? dateFrom, string? dateTo)
+        {
+            try
+            {
+                // 1. Fetch data (same filters as GetHistory)
+                var data = await BuildHistoryQuery(vendor, typeValue, process, color, productId, dateFrom, dateTo)
+                    .ToListAsync();
+
+                // 2. Build product_id → Operation label map
+                var codeMap = await GetCodeMapAsync();
+
+                // 3. Generate Excel with EPPlus
+                ExcelPackage.License.SetNonCommercialOrganization("ItalisaTools");
+                using var package = new ExcelPackage();
+                var ws = package.Workbook.Worksheets.Add("Production History");
+
+                // ── Column definitions ──────────────────────────────────────
+                // Col:  1     2        3         4           5       6      7         8       9             10
+                // Hdr:  #  Vendor  Process  Operation  Color   Type  Quantity  Date  Description  Image
+                double[] colWidths = { 5, 14, 18, 32, 16, 20, 12, 22, 40, 16 };
+                string[] headers   = { "#", "Vendor", "Process", "Operation", "Color", "Type", "Quantity", "Date", "Description", "Image" };
+
+                // ── Header row ──────────────────────────────────────────────
+                for (int c = 0; c < headers.Length; c++)
+                {
+                    var cell = ws.Cells[1, c + 1];
+                    cell.Value = headers[c];
+                    cell.Style.Font.Bold = true;
+                    cell.Style.Font.Color.SetColor(Color.White);
+                    cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    cell.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(0x1B, 0x4F, 0x8A)); // --denim
+                    cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    cell.Style.VerticalAlignment   = ExcelVerticalAlignment.Center;
+                    cell.Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
+                    cell.Style.Border.Bottom.Color.SetColor(Color.FromArgb(0x0F, 0x2F, 0x52));
+                }
+                ws.Row(1).Height = 22;
+
+                // ── Data rows ───────────────────────────────────────────────
+                const int    ImgCol        = 10;    // column index (1-based)
+                const double ImgRowHeight  = 65;    // Excel row height units ≈ 86 px
+                const int    ImgSizePx     = 70;    // embedded picture px (square)
+
+                for (int i = 0; i < data.Count; i++)
+                {
+                    var item   = data[i];
+                    int exlRow = i + 2;             // Excel row (1-based, header is row 1)
+
+                    // ── Cell values ─────────────────────────────────────────
+                    ws.Cells[exlRow, 1].Value = i + 1;
+                    ws.Cells[exlRow, 2].Value = item.vendor      ?? "";
+                    ws.Cells[exlRow, 3].Value = item.process     ?? "";
+                    ws.Cells[exlRow, 4].Value = codeMap.TryGetValue(item.product_id ?? -1, out var op) ? op
+                                                : item.product_id.HasValue ? $"ID:{item.product_id}" : "";
+                    ws.Cells[exlRow, 5].Value = item.color       ?? "";
+                    ws.Cells[exlRow, 6].Value = item.type_value  ?? "";
+                    ws.Cells[exlRow, 7].Value = item.product_qty ?? 0;
+                    ws.Cells[exlRow, 8].Value = item.date_finished.ToString("dd/MM/yyyy HH:mm");
+                    ws.Cells[exlRow, 9].Value = item.description ?? "";
+
+                    // ── Alternate row background ────────────────────────────
+                    if (i % 2 == 1)
+                    {
+                        using var range = ws.Cells[exlRow, 1, exlRow, ImgCol];
+                        range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                        range.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(0xEF, 0xF6, 0xFF));
+                    }
+
+                    // ── Embed image ─────────────────────────────────────────
+                    var physPath = ResolvePhysicalImagePath(item.image_path);
+                    if (physPath != null)
+                    {
+                        try
+                        {
+                            ws.Row(exlRow).Height = ImgRowHeight;
+
+                            using var fileStream = new FileStream(physPath, FileMode.Open, FileAccess.Read);
+                            var pic = ws.Drawings.AddPicture($"img_{exlRow}", fileStream);
+                            pic.SetPosition(exlRow - 1, 3, ImgCol - 1, 3);
+                            pic.SetSize(ImgSizePx, ImgSizePx);
+                        }
+                        catch (Exception imgEx)
+                        {
+                            Console.WriteLine($"ExportExcel image error row {exlRow}: {imgEx.Message}");
+                        }
+                    }
+
+                    // ── Vertical alignment for all data cells ───────────────
+                    ws.Cells[exlRow, 1, exlRow, ImgCol - 1].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                }
+
+                // ── Global style ────────────────────────────────────────────
+                // Quantity column: right-align + number format
+                ws.Column(7).Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+                ws.Cells[2, 7, data.Count + 1, 7].Style.Numberformat.Format = "#,##0";
+
+                // Borders on entire data range
+                if (data.Count > 0)
+                {
+                    var dataRange = ws.Cells[1, 1, data.Count + 1, ImgCol];
+                    dataRange.Style.Border.BorderAround(ExcelBorderStyle.Thin, Color.FromArgb(0xE2, 0xE8, 0xF0));
+                    // Internal borders
+                    for (int r = 2; r <= data.Count + 1; r++)
+                        ws.Cells[r, 1, r, ImgCol].Style.Border.Bottom.Style = ExcelBorderStyle.Hair;
+                }
+
+                // ── Column widths ───────────────────────────────────────────
+                for (int c = 0; c < colWidths.Length; c++)
+                    ws.Column(c + 1).Width = colWidths[c];
+
+                // Freeze header row
+                ws.View.FreezePanes(2, 1);
+
+                // ── Return file ─────────────────────────────────────────────
+                var bytes    = package.GetAsByteArray();
+                var fileName = $"Production_History_{DateTime.Now:yyyyMMdd_HHmm}.xlsx";
+                return File(
+                    bytes,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    fileName);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ExportHistoryExcel Error: {ex.Message}");
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        // ── Shared query builder ─────────────────────────────────────────────
+
+        private IQueryable<SVN_Italisa_Production> BuildHistoryQuery(
+            string? vendor, string? typeValue, string? process,
+            string? color, int? productId,
+            string? dateFrom, string? dateTo)
+        {
+            var query = _context.SVN_Italisa_Production.AsQueryable();
+
+            if (!string.IsNullOrEmpty(vendor))
+                query = query.Where(x => x.vendor == vendor);
+            if (!string.IsNullOrEmpty(typeValue))
+                query = query.Where(x => x.type_value == typeValue);
+            if (!string.IsNullOrEmpty(process))
+                query = query.Where(x => x.process == process);
+            if (!string.IsNullOrEmpty(color))
+                query = query.Where(x => x.color == color);
+            if (productId.HasValue)
+                query = query.Where(x => x.product_id == productId.Value);
+            if (!string.IsNullOrEmpty(dateFrom) && DateTime.TryParse(dateFrom, out var dfrom))
+                query = query.Where(x => x.date_finished >= dfrom);
+            if (!string.IsNullOrEmpty(dateTo) && DateTime.TryParse(dateTo, out var dto2))
+                query = query.Where(x => x.date_finished <= dto2.AddDays(1));
+
+            return query.OrderByDescending(x => x.date_finished);
+        }
+
+        // ── Helper: resolve stored image path → physical file path ──────────
+
+        private string? ResolvePhysicalImagePath(string? storedPath)
+        {
+            if (string.IsNullOrEmpty(storedPath)) return null;
+
+            var path      = storedPath;
+            var pathBase  = HttpContext.Request.PathBase.Value ?? "";
+
+            // Strip PathBase prefix (e.g. "/italisa")
+            if (!string.IsNullOrEmpty(pathBase) &&
+                path.StartsWith(pathBase, StringComparison.OrdinalIgnoreCase))
+            {
+                path = path[pathBase.Length..];
+            }
+
+            // Normalize to relative path under wwwroot
+            path = path.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+            var physical = Path.Combine(_env.WebRootPath, path);
+
+            return System.IO.File.Exists(physical) ? physical : null;
+        }
+
+        // ── Helper: build product_id → Operation text map ────────────────────
+
+        private async Task<Dictionary<int, string>> GetCodeMapAsync()
+        {
+            var map        = new Dictionary<int, string>();
+            var seen       = new HashSet<int>();
+            var connString = _context.Database.GetConnectionString();
+
+            var processes = await _context.SVN_Italisa_Process
+                .Select(p => p.process)
+                .ToListAsync();
+
+            foreach (var proc in processes.Where(p => !string.IsNullOrWhiteSpace(p)))
+            {
+                try
+                {
+                    using var conn = new SqlConnection(connString);
+                    await conn.OpenAsync();
+
+                    using var cmd = new SqlCommand("sp_GetItemsByOperation", conn)
+                    {
+                        CommandType = CommandType.StoredProcedure
+                    };
+                    cmd.Parameters.Add(new SqlParameter("@OperationKeyword", proc!.Trim()));
+
+                    using var reader = await cmd.ExecuteReaderAsync();
+                    while (await reader.ReadAsync())
+                    {
+                        var id = reader.GetInt32(reader.GetOrdinal("product_id"));
+                        if (seen.Add(id))
+                            map[id] = reader.GetString(reader.GetOrdinal("Operation"));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"GetCodeMapAsync error for '{proc}': {ex.Message}");
+                }
+            }
+
+            return map;
+        }
+
+        // ── Lookup endpoints ─────────────────────────────────────────────────
 
         [HttpGet]
         public async Task<IActionResult> GetVendors()
@@ -194,29 +389,27 @@ namespace ItalisaTools.Controllers
                 return Json(new List<CodeItemDto>());
 
             var codes = new List<CodeItemDto>();
-
             try
             {
-                var connectionString = _context.Database.GetConnectionString();
+                var connString = _context.Database.GetConnectionString();
+                using var conn = new SqlConnection(connString);
+                await conn.OpenAsync();
 
-                using var connection = new SqlConnection(connectionString);
-                await connection.OpenAsync();
+                using var cmd = new SqlCommand("sp_GetItemsByOperation", conn)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+                cmd.Parameters.Add(new SqlParameter("@OperationKeyword", process.Trim()));
 
-                using var command = new SqlCommand("sp_GetItemsByOperation", connection);
-                command.CommandType = CommandType.StoredProcedure;
-                command.Parameters.Add(new SqlParameter("@OperationKeyword", process.Trim()));
-
-                using var reader = await command.ExecuteReaderAsync();
+                using var reader = await cmd.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                 {
                     codes.Add(new CodeItemDto
                     {
                         Value = reader.GetInt32(reader.GetOrdinal("product_id")),
-                        Text = reader.GetString(reader.GetOrdinal("Operation"))
+                        Text  = reader.GetString(reader.GetOrdinal("Operation"))
                     });
-
                 }
-
                 return Json(codes);
             }
             catch (Exception ex)
@@ -226,108 +419,46 @@ namespace ItalisaTools.Controllers
             }
         }
 
-        // ── NEW: Get all product_id → Operation mappings across all processes ──
         [HttpGet]
         public async Task<IActionResult> GetAllCodes()
         {
-            var allCodes = new List<CodeItemDto>();
-            var seen     = new HashSet<int>();
-
-            try
-            {
-                var connectionString = _context.Database.GetConnectionString();
-                var processes = await _context.SVN_Italisa_Process
-                    .Select(p => p.process)
-                    .ToListAsync();
-
-                foreach (var proc in processes.Where(p => !string.IsNullOrWhiteSpace(p)))
-                {
-                    try
-                    {
-                        using var conn = new SqlConnection(connectionString);
-                        await conn.OpenAsync();
-
-                        using var cmd = new SqlCommand("sp_GetItemsByOperation", conn);
-                        cmd.CommandType = CommandType.StoredProcedure;
-                        cmd.Parameters.Add(new SqlParameter("@OperationKeyword", proc.Trim()));
-
-                        using var reader = await cmd.ExecuteReaderAsync();
-                        while (await reader.ReadAsync())
-                        {
-                            var id = reader.GetInt32(reader.GetOrdinal("product_id"));
-                            if (seen.Add(id))
-                            {
-                                allCodes.Add(new CodeItemDto
-                                {
-                                    Value = id,
-                                    Text  = reader.GetString(reader.GetOrdinal("Operation"))
-                                });
-                            }
-                        }
-                    }
-                    catch (Exception innerEx)
-                    {
-                        Console.WriteLine($"GetAllCodes inner error for '{proc}': {innerEx.Message}");
-                    }
-                }
-
-                return Json(allCodes);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"GetAllCodes Error: {ex.Message}");
-                return Json(new List<CodeItemDto>());
-            }
+            var map = await GetCodeMapAsync();
+            var result = map.Select(kv => new CodeItemDto { Value = kv.Key, Text = kv.Value }).ToList();
+            return Json(result);
         }
 
+        // ── Other pages ──────────────────────────────────────────────────────
 
-        public IActionResult Report()
-        {
-            return View();
-        }
-        
-        /* Overview*/
-        public IActionResult Overview()
-        {
-            return View();
-        }
+        public IActionResult Report() => View();
 
-        // GET: /Production/GetOverviewReport?startDate=2026-05-01&endDate=2026-05-04
+        public IActionResult Overview() => View();
+
         [HttpGet]
         public async Task<IActionResult> GetOverviewReport(string? startDate, string? endDate)
         {
             try
             {
-                // Parse dates; empty startDate = all time (use year 2000 as floor)
-                DateTime start = string.IsNullOrEmpty(startDate)
-                    ? new DateTime(2000, 1, 1)
-                    : DateTime.Parse(startDate);
+                DateTime start = string.IsNullOrEmpty(startDate) ? new DateTime(2000, 1, 1) : DateTime.Parse(startDate);
+                DateTime end   = string.IsNullOrEmpty(endDate)   ? DateTime.Today            : DateTime.Parse(endDate);
 
-                DateTime end = string.IsNullOrEmpty(endDate)
-                    ? DateTime.Today
-                    : DateTime.Parse(endDate);
-
-                var connectionString = _context.Database.GetConnectionString();
-
-                using var conn = new SqlConnection(connectionString);
+                var connString = _context.Database.GetConnectionString();
+                using var conn = new SqlConnection(connString);
                 await conn.OpenAsync();
 
-                using var cmd = new SqlCommand("sp_Get_Italisa_Production_Report", conn);
-                cmd.CommandType = CommandType.StoredProcedure;
-
-                // SP expects @StartDate and @EndDate as date type
+                using var cmd = new SqlCommand("sp_Get_Italisa_Production_Report", conn)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
                 cmd.Parameters.Add(new SqlParameter("@StartDate", SqlDbType.Date) { Value = start });
-                cmd.Parameters.Add(new SqlParameter("@EndDate", SqlDbType.Date) { Value = end });
+                cmd.Parameters.Add(new SqlParameter("@EndDate",   SqlDbType.Date) { Value = end   });
 
                 using var reader = await cmd.ExecuteReaderAsync();
 
-                // Read column names dynamically (pivot columns vary)
                 var columns = Enumerable.Range(0, reader.FieldCount)
                                         .Select(i => reader.GetName(i))
                                         .ToList();
 
                 var rows = new List<Dictionary<string, object?>>();
-
                 while (await reader.ReadAsync())
                 {
                     var row = new Dictionary<string, object?>();
@@ -348,8 +479,7 @@ namespace ItalisaTools.Controllers
             }
         }
 
-
-        // ── DTOs ──────────────────────────────────────────────────────────────
+        // ── DTOs ─────────────────────────────────────────────────────────────
 
         public class CodeItemDto
         {
@@ -359,15 +489,15 @@ namespace ItalisaTools.Controllers
 
         public class ProductionCreateDto
         {
-            public string?   Vendor       { get; set; }
-            public int?      ProductId    { get; set; }
-            public string?   TypeValue    { get; set; }
-            public string?   Color        { get; set; }
-            public int?      Quantity     { get; set; }
-            public string?   Process      { get; set; }
-            public DateTime? DateFinished { get; set; }
-            public string?   Description  { get; set; }
-            public IFormFile? ImageFile   { get; set; }
+            public string?    Vendor       { get; set; }
+            public int?       ProductId    { get; set; }
+            public string?    TypeValue    { get; set; }
+            public string?    Color        { get; set; }
+            public int?       Quantity     { get; set; }
+            public string?    Process      { get; set; }
+            public DateTime?  DateFinished { get; set; }
+            public string?    Description  { get; set; }
+            public IFormFile? ImageFile    { get; set; }
         }
     }
 }
