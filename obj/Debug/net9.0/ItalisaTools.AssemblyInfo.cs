@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ItalisaTools")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d8222f91e1a5463e7f713e3979f355f44cbc47cf")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+77677fffd25fd3406d5156c79abf12d39bbc0884")]
 [assembly: System.Reflection.AssemblyProductAttribute("ItalisaTools")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ItalisaTools")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

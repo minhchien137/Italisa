@@ -1301,7 +1301,8 @@
             const total  = rows
                 .filter(x => x.type_value === 'Production Qty')
                 .reduce((s, x) => s + (x.product_qty || 0), 0);
-            const isFirst = vi === 0;
+            const isFirst = false;
+
 
             html += `
             <div class="vendor-block">
@@ -1325,6 +1326,7 @@
                                     <th>${t('label.datetime')}</th>
                                     <th>${t('report.col.process')}</th>
                                     <th>${t('report.col.product')}</th>
+                                    <th>${t('report.col.color') || 'Color'}</th>
                                     <th>${t('report.col.type')}</th>
                                     <th>${t('report.col.qty')}</th>
                                     <th>${t('report.col.desc')}</th>
@@ -1343,6 +1345,7 @@
                     <td>${dt}</td>
                     <td><span class="badge badge-process">${r.process || '—'}</span></td>
                     <td><strong>${opName}</strong></td>
+                    <td>${r.color ? `<span class="badge" style="background:#fef3c7;color:#92400e;">${r.color}</span>` : '<span style="color:var(--gray-400)">—</span>'}</td>
                     <td><span class="badge badge-type ${typeCls}">${r.type_value || '—'}</span></td>
                     <td><strong style="color:var(--denim)">${(r.product_qty || 0).toLocaleString()}</strong></td>
                     <td style="color:var(--gray-600)">${desc}</td>
