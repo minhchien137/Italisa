@@ -457,7 +457,130 @@ namespace ItalisaTools.Controllers
             return Json(result);
         }
 
-        // ── Other pages ──────────────────────────────────────────────────────
+ 
+
+        // ── YIELD REPORT ──────────────────────────────────────────────────────
+
+
+// ── Defect Report page ───────────────────────────────────────────────────
+    public IActionResult DefectReport() => View();
+     
+        [HttpGet]
+        public async Task<IActionResult> GetDefectReportData(
+            string? dateFrom, string? dateTo,
+            string? process, string? color, int? productId)
+        {
+            try
+            {
+                // ── Fetch raw records ─────────────────────────────────────────────
+                var query = _context.SVN_Italisa_Production.AsQueryable();
+
+                if (!string.IsNullOrEmpty(dateFrom) && DateTime.TryParse(dateFrom, out var dfrom))
+                    query = query.Where(x => x.date_finished >= dfrom);
+                if (!string.IsNullOrEmpty(dateTo) && DateTime.TryParse(dateTo, out var dto2))
+                    query = query.Where(x => x.date_finished <= dto2.AddDays(1).AddSeconds(-1));
+                if (!string.IsNullOrEmpty(process))
+                    query = query.Where(x => x.process == process);
+                if (!string.IsNullOrEmpty(color))
+                    query = query.Where(x => x.color == color);
+                if (productId.HasValue)
+                    query = query.Where(x => x.product_id == productId.Value);
+
+                var records = await query.ToListAsync();
+
+                // ── Lookup tables ─────────────────────────────────────────────────
+                // SVN_Italisa_Code: id → (Italisa_no, Item_code)
+                var codeInfo = await _context.SVN_Italisa_Code.ToListAsync();
+                var codeById = codeInfo.ToDictionary(c => c.id, c => c);
+
+                // product_id → Operation label (from stored proc via existing helper)
+                var codeMap = await GetCodeMapAsync();
+
+                // ── Group and aggregate ───────────────────────────────────────────
+                var grouped = records
+                    .GroupBy(x => new
+                    {
+                        Date = x.date_finished.Date,
+                        ProdId = x.product_id,
+                        Color = x.color ?? "-",
+                        Process = x.process ?? "-"
+                    })
+                    .Select(g =>
+                    {
+                        // Input qty = all non-Defect records
+                        var inputQty = g
+                            .Where(x => x.type_value != "Defect")
+                            .Sum(x => x.product_qty ?? 0);
+
+                        // NG qty = sum of Defect records
+                        var ngQty = g
+                            .Where(x => x.type_value == "Defect")
+                            .Sum(x => x.product_qty ?? 0);
+
+                        var okQty = Math.Max(0, inputQty - ngQty);
+
+                        // Defect breakdown by defect_name
+                        var defects = g
+                            .Where(x => x.type_value == "Defect" && !string.IsNullOrEmpty(x.defect_name))
+                            .GroupBy(x => x.defect_name!)
+                            .ToDictionary(
+                                dg => dg.Key,
+                                dg => dg.Sum(x => x.product_qty ?? 0)
+                            );
+
+                        // Code lookup
+                        var codeData = g.Key.ProdId.HasValue && codeById.ContainsKey(g.Key.ProdId.Value)
+                            ? codeById[g.Key.ProdId.Value]
+                            : null;
+
+                        // Operation label (e.g. "De_burring-465(ITA)") → use as product name
+                        codeMap.TryGetValue(g.Key.ProdId ?? -1, out var operationLabel);
+
+                        return new
+                        {
+                            date = g.Key.Date.ToString("dd-MMM-yyyy"),
+                            productId = g.Key.ProdId,
+                            partCode = codeData?.Item_code
+                                        ?? (g.Key.ProdId.HasValue ? $"ID:{g.Key.ProdId}" : "-"),
+                            italisaNo = codeData?.Italisa_no,
+                            product = operationLabel
+                                        ?? codeData?.Item_code
+                                        ?? (g.Key.ProdId.HasValue ? $"ID:{g.Key.ProdId}" : "-"),
+                            coating = g.Key.Color,
+                            process = g.Key.Process,
+                            inputQty,
+                            okQty,
+                            ngQty,
+                            outputQty = okQty,
+                            defectRate = inputQty > 0
+                                ? Math.Round((double)ngQty / inputQty * 100, 1)
+                                : 0.0,
+                            yieldRate = inputQty > 0
+                                ? Math.Round((double)okQty / inputQty * 100, 1)
+                                : 100.0,
+                            defects
+                        };
+                    })
+                    .OrderByDescending(x => x.date)
+                    .ThenBy(x => x.partCode)
+                    .ToList();
+
+                // ── Collect all defect type names that appear in this dataset ─────
+                var defectTypes = grouped
+                    .SelectMany(x => x.defects.Keys)
+                    .Distinct()
+                    .OrderBy(x => x)
+                    .ToList();
+
+                return Json(new { rows = grouped, defectTypes });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"GetDefectReportData Error: {ex.Message}");
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
 
         public IActionResult Report() => View();
 
@@ -469,7 +592,7 @@ namespace ItalisaTools.Controllers
             try
             {
                 DateTime start = string.IsNullOrEmpty(startDate) ? new DateTime(2000, 1, 1) : DateTime.Parse(startDate);
-                DateTime end   = string.IsNullOrEmpty(endDate)   ? DateTime.Today            : DateTime.Parse(endDate);
+                DateTime end = string.IsNullOrEmpty(endDate) ? DateTime.Today : DateTime.Parse(endDate);
 
                 var connString = _context.Database.GetConnectionString();
                 using var conn = new SqlConnection(connString);
@@ -480,7 +603,7 @@ namespace ItalisaTools.Controllers
                     CommandType = CommandType.StoredProcedure
                 };
                 cmd.Parameters.Add(new SqlParameter("@StartDate", SqlDbType.Date) { Value = start });
-                cmd.Parameters.Add(new SqlParameter("@EndDate",   SqlDbType.Date) { Value = end   });
+                cmd.Parameters.Add(new SqlParameter("@EndDate", SqlDbType.Date) { Value = end });
 
                 using var reader = await cmd.ExecuteReaderAsync();
 
@@ -508,6 +631,8 @@ namespace ItalisaTools.Controllers
                 return StatusCode(500, new { error = ex.Message });
             }
         }
+        
+        
 
         // ── DTOs ─────────────────────────────────────────────────────────────
 

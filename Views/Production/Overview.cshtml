@@ -385,6 +385,32 @@
         .color-badge.brushed-brass { background: #fef3c7; color: #92400e; border: 1px solid #fbbf24; }
         .color-badge.default       { background: var(--gray-100); color: var(--gray-600); }
 
+        /* SVN Code + SVN Name columns */
+        table.pivot-table thead th.col-svn-code,
+        table.pivot-table thead th.col-svn-name {
+            background: var(--gray-100);
+            color: var(--denim-dark);
+            border-right: 1px solid var(--gray-200);
+        }
+        table.pivot-table tbody td.col-svn-code {
+            font-size: 0.78rem;
+            font-family: 'Space Grotesk', monospace;
+            color: var(--denim);
+            font-weight: 600;
+            white-space: nowrap;
+            border-right: 1px solid var(--gray-200);
+        }
+        table.pivot-table tbody td.col-svn-name {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--gray-600);
+            font-size: 0.82rem;
+            border-right: 1px solid var(--gray-200);
+        }
+
+
         table.pivot-table thead th.col-min {
             background: #fef9c3;
             color: #854d0e;
@@ -784,14 +810,18 @@
 
     // ── Column metadata ──────────────────────────────────────────────────────
     // cols layout: [0]=PN, [1]=Name, [2]=Color, [3..n-2]=WC columns, [n-1]=MinOutputQty
+    
     function getColMeta(cols) {
-        const pnCol    = cols[0] || '';
-        const nameCol  = cols[1] || '';
-        const colorCol = cols[2] || '';
-        const minCol   = cols[cols.length - 1] || '';
-        const wcCols   = cols.slice(3, cols.length - 1);
-        return { pnCol, nameCol, colorCol, minCol, wcCols };
+        const pnCol      = cols[0] || '';
+        const nameCol    = cols[1] || '';
+        const colorCol   = cols[2] || '';
+        const svnCodeCol = cols[3] || '';
+        const svnNameCol = cols[4] || '';
+        const minCol     = cols[cols.length - 1] || '';
+        const wcCols     = cols.slice(5, cols.length - 1);
+        return { pnCol, nameCol, colorCol, svnCodeCol, svnNameCol, minCol, wcCols };
     }
+
 
     // ── Render summary stats ─────────────────────────────────────────────────
     function renderStats(rows, cols) {
@@ -836,7 +866,7 @@
         }
 
         // ✅ FIX: destructure colorCol here
-        const { pnCol, nameCol, colorCol, minCol, wcCols } = getColMeta(cols);
+        const { pnCol, nameCol, colorCol, minCol, wcCols, svnCodeCol, svnNameCol } = getColMeta(cols);
         const pnWidth = 64;
 
         const totals = {};
@@ -846,7 +876,9 @@
         let html = `<table class="pivot-table"><thead><tr>
             <th class="col-fixed" style="min-width:${pnWidth}px">${escHtml(pnCol)}</th>
             <th class="col-fixed-2" style="min-width:200px">${escHtml(nameCol)}</th>
-            <th class="col-color" style="min-width:130px">${escHtml(colorCol)}</th>`;
+            <th class="col-color" style="min-width:130px">${escHtml(colorCol)}</th>
+            <th class="col-svn-code" style="min-width:110px">${escHtml(svnCodeCol)}</th>
+            <th class="col-svn-name" style="min-width:315px">${escHtml(svnNameCol)}</th>`;
 
         wcCols.forEach(c => { html += `<th style="min-width:90px">${escHtml(c)}</th>`; });
         html += `<th class="col-min" style="min-width:110px">${escHtml(minCol)}</th></tr></thead><tbody>`;
@@ -860,7 +892,9 @@
             html += `<tr>
                 <td class="col-fixed">${pnDisp}</td>
                 <td class="col-fixed-2" title="${escHtml(String(nameVal))}">${nameDisp}</td>
-                <td class="col-color">${colorBadge(r[colorCol] ?? '')}</td>`;
+                <td class="col-color">${colorBadge(r[colorCol] ?? '')}</td>
+                <td class="col-svn-code">${escHtml(String(r[svnCodeCol] ?? ''))}</td>
+                <td class="col-svn-name">${escHtml(String(r[svnNameCol] ?? ''))}</td>`;
 
             wcCols.forEach(c => {
                 const v = Number(r[c]) || 0;
@@ -873,7 +907,10 @@
         html += `</tbody><tfoot><tr>
             <td class="col-fixed" colspan="1">TOTAL</td>
             <td class="col-fixed-2" style="left:${pnWidth}px;text-align:left"></td>
-            <td class="col-color"></td>`;
+            <td class="col-color"></td>
+            <td class="col-svn-code"></td>
+            <td class="col-svn-name"></td>
+        `;
         wcCols.forEach(c => { html += `<td style="text-align:right">${(totals[c] || 0).toLocaleString()}</td>`; });
         html += `<td class="col-min">${(totals[minCol] || 0).toLocaleString()}</td></tr></tfoot></table>`;
 
@@ -888,11 +925,13 @@
             filteredRows = [...reportData];
         } else {
             // ✅ FIX: destructure colorCol here
-            const { pnCol, nameCol, colorCol } = getColMeta(reportCols);
+            const { pnCol, nameCol, colorCol, svnCodeCol, svnNameCol } = getColMeta(reportCols);
             filteredRows = reportData.filter(r =>
                 String(r[pnCol]    ?? '').toLowerCase().includes(q) ||
                 String(r[nameCol]  ?? '').toLowerCase().includes(q) ||
-                String(r[colorCol] ?? '').toLowerCase().includes(q)
+                String(r[colorCol] ?? '').toLowerCase().includes(q) ||
+                String(r[svnCodeCol]  ?? '').toLowerCase().includes(q) ||
+                String(r[svnNameCol]  ?? '').toLowerCase().includes(q)
             );
         }
         renderTable(filteredRows, reportCols, term.trim());
@@ -910,10 +949,10 @@
         const fromDisp = fromVal ? fromVal : 'All time';
         const toDisp   = toVal;
 
-        const { pnCol, nameCol, colorCol, minCol, wcCols } = getColMeta(reportCols);
+        const { pnCol, nameCol, colorCol, svnCodeCol, svnNameCol, minCol, wcCols } = getColMeta(reportCols);
         const wb = XLSX.utils.book_new();
 
-        const dataHeader  = [pnCol, nameCol, colorCol, ...wcCols, minCol];
+        const dataHeader  = [pnCol, nameCol, colorCol, svnCodeCol, svnNameCol, ...wcCols, minCol];
         const numDataCols = dataHeader.length;
 
         const aoa = [];
@@ -939,6 +978,8 @@
                 r[pnCol]    ?? '',
                 r[nameCol]  ?? '',
                 r[colorCol] ?? '',
+                r[svnCodeCol]  ?? '',
+                r[svnNameCol]  ?? '',
                 ...wcCols.map(c => { const v = Number(r[c]) || 0; totals[c] += v; return v; }),
                 (() => { const v = Number(r[minCol]) || 0; totals[minCol] += v; return v; })()
             ];
@@ -946,7 +987,7 @@
         });
 
         // Total row
-        aoa.push(['TOTAL', '', '', ...wcCols.map(c => totals[c] || 0), totals[minCol] || 0]);
+        aoa.push(['TOTAL', '', '', '', '', ...wcCols.map(c => totals[c] || 0), totals[minCol] || 0]);
 
         const ws = XLSX.utils.aoa_to_sheet(aoa);
 
@@ -955,6 +996,8 @@
             { wch: 12 },   // PN#
             { wch: 30 },   // Item Name
             { wch: 16 },   // Color
+            { wch: 16 },   // SVN Code
+            { wch: 40 },   // SVN Name
             ...wcCols.map(() => ({ wch: 14 })),
             { wch: 18 }    // Min Output Qty
         ];
