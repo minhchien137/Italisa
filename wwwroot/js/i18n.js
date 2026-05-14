@@ -5,6 +5,7 @@ const I18N = {
         'nav.history' : 'Lịch sử nhập',
         'nav.report'  : 'Báo cáo sản lượng',
         'nav.reportsvn' : 'Báo cáo tổng quan',
+        'nav.defect.report' : 'Báo cáo tỷ lệ đạt',
         
         /* ── Create page ── */
         'create.title'        : 'Nhập Dữ Liệu Sản lượng Sản Xuất',
@@ -244,6 +245,7 @@ const I18N = {
         'nav.history' : 'History',
         'nav.report'  : 'Report',
         'nav.reportsvn' : 'Overview',
+        'nav.defect.report' : 'Yield Report',
         
         /* ── Create page ── */
         'create.title'        : 'Production Data Entry',

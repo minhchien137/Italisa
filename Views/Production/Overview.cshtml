@@ -360,6 +360,31 @@
             background: var(--gray-100);
             border-right: 1px solid var(--gray-200);
         }
+
+        /* Color column + badge */
+        table.pivot-table thead th.col-color {
+            background: var(--gray-100);
+            color: var(--denim-dark);
+            border-right: 1px solid var(--gray-200);
+        }
+        table.pivot-table tbody td.col-color {
+            white-space: nowrap;
+            border-right: 1px solid var(--gray-200);
+        }
+        .color-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .color-badge.matt-black    { background: #1e293b; color: #f8fafc; }
+        .color-badge.chrome        { background: #e2e8f0; color: #1e293b; border: 1px solid #cbd5e1; }
+        .color-badge.beige         { background: #f5f0e8; color: #78350f; border: 1px solid #d9c89a; }
+        .color-badge.brushed-brass { background: #fef3c7; color: #92400e; border: 1px solid #fbbf24; }
+        .color-badge.default       { background: var(--gray-100); color: var(--gray-600); }
+
         table.pivot-table thead th.col-min {
             background: #fef9c3;
             color: #854d0e;
@@ -443,7 +468,7 @@
             border-left: 2px solid #fde68a;
         }
 
-        /* ── MOBILE: disable sticky columns so they don't overlap on small screens ── */
+        /* ── MOBILE: disable sticky columns ── */
         .mobile-card-list { display: none; }
 
         @@media (max-width: 639px) {
@@ -455,12 +480,10 @@
             table.pivot-table tfoot td.col-fixed-2 {
                 position: static !important;
             }
-            /* Smaller font + tighter padding on mobile table */
             table.pivot-table { font-size: 0.78rem; }
             table.pivot-table thead th { padding: 0.5rem 0.6rem; }
             table.pivot-table tbody td { padding: 0.5rem 0.6rem; }
             table.pivot-table tfoot td { padding: 0.5rem 0.6rem; }
-
         }
 
         /* ── EMPTY / LOADING STATES ── */
@@ -688,12 +711,12 @@
 @section Scripts {
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script>
-    
+
     const pathBase = '@Context.Request.PathBase'.replace(/\/$/, '');
 
-    let   reportData = [];
-    let   reportCols = [];
-    let   filteredRows = [];
+    let reportData   = [];
+    let reportCols   = [];
+    let filteredRows = [];
 
     // ── Init ─────────────────────────────────────────────────────────────────
     (function initDates() {
@@ -730,8 +753,8 @@
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
             const json = await res.json();
-            reportCols = json.columns || [];
-            reportData = json.rows    || [];
+            reportCols   = json.columns || [];
+            reportData   = json.rows    || [];
             filteredRows = [...reportData];
 
             renderStats(reportData, reportCols);
@@ -741,7 +764,8 @@
         } catch (err) {
             console.error('applyFilter', err);
             showToast('Failed to load report: ' + err.message, 'error');
-            document.getElementById('tableContainer').innerHTML = `<div class="state-box"><div class="state-icon">⚠️</div><h4>Error loading data</h4><p>${err.message}</p></div>`;
+            document.getElementById('tableContainer').innerHTML =
+                `<div class="state-box"><div class="state-icon">⚠️</div><h4>Error loading data</h4><p>${err.message}</p></div>`;
         } finally {
             showLoading(false);
             setButtons(true);
@@ -759,12 +783,14 @@
     }
 
     // ── Column metadata ──────────────────────────────────────────────────────
+    // cols layout: [0]=PN, [1]=Name, [2]=Color, [3..n-2]=WC columns, [n-1]=MinOutputQty
     function getColMeta(cols) {
-        const pnCol   = cols[0]  || '';
-        const nameCol = cols[1]  || '';
-        const minCol  = cols[cols.length - 1] || '';
-        const wcCols  = cols.slice(2, cols.length - 1);
-        return { pnCol, nameCol, minCol, wcCols };
+        const pnCol    = cols[0] || '';
+        const nameCol  = cols[1] || '';
+        const colorCol = cols[2] || '';
+        const minCol   = cols[cols.length - 1] || '';
+        const wcCols   = cols.slice(3, cols.length - 1);
+        return { pnCol, nameCol, colorCol, minCol, wcCols };
     }
 
     // ── Render summary stats ─────────────────────────────────────────────────
@@ -783,15 +809,25 @@
     }
 
     function clearStats() {
-        ['statProducts','statTotalQty','statWC','statMinQty'].forEach(id => {
+        ['statProducts', 'statTotalQty', 'statWC', 'statMinQty'].forEach(id => {
             document.getElementById(id).textContent = '—';
         });
+    }
+
+    function colorBadge(v) {
+        v = String(v).trim();
+        let cls = 'default';
+        if (v.toLowerCase() === 'matt black')       cls = 'matt-black';
+        else if (v.toLowerCase() === 'chrome')      cls = 'chrome';
+        else if (v.toLowerCase() === 'beige')       cls = 'beige';
+        else if (v.toLowerCase().includes('brass')) cls = 'brushed-brass';
+        return `<span class="color-badge ${cls}">${escHtml(v)}</span>`;
     }
 
     // ── Render desktop pivot table ───────────────────────────────────────────
     function renderTable(rows, cols, highlight = '') {
         const container = document.getElementById('tableContainer');
-        document.getElementById('recordBadge').textContent = rows.length + ' rows';
+        document.getElementById('recordBadge').textContent  = rows.length + ' rows';
         document.getElementById('rowCountLabel').textContent = rows.length + ' product(s) shown';
 
         if (!rows.length) {
@@ -799,15 +835,18 @@
             return;
         }
 
-        const { pnCol, nameCol, minCol, wcCols } = getColMeta(cols);
+        // ✅ FIX: destructure colorCol here
+        const { pnCol, nameCol, colorCol, minCol, wcCols } = getColMeta(cols);
         const pnWidth = 64;
+
         const totals = {};
         cols.forEach(c => { totals[c] = 0; });
-        rows.forEach(r => { cols.slice(2).forEach(c => { totals[c] += (Number(r[c]) || 0); }); });
+        rows.forEach(r => { cols.slice(3).forEach(c => { totals[c] += (Number(r[c]) || 0); }); });
 
         let html = `<table class="pivot-table"><thead><tr>
             <th class="col-fixed" style="min-width:${pnWidth}px">${escHtml(pnCol)}</th>
-            <th class="col-fixed-2" style="min-width:200px;left:${pnWidth}px">${escHtml(nameCol)}</th>`;
+            <th class="col-fixed-2" style="min-width:200px">${escHtml(nameCol)}</th>
+            <th class="col-color" style="min-width:130px">${escHtml(colorCol)}</th>`;
 
         wcCols.forEach(c => { html += `<th style="min-width:90px">${escHtml(c)}</th>`; });
         html += `<th class="col-min" style="min-width:110px">${escHtml(minCol)}</th></tr></thead><tbody>`;
@@ -820,7 +859,8 @@
 
             html += `<tr>
                 <td class="col-fixed">${pnDisp}</td>
-                <td class="col-fixed-2" style="left:${pnWidth}px" title="${escHtml(String(nameVal))}">${nameDisp}</td>`;
+                <td class="col-fixed-2" title="${escHtml(String(nameVal))}">${nameDisp}</td>
+                <td class="col-color">${colorBadge(r[colorCol] ?? '')}</td>`;
 
             wcCols.forEach(c => {
                 const v = Number(r[c]) || 0;
@@ -832,7 +872,8 @@
 
         html += `</tbody><tfoot><tr>
             <td class="col-fixed" colspan="1">TOTAL</td>
-            <td class="col-fixed-2" style="left:${pnWidth}px;text-align:left"></td>`;
+            <td class="col-fixed-2" style="left:${pnWidth}px;text-align:left"></td>
+            <td class="col-color"></td>`;
         wcCols.forEach(c => { html += `<td style="text-align:right">${(totals[c] || 0).toLocaleString()}</td>`; });
         html += `<td class="col-min">${(totals[minCol] || 0).toLocaleString()}</td></tr></tfoot></table>`;
 
@@ -846,10 +887,12 @@
         if (!q) {
             filteredRows = [...reportData];
         } else {
-            const { pnCol, nameCol } = getColMeta(reportCols);
+            // ✅ FIX: destructure colorCol here
+            const { pnCol, nameCol, colorCol } = getColMeta(reportCols);
             filteredRows = reportData.filter(r =>
-                String(r[pnCol]   ?? '').toLowerCase().includes(q) ||
-                String(r[nameCol] ?? '').toLowerCase().includes(q)
+                String(r[pnCol]    ?? '').toLowerCase().includes(q) ||
+                String(r[nameCol]  ?? '').toLowerCase().includes(q) ||
+                String(r[colorCol] ?? '').toLowerCase().includes(q)
             );
         }
         renderTable(filteredRows, reportCols, term.trim());
@@ -862,24 +905,15 @@
             return;
         }
 
-        const fromVal = document.getElementById('fFromDate').value;
-        const toVal   = document.getElementById('fToDate').value || new Date().toISOString().slice(0,10);
+        const fromVal  = document.getElementById('fFromDate').value;
+        const toVal    = document.getElementById('fToDate').value || new Date().toISOString().slice(0, 10);
         const fromDisp = fromVal ? fromVal : 'All time';
         const toDisp   = toVal;
 
-        const { pnCol, nameCol, minCol, wcCols } = getColMeta(reportCols);
+        const { pnCol, nameCol, colorCol, minCol, wcCols } = getColMeta(reportCols);
         const wb = XLSX.utils.book_new();
 
-        // ── Build array-of-arrays ──
-        // Row 0: Company / Report title (merged)
-        // Row 1: blank
-        // Row 2: Date range label
-        // Row 3: blank
-        // Row 4: Column headers
-        // Row 5+: Data rows
-        // Last+1: Total row
-
-        const dataHeader = [pnCol, nameCol, ...wcCols, minCol];
+        const dataHeader  = [pnCol, nameCol, colorCol, ...wcCols, minCol];
         const numDataCols = dataHeader.length;
 
         const aoa = [];
@@ -902,8 +936,9 @@
 
         filteredRows.forEach(r => {
             const row = [
-                r[pnCol]   ?? '',
-                r[nameCol] ?? '',
+                r[pnCol]    ?? '',
+                r[nameCol]  ?? '',
+                r[colorCol] ?? '',
                 ...wcCols.map(c => { const v = Number(r[c]) || 0; totals[c] += v; return v; }),
                 (() => { const v = Number(r[minCol]) || 0; totals[minCol] += v; return v; })()
             ];
@@ -911,7 +946,7 @@
         });
 
         // Total row
-        aoa.push(['TOTAL', '', ...wcCols.map(c => totals[c] || 0), totals[minCol] || 0]);
+        aoa.push(['TOTAL', '', '', ...wcCols.map(c => totals[c] || 0), totals[minCol] || 0]);
 
         const ws = XLSX.utils.aoa_to_sheet(aoa);
 
@@ -919,86 +954,76 @@
         ws['!cols'] = [
             { wch: 12 },   // PN#
             { wch: 30 },   // Item Name
+            { wch: 16 },   // Color
             ...wcCols.map(() => ({ wch: 14 })),
             { wch: 18 }    // Min Output Qty
         ];
 
         // ── Row heights ──
         ws['!rows'] = [
-            { hpt: 28 },  // title row
-            { hpt: 18 },  // date range
-            { hpt: 16 },  // generated
-            { hpt: 8  },  // spacer
-            { hpt: 22 },  // header row
+            { hpt: 28 },
+            { hpt: 18 },
+            { hpt: 16 },
+            { hpt: 8  },
+            { hpt: 22 },
         ];
 
         // ── Merge title/date/generated across all columns ──
         const endCol = numDataCols - 1;
         ws['!merges'] = [
-            { s: { r: 0, c: 0 }, e: { r: 0, c: endCol } },  // title
-            { s: { r: 1, c: 0 }, e: { r: 1, c: endCol } },  // date range
-            { s: { r: 2, c: 0 }, e: { r: 2, c: endCol } },  // generated
+            { s: { r: 0, c: 0 }, e: { r: 0, c: endCol } },
+            { s: { r: 1, c: 0 }, e: { r: 1, c: endCol } },
+            { s: { r: 2, c: 0 }, e: { r: 2, c: endCol } },
         ];
 
-        // ── Cell styles ──
-        // Helper to get cell address
         const addr = (r, c) => XLSX.utils.encode_cell({ r, c });
 
-        // TITLE row (row 0) – dark blue bg, white bold text, large font, center
         const titleStyle = {
             font:      { name: 'Calibri', sz: 16, bold: true, color: { rgb: 'FFFFFF' } },
             fill:      { fgColor: { rgb: '0F2F52' } },
             alignment: { horizontal: 'center', vertical: 'center' },
-            border:    {}
         };
-        ws[addr(0,0)] = { v: aoa[0][0], t: 's', s: titleStyle };
+        ws[addr(0, 0)] = { v: aoa[0][0], t: 's', s: titleStyle };
 
-        // DATE RANGE row (row 1)
         const dateStyle = {
             font:      { name: 'Calibri', sz: 11, italic: true, color: { rgb: 'FFFFFF' } },
             fill:      { fgColor: { rgb: '1B4F8A' } },
             alignment: { horizontal: 'center', vertical: 'center' },
         };
-        ws[addr(1,0)] = { v: aoa[1][0], t: 's', s: dateStyle };
+        ws[addr(1, 0)] = { v: aoa[1][0], t: 's', s: dateStyle };
 
-        // GENERATED row (row 2)
         const genStyle = {
             font:      { name: 'Calibri', sz: 9, color: { rgb: 'C0D9F5' } },
             fill:      { fgColor: { rgb: '1B4F8A' } },
             alignment: { horizontal: 'center', vertical: 'center' },
         };
-        ws[addr(2,0)] = { v: aoa[2][0], t: 's', s: genStyle };
+        ws[addr(2, 0)] = { v: aoa[2][0], t: 's', s: genStyle };
 
-        // HEADER row (row 4) – blue header with white bold text
-        const headerRowIdx = 4;
+        const headerRowIdx  = 4;
         const headerStylePN = {
             font:      { name: 'Calibri', sz: 10, bold: true, color: { rgb: 'FFFFFF' } },
             fill:      { fgColor: { rgb: '1B4F8A' } },
             alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-            border: {
-                bottom: { style: 'medium', color: { rgb: 'FFFFFF' } }
-            }
+            border:    { bottom: { style: 'medium', color: { rgb: 'FFFFFF' } } }
         };
-        const headerStyleName = { ...headerStylePN, alignment: { horizontal: 'left', vertical: 'center', wrapText: true } };
-        const headerStyleWC = { ...headerStylePN, alignment: { horizontal: 'center', vertical: 'center', wrapText: true } };
-        const headerStyleMin = {
+        const headerStyleName  = { ...headerStylePN, alignment: { horizontal: 'left',   vertical: 'center', wrapText: true } };
+        const headerStyleColor = { ...headerStylePN, alignment: { horizontal: 'center', vertical: 'center', wrapText: true } };
+        const headerStyleMin   = {
             font:      { name: 'Calibri', sz: 10, bold: true, color: { rgb: '854D0E' } },
             fill:      { fgColor: { rgb: 'FEF9C3' } },
             alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-            border: {
-                left:   { style: 'medium', color: { rgb: 'FDE68A' } },
-                bottom: { style: 'medium', color: { rgb: 'FDE68A' } }
-            }
+            border:    { left: { style: 'medium', color: { rgb: 'FDE68A' } }, bottom: { style: 'medium', color: { rgb: 'FDE68A' } } }
         };
 
-        ws[addr(headerRowIdx, 0)] = { v: pnCol, t: 's', s: headerStylePN };
-        ws[addr(headerRowIdx, 1)] = { v: nameCol, t: 's', s: headerStyleName };
+        ws[addr(headerRowIdx, 0)] = { v: pnCol,    t: 's', s: headerStylePN };
+        ws[addr(headerRowIdx, 1)] = { v: nameCol,  t: 's', s: headerStyleName };
+        ws[addr(headerRowIdx, 2)] = { v: colorCol, t: 's', s: headerStyleColor };
         wcCols.forEach((c, i) => {
-            ws[addr(headerRowIdx, 2 + i)] = { v: c, t: 's', s: headerStyleWC };
+            ws[addr(headerRowIdx, 3 + i)] = { v: c, t: 's', s: headerStylePN };
         });
         ws[addr(headerRowIdx, numDataCols - 1)] = { v: minCol, t: 's', s: headerStyleMin };
 
-        // DATA rows (rows 5 … 5+n-1)
+        // Data rows
         const dataStartRow = 5;
         const dataStylePN = {
             font:      { name: 'Calibri', sz: 10, bold: true, color: { rgb: '1B4F8A' } },
@@ -1044,9 +1069,13 @@
                 v: r[nameCol] ?? '', t: 's',
                 s: isEven ? dataStyleNameEven : dataStyleNameOdd
             };
+            ws[addr(rowIdx, 2)] = {
+                v: r[colorCol] ?? '', t: 's',
+                s: { ...(isEven ? dataStyleNameEven : dataStyleNameOdd), alignment: { horizontal: 'center', vertical: 'center' } }
+            };
             wcCols.forEach((c, ci) => {
                 const v = Number(r[c]) || 0;
-                ws[addr(rowIdx, 2 + ci)] = {
+                ws[addr(rowIdx, 3 + ci)] = {
                     v, t: 'n',
                     s: { ...(v > 0 ? dataStyleNumNZ : dataStyleNumZero), fill: isEven ? evenFill : undefined },
                     z: '#,##0'
@@ -1056,8 +1085,8 @@
             ws[addr(rowIdx, numDataCols - 1)] = { v: minV, t: 'n', s: dataStyleMin, z: '#,##0' };
         });
 
-        // TOTAL row
-        const totalRowIdx = dataStartRow + filteredRows.length;
+        // Total row
+        const totalRowIdx     = dataStartRow + filteredRows.length;
         const totalStyleLabel = {
             font:      { name: 'Calibri', sz: 10, bold: true, color: { rgb: 'FFFFFF' } },
             fill:      { fgColor: { rgb: '1B4F8A' } },
@@ -1081,15 +1110,16 @@
 
         ws[addr(totalRowIdx, 0)] = { v: 'TOTAL', t: 's', s: totalStyleLabel };
         ws[addr(totalRowIdx, 1)] = { v: `${filteredRows.length} products`, t: 's', s: totalStyleLabel };
+        ws[addr(totalRowIdx, 2)] = { v: '', t: 's', s: totalStyleLabel };
         wcCols.forEach((c, ci) => {
-            ws[addr(totalRowIdx, 2 + ci)] = { v: totals[c] || 0, t: 'n', s: totalStyleNum, z: '#,##0' };
+            ws[addr(totalRowIdx, 3 + ci)] = { v: totals[c] || 0, t: 'n', s: totalStyleNum, z: '#,##0' };
         });
         ws[addr(totalRowIdx, numDataCols - 1)] = { v: totals[minCol] || 0, t: 'n', s: totalStyleMin, z: '#,##0' };
 
         XLSX.utils.book_append_sheet(wb, ws, 'Overview');
 
-        const now   = new Date();
-        const stamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+        const now     = new Date();
+        const stamp   = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
         const fromStr = fromVal || 'alltime';
         XLSX.writeFile(wb, `Production_Overview_${fromStr}_${toVal}_${stamp}.xlsx`);
         showToast(`Exported ${filteredRows.length} rows to Excel.`, 'success');
@@ -1097,7 +1127,7 @@
 
     // ── Helpers ──────────────────────────────────────────────────────────────
     function escHtml(str) {
-        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
     function hlText(str, term) {
@@ -1113,7 +1143,7 @@
     }
 
     function setButtons(enabled) {
-        ['btnApply','btnExcel'].forEach(id => {
+        ['btnApply', 'btnExcel'].forEach(id => {
             document.getElementById(id).disabled = !enabled;
         });
     }

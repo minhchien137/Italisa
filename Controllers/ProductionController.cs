@@ -475,7 +475,7 @@ namespace ItalisaTools.Controllers
                 using var conn = new SqlConnection(connString);
                 await conn.OpenAsync();
 
-                using var cmd = new SqlCommand("sp_Get_Italisa_Production_Report", conn)
+                using var cmd = new SqlCommand("sp_Get_Italisa_Production_Report_Color", conn)
                 {
                     CommandType = CommandType.StoredProcedure
                 };
