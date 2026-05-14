@@ -620,6 +620,15 @@
                         <option value="" data-i18n="ph.type">-- Select Type --</option>
                         <option value="Production Qty" data-i18n="type.production">Production Quantity</option>
                         <option value="Man Q'ty" data-i18n="type.manpower">Man Power</option>
+                        <option value="Defect" data-i18n="type.defect">Defect</option>
+                    </select>
+                </div>
+
+                <!-- ── Defect Code (chỉ hiện khi Type = Defect) ── -->
+                <div class="form-group" id="defectGroup" style="display:none;">
+                    <label data-i18n="label.defect">Defect Code <span class="required">*</span></label>
+                    <select id="defectSelect">
+                        <option value="" data-i18n="ph.defect">-- Select Defect --</option>
                     </select>
                 </div>
 
@@ -721,15 +730,19 @@
         $('#codeSelect')   .select2(getSelect2Config('ph.code'));
         $('#colorSelect')  .select2(getSelect2Config('ph.color'));
         $('#typeSelect')   .select2(getSelect2Config('ph.type', true));
+        $('#defectSelect') .select2(getSelect2Config('ph.defect'));
     }
 
     // Re-init Select2 on lang change so placeholders update
     document.addEventListener('langChanged', () => {
-        ['#vendorSelect','#processSelect','#codeSelect','#colorSelect','#typeSelect'].forEach(sel => {
+        ['#vendorSelect','#processSelect','#codeSelect','#colorSelect','#typeSelect','#defectSelect'].forEach(sel => {
             if ($(sel).data('select2')) $(sel).select2('destroy');
         });
         initSelect2();
         $('#processSelect').on('change', function () { loadCodesByProcess($(this).val()); });
+        $('#typeSelect').on('change', function () { onTypeChange($(this).val()); });
+        // Re-render defect labels theo ngôn ngữ mới
+        if (window._defectsData) renderDefectOptions(window._defectsData);
     });
 
     // ── Init ──────────────────────────────────────────────────────────────────
@@ -739,9 +752,67 @@
         $('#processSelect').on('change', function () {
             loadCodesByProcess($(this).val());
         });
+        $('#typeSelect').on('change', function () {
+            onTypeChange($(this).val());
+        });
         const savedVendor = localStorage.getItem('lastVendor');
         if (savedVendor) $('#vendorSelect').val(savedVendor).trigger('change');
     });
+
+    // ── Show/hide Defect dropdown theo Type ──────────────────────────────────
+    function onTypeChange(typeValue) {
+        const defectGroup = document.getElementById('defectGroup');
+        if (typeValue === 'Defect') {
+            defectGroup.style.display = '';
+            if (!window._defectsData) {
+                loadDefects();
+            }
+        } else {
+            defectGroup.style.display = 'none';
+            $('#defectSelect').val('').trigger('change');
+        }
+    }
+
+    // ── Load defects từ server ────────────────────────────────────────────────
+    async function loadDefects() {
+        const $defectSelect = $('#defectSelect');
+        $defectSelect.empty().append(`<option value="">${t('hint.defect.loading')}</option>`).trigger('change');
+        try {
+            const res     = await fetch(`${pathBase}/Production/GetDefects`);
+            const defects = await res.json();
+            window._defectsData = defects; // cache lại để re-render khi đổi ngôn ngữ
+            renderDefectOptions(defects);
+        } catch (e) {
+            $defectSelect.empty().append(`<option value="">${t('hint.defect.error')}</option>`).trigger('change');
+            console.error('LoadDefects error:', e);
+        }
+    }
+
+    // ── Render options theo ngôn ngữ hiện tại (value luôn = nameEn) ──────────
+    function renderDefectOptions(defects) {
+        const $defectSelect = $('#defectSelect');
+        const currentVal    = $defectSelect.val(); // giữ lại lựa chọn hiện tại nếu có
+        $defectSelect.empty().append(`<option value="">${t('ph.defect')}</option>`);
+        defects.forEach(d => {
+            const label = buildDefectLabel(d);
+            const opt   = new Option(label, d.nameEn);
+            opt.setAttribute('data-en', d.nameEn);
+            opt.setAttribute('data-vn', d.nameVn);
+            opt.setAttribute('data-cn', d.nameCn);
+            $defectSelect.append(opt);
+        });
+        // Khôi phục lựa chọn cũ nếu còn hợp lệ
+        if (currentVal) $defectSelect.val(currentVal);
+        $defectSelect.trigger('change');
+    }
+
+    // ── Tạo label hiển thị theo ngôn ngữ hiện tại ────────────────────────────
+    function buildDefectLabel(d) {
+        const parts = [d.nameEn];
+        if (d.nameVn && d.nameVn !== d.nameEn) parts.push(d.nameVn);
+        if (d.nameCn && d.nameCn !== d.nameEn) parts.push(d.nameCn);
+        return parts.join(' / ');
+    }
 
     // ── Set default datetime to now ──
     function setDefaultDateTime() {
@@ -844,6 +915,7 @@
         const typeSel    = document.getElementById('typeSelect');
         const processSel = document.getElementById('processSelect');
         const colorSel   = document.getElementById('colorSelect');
+        const defectSel  = document.getElementById('defectSelect');
         const imageFile  = document.getElementById('imageInput').files[0] || null;
 
         return {
@@ -856,6 +928,8 @@
             color:        colorSel.value,
             colorText:    colorSel.options[colorSel.selectedIndex]?.text,
             typeValue:    typeSel.value,
+            defectName:   defectSel.value,
+            defectText:   defectSel.options[defectSel.selectedIndex]?.text,
             quantity:     parseInt(document.getElementById('quantityInput').value) || null,
             dateFinished: document.getElementById('dateFinishedInput').value,
             description:  document.getElementById('descriptionInput').value.trim(),
@@ -869,6 +943,7 @@
         if (!data.productId)                      return t('val.code');
         if (!data.color)                          return t('val.color');
         if (!data.typeValue)                      return t('val.type');
+        if (data.typeValue === 'Defect' && !data.defectName) return t('val.defect');
         if (!data.quantity || data.quantity <= 0) return t('val.quantity');
         if (!data.dateFinished)                   return t('val.datetime');
         return null;
@@ -881,12 +956,16 @@
             : '(none)';
         const imgLabel = data.imageFile ? `📎 ${data.imageFile.name}` : '(none)';
         const dtStyle  = dtColor ? `style="color:${dtColor};font-weight:700;"` : '';
+        const defectRow = data.typeValue === 'Defect'
+            ? `<div class="modal-summary-row"><span>${t('modal.defect')}</span><span>${data.defectText || data.defectName || '—'}</span></div>`
+            : '';
         return `
             <div class="modal-summary-row"><span>Vendor</span><span>${data.vendor}</span></div>
             <div class="modal-summary-row"><span>Process</span><span>${data.processText}</span></div>
             <div class="modal-summary-row"><span>Code</span><span>${data.codeText}</span></div>
             <div class="modal-summary-row"><span>Color</span><span>${data.color || '(none)'}</span></div>
             <div class="modal-summary-row"><span>Type</span><span>${data.typeValue}</span></div>
+            ${defectRow}
             <div class="modal-summary-row"><span>Quantity</span><span>${data.quantity}</span></div>
             <div class="modal-summary-row"><span>Date &amp; Time</span><span ${dtStyle}>${dtDisplay}</span></div>
             <div class="modal-summary-row"><span>Description</span><span>${descLabel}</span></div>
@@ -1070,6 +1149,9 @@
             formData.append('quantity',     data.quantity);
             formData.append('dateFinished', data.dateFinished);
             formData.append('description',  data.description);
+            if (data.typeValue === 'Defect') {
+                formData.append('defectName', data.defectName);
+            }
 
             // ── Compress ảnh trước khi gửi ──
             if (data.imageFile) {
@@ -1112,6 +1194,8 @@
         $('#processSelect').val('').trigger('change');
         $('#colorSelect').val('').trigger('change');
         $('#typeSelect').val('').trigger('change');
+        $('#defectSelect').val('').trigger('change');
+        document.getElementById('defectGroup').style.display = 'none';
         document.getElementById('quantityInput').value    = '';
         document.getElementById('descriptionInput').value = '';
         setDefaultDateTime();

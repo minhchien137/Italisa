@@ -151,7 +151,7 @@
             .filter-grid { grid-template-columns: repeat(3, 1fr); gap: 1rem; }
         }
         @@media (min-width: 1000px) {
-            .filter-grid { grid-template-columns: repeat(7, 1fr) auto; align-items: end; gap: 1rem; }
+            .filter-grid { grid-template-columns: repeat(8, 1fr) auto; align-items: end; gap: 1rem; }
         }
 
         .filter-group { display: flex; flex-direction: column; gap: 5px; }
@@ -295,6 +295,8 @@
         .badge-blue   { background: var(--denim-light); color: var(--denim-dark); }
         .badge-purple { background: #ede9fe; color: #5b21b6; }
         .badge-color  { background: #fef3c7; color: #92400e; }
+        .badge-defect { background: #fee2e2; color: #991b1b; }
+        .td-defect { font-size: 0.82rem; color: var(--gray-600); max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         /* ── DESKTOP TABLE ── */
         .table-wrapper { overflow-x: auto; }
@@ -539,6 +541,14 @@
                         <option value="" data-i18n="hist.all.types">All Types</option>
                         <option value="Production Qty" data-i18n="type.production">Production Qty</option>
                         <option value="Man Q'ty" data-i18n="type.manpower">Man Q'ty</option>
+                        <option value="Defect" data-i18n="type.defect">Defect</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label data-i18n="hist.label.defect">Defect</label>
+                    <select id="filterDefect">
+                        <option value="" data-i18n="hist.all.defects">All Defects</option>
                     </select>
                 </div>
 
@@ -598,6 +608,7 @@
                         <th data-i18n="hist.col.color">Color</th>
                         <th data-i18n="hist.col.vendor">Vendor</th>
                         <th data-i18n="hist.col.type">Type</th>
+                        <th data-i18n="hist.col.defect">Defect</th>
                         <th data-i18n="hist.col.qty">Quantity</th>
                         <th data-i18n="hist.col.date">Date Finished</th>
                         <th data-i18n="hist.col.desc">Description</th>
@@ -606,7 +617,7 @@
                 </thead>
                 <tbody id="tableBody">
                     <tr>
-                        <td colspan="10">
+                        <td colspan="11">
                             <div class="loading-state">
                                 <div class="spinner"></div>
                                 <p data-i18n="hist.loading">Loading data...</p>
@@ -767,6 +778,22 @@
         } catch (e) { console.error('Load processes error:', e); }
     }
 
+    /* ── Load Defect Names for filter ── */
+    async function loadDefectNames() {
+        try {
+            const res     = await fetch(`${pathBase}/Production/GetDefectNames`);
+            const defects = await res.json();
+            const sel     = document.getElementById('filterDefect');
+            defects.forEach(d => {
+                if (d) {
+                    const opt = document.createElement('option');
+                    opt.value = d; opt.textContent = d;
+                    sel.appendChild(opt);
+                }
+            });
+        } catch (e) { console.error('Load defect names error:', e); }
+    }
+
     /* ── Load Colors ── */
     async function loadColors() {
         try {
@@ -841,6 +868,10 @@
                 ? `<td class="td-color"><span class="badge badge-color">${escHtml(row.color)}</span></td>`
                 : `<td class="no-val">—</td>`;
 
+            const defectCell = row.defect_name
+                ? `<td class="td-defect" title="${escHtml(row.defect_name)}"><span class="badge badge-defect">${escHtml(row.defect_name)}</span></td>`
+                : `<td class="td-img no-val">—</td>`;
+
             const descCell = row.description
                 ? `<td class="td-desc" title="${escHtml(row.description)}">${escHtml(row.description)}</td>`
                 : `<td class="no-val">—</td>`;
@@ -850,6 +881,10 @@
                 ? `<td class="td-img"><img class="thumb" src="${imgSrc}" alt="img" loading="lazy" onclick="openLightbox('${imgSrc}')" /></td>`
                 : `<td class="td-img no-val">—</td>`;
 
+            const typeBadgeClass = row.type_value === 'Production Qty' ? 'badge-blue'
+                                 : row.type_value === 'Defect'         ? 'badge-defect'
+                                 : 'badge-purple';
+
             return `
             <tr>
                 <td class="td-id">#${row.id}</td>
@@ -858,10 +893,11 @@
                 ${colorCell}
                 <td class="td-vendor">${escHtml(row.vendor ?? '—')}</td>
                 <td>
-                    <span class="badge ${row.type_value === 'Production Qty' ? 'badge-blue' : 'badge-purple'}">
+                    <span class="badge ${typeBadgeClass}">
                         ${escHtml(row.type_value ?? '—')}
                     </span>
                 </td>
+                ${defectCell}
                 <td class="td-qty">${row.product_qty != null ? row.product_qty.toLocaleString() : '<span class="no-val">—</span>'}</td>
                 <td class="td-date">${row.date_finished ? new Date(row.date_finished).toLocaleString() : '—'}</td>
                 ${descCell}
@@ -894,6 +930,15 @@
                        <span class="data-card-label">Color</span>
                        <span class="no-val">—</span>
                    </div>`;
+            const defectSection = row.defect_name
+                ? `<div class="data-card-field full">
+                       <span class="data-card-label">${t('hist.col.defect')}</span>
+                       <span class="data-card-value"><span class="badge badge-defect">${escHtml(row.defect_name)}</span></span>
+                   </div>`
+                : '';
+            const typeBadgeClass = row.type_value === 'Production Qty' ? 'badge-blue'
+                                 : row.type_value === 'Defect'         ? 'badge-defect'
+                                 : 'badge-purple';
             return `
             <div class="data-card">
                 <div class="data-card-top">
@@ -917,11 +962,12 @@
                     <div class="data-card-field">
                         <span class="data-card-label">Type</span>
                         <span class="data-card-value">
-                            <span class="badge ${row.type_value === 'Production Qty' ? 'badge-blue' : 'badge-purple'}">
+                            <span class="badge ${typeBadgeClass}">
                                 ${escHtml(row.type_value ?? '—')}
                             </span>
                         </span>
                     </div>
+                    ${defectSection}
                     <div class="data-card-field full">
                         <span class="data-card-label">Date Finished</span>
                         <span class="data-card-value" style="font-size:0.8rem;color:var(--gray-600)">
@@ -1005,28 +1051,30 @@
 
     /* ── Load Data ── */
     async function loadData() {
-        const vendor    = document.getElementById('filterVendor').value;
-        const process   = document.getElementById('filterProcess').value;
-        const productId = document.getElementById('filterProduct').value;
-        const color     = document.getElementById('filterColor').value;
-        const typeValue = document.getElementById('filterType').value;
-        const dateFrom  = document.getElementById('filterDateFrom').value;
-        const dateTo    = document.getElementById('filterDateTo').value;
+        const vendor     = document.getElementById('filterVendor').value;
+        const process    = document.getElementById('filterProcess').value;
+        const productId  = document.getElementById('filterProduct').value;
+        const color      = document.getElementById('filterColor').value;
+        const typeValue  = document.getElementById('filterType').value;
+        const defectName = document.getElementById('filterDefect').value;
+        const dateFrom   = document.getElementById('filterDateFrom').value;
+        const dateTo     = document.getElementById('filterDateTo').value;
 
         const loadingHTML = `<div class="loading-state"><div class="spinner"></div><p>${t('hist.loading')}</p></div>`;
-        document.getElementById('tableBody').innerHTML = `<tr><td colspan="10">${loadingHTML}</td></tr>`;
+        document.getElementById('tableBody').innerHTML = `<tr><td colspan="11">${loadingHTML}</td></tr>`;
         document.getElementById('cardList').innerHTML  = loadingHTML;
         document.getElementById('paginationBar').style.display = 'none';
         document.getElementById('recordCount').innerHTML = t('hist.loading');
 
         const params = new URLSearchParams();
-        if (vendor)    params.append('vendor', vendor);
-        if (process)   params.append('process', process);
-        if (productId) params.append('productId', productId);
-        if (color)     params.append('color', color);
-        if (typeValue) params.append('typeValue', typeValue);
-        if (dateFrom)  params.append('dateFrom', dateFrom);
-        if (dateTo)    params.append('dateTo', dateTo);
+        if (vendor)     params.append('vendor', vendor);
+        if (process)    params.append('process', process);
+        if (productId)  params.append('productId', productId);
+        if (color)      params.append('color', color);
+        if (typeValue)  params.append('typeValue', typeValue);
+        if (defectName) params.append('defectName', defectName);
+        if (dateFrom)   params.append('dateFrom', dateFrom);
+        if (dateTo)     params.append('dateTo', dateTo);
 
         try {
             const res  = await fetch(`${pathBase}/Production/GetHistory?` + params.toString());
@@ -1036,11 +1084,11 @@
             }
             const data = await res.json();
             currentData = data;
-            currentPage = 1;    // reset to first page on new search
+            currentPage = 1;
 
             if (data.length === 0) {
                 const emptyHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><p>${t('hist.empty')}</p></div>`;
-                document.getElementById('tableBody').innerHTML = `<tr><td colspan="10">${emptyHTML}</td></tr>`;
+                document.getElementById('tableBody').innerHTML = `<tr><td colspan="11">${emptyHTML}</td></tr>`;
                 document.getElementById('cardList').innerHTML  = emptyHTML;
                 document.getElementById('recordCount').innerHTML = t('hist.page.no_records');
                 document.getElementById('paginationBar').style.display = 'none';
@@ -1052,7 +1100,7 @@
         } catch (e) {
             console.error('GetHistory error:', e);
             const errHTML = `<div class="empty-state"><div class="empty-state-icon">⚠️</div><p>An error occurred: ${escHtml(e.message)}</p></div>`;
-            document.getElementById('tableBody').innerHTML = `<tr><td colspan="10">${errHTML}</td></tr>`;
+            document.getElementById('tableBody').innerHTML = `<tr><td colspan="11">${errHTML}</td></tr>`;
             document.getElementById('cardList').innerHTML  = errHTML;
             document.getElementById('recordCount').innerHTML = 'Error';
             document.getElementById('paginationBar').style.display = 'none';
@@ -1066,26 +1114,25 @@
             return;
         }
 
-        /* Pass the same filter values that were used for the current search,
-           so the server re-queries the exact same dataset and embeds images. */
-        const params = new URLSearchParams();
-        const vendor    = document.getElementById('filterVendor').value;
-        const process   = document.getElementById('filterProcess').value;
-        const productId = document.getElementById('filterProduct').value;
-        const color     = document.getElementById('filterColor').value;
-        const typeValue = document.getElementById('filterType').value;
-        const dateFrom  = document.getElementById('filterDateFrom').value;
-        const dateTo    = document.getElementById('filterDateTo').value;
+        const params     = new URLSearchParams();
+        const vendor     = document.getElementById('filterVendor').value;
+        const process    = document.getElementById('filterProcess').value;
+        const productId  = document.getElementById('filterProduct').value;
+        const color      = document.getElementById('filterColor').value;
+        const typeValue  = document.getElementById('filterType').value;
+        const defectName = document.getElementById('filterDefect').value;
+        const dateFrom   = document.getElementById('filterDateFrom').value;
+        const dateTo     = document.getElementById('filterDateTo').value;
 
-        if (vendor)    params.append('vendor',    vendor);
-        if (process)   params.append('process',   process);
-        if (productId) params.append('productId', productId);
-        if (color)     params.append('color',     color);
-        if (typeValue) params.append('typeValue', typeValue);
-        if (dateFrom)  params.append('dateFrom',  dateFrom);
-        if (dateTo)    params.append('dateTo',    dateTo);
+        if (vendor)     params.append('vendor',     vendor);
+        if (process)    params.append('process',    process);
+        if (productId)  params.append('productId',  productId);
+        if (color)      params.append('color',      color);
+        if (typeValue)  params.append('typeValue',  typeValue);
+        if (defectName) params.append('defectName', defectName);
+        if (dateFrom)   params.append('dateFrom',   dateFrom);
+        if (dateTo)     params.append('dateTo',     dateTo);
 
-        /* Open in same tab — browser will treat the xlsx response as a download */
         window.location.href = `${pathBase}/Production/ExportHistoryExcel?${params.toString()}`;
     }
 
@@ -1094,6 +1141,7 @@
         document.getElementById('filterProcess').value  = '';
         document.getElementById('filterColor').value    = '';
         document.getElementById('filterType').value     = '';
+        document.getElementById('filterDefect').value   = '';
         document.getElementById('filterDateFrom').value = '';
         document.getElementById('filterDateTo').value   = '';
         updateProductFilter('');
@@ -1122,7 +1170,7 @@
     });
 
     window.addEventListener('DOMContentLoaded', () => {
-        Promise.all([loadAllCodes(), loadVendors(), loadProcesses(), loadColors()])
+        Promise.all([loadAllCodes(), loadVendors(), loadProcesses(), loadColors(), loadDefectNames()])
             .then(() => {
                 updateProductFilter('');
                 loadData();

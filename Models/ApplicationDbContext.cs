@@ -17,6 +17,8 @@ namespace ItalisaTools.Models
 
         public DbSet<SVN_Italisa_Color> sVN_Italisa_Color { get; set; }
 
+        public DbSet<SVN_Italisa_DefectInfor> SVN_Italisa_DefectInfor { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 

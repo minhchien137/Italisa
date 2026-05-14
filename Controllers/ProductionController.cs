@@ -76,7 +76,8 @@ namespace ItalisaTools.Controllers
                     color         = dto.Color,
                     date_finished = dto.DateFinished ?? DateTime.Now,
                     description   = dto.Description,
-                    image_path    = imagePath
+                    image_path    = imagePath,
+                    defect_name   = dto.TypeValue == "Defect" ? dto.DefectName : null
                 };
 
                 _context.SVN_Italisa_Production.Add(record);
@@ -103,17 +104,18 @@ namespace ItalisaTools.Controllers
         [HttpGet]
         public async Task<IActionResult> GetHistory(
             string? vendor, string? typeValue, string? process,
-            string? color, int? productId,
+            string? color, int? productId, string? defectName,
             string? dateFrom, string? dateTo)
         {
             try
             {
-                var data = await BuildHistoryQuery(vendor, typeValue, process, color, productId, dateFrom, dateTo)
+                var data = await BuildHistoryQuery(vendor, typeValue, process, color, productId, defectName, dateFrom, dateTo)
                     .Select(x => new
                     {
                         x.id, x.process, x.product_qty, x.product_id,
                         x.vendor, x.type_value, x.color,
-                        x.date_finished, x.description, x.image_path
+                        x.date_finished, x.description, x.image_path,
+                        x.defect_name
                     })
                     .ToListAsync();
 
@@ -131,13 +133,13 @@ namespace ItalisaTools.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportHistoryExcel(
             string? vendor, string? typeValue, string? process,
-            string? color, int? productId,
+            string? color, int? productId, string? defectName,
             string? dateFrom, string? dateTo)
         {
             try
             {
                 // 1. Fetch data (same filters as GetHistory)
-                var data = await BuildHistoryQuery(vendor, typeValue, process, color, productId, dateFrom, dateTo)
+                var data = await BuildHistoryQuery(vendor, typeValue, process, color, productId, defectName, dateFrom, dateTo)
                     .ToListAsync();
 
                 // 2. Build product_id → Operation label map
@@ -149,10 +151,10 @@ namespace ItalisaTools.Controllers
                 var ws = package.Workbook.Worksheets.Add("Production History");
 
                 // ── Column definitions ──────────────────────────────────────
-                // Col:  1     2        3         4           5       6      7         8       9             10
-                // Hdr:  #  Vendor  Process  Operation  Color   Type  Quantity  Date  Description  Image
-                double[] colWidths = { 5, 14, 18, 32, 16, 20, 12, 22, 40, 16 };
-                string[] headers   = { "#", "Vendor", "Process", "Operation", "Color", "Type", "Quantity", "Date", "Description", "Image" };
+                // Col:  1     2        3         4           5       6      7         8       9             10           11
+                // Hdr:  #  Vendor  Process  Operation  Color   Type  Defect  Quantity  Date  Description  Image
+                double[] colWidths = { 5, 14, 18, 32, 16, 20, 24, 12, 22, 40, 16 };
+                string[] headers   = { "#", "Vendor", "Process", "Operation", "Color", "Type", "Defect", "Quantity", "Date", "Description", "Image" };
 
                 // ── Header row ──────────────────────────────────────────────
                 for (int c = 0; c < headers.Length; c++)
@@ -171,14 +173,14 @@ namespace ItalisaTools.Controllers
                 ws.Row(1).Height = 22;
 
                 // ── Data rows ───────────────────────────────────────────────
-                const int    ImgCol        = 10;    // column index (1-based)
-                const double ImgRowHeight  = 65;    // Excel row height units ≈ 86 px
-                const int    ImgSizePx     = 70;    // embedded picture px (square)
+                const int    ImgCol        = 11;    // column index (1-based) — shifted +1
+                const double ImgRowHeight  = 65;
+                const int    ImgSizePx     = 70;
 
                 for (int i = 0; i < data.Count; i++)
                 {
                     var item   = data[i];
-                    int exlRow = i + 2;             // Excel row (1-based, header is row 1)
+                    int exlRow = i + 2;
 
                     // ── Cell values ─────────────────────────────────────────
                     ws.Cells[exlRow, 1].Value = i + 1;
@@ -188,9 +190,10 @@ namespace ItalisaTools.Controllers
                                                 : item.product_id.HasValue ? $"ID:{item.product_id}" : "";
                     ws.Cells[exlRow, 5].Value = item.color       ?? "";
                     ws.Cells[exlRow, 6].Value = item.type_value  ?? "";
-                    ws.Cells[exlRow, 7].Value = item.product_qty ?? 0;
-                    ws.Cells[exlRow, 8].Value = item.date_finished.ToString("dd/MM/yyyy HH:mm");
-                    ws.Cells[exlRow, 9].Value = item.description ?? "";
+                    ws.Cells[exlRow, 7].Value = item.defect_name ?? "";   // ← Defect
+                    ws.Cells[exlRow, 8].Value = item.product_qty ?? 0;
+                    ws.Cells[exlRow, 9].Value = item.date_finished.ToString("dd/MM/yyyy HH:mm");
+                    ws.Cells[exlRow, 10].Value = item.description ?? "";
 
                     // ── Alternate row background ────────────────────────────
                     if (i % 2 == 1)
@@ -224,16 +227,15 @@ namespace ItalisaTools.Controllers
                 }
 
                 // ── Global style ────────────────────────────────────────────
-                // Quantity column: right-align + number format
-                ws.Column(7).Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
-                ws.Cells[2, 7, data.Count + 1, 7].Style.Numberformat.Format = "#,##0";
+                // Quantity column (col 8): right-align + number format
+                ws.Column(8).Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+                ws.Cells[2, 8, data.Count + 1, 8].Style.Numberformat.Format = "#,##0";
 
                 // Borders on entire data range
                 if (data.Count > 0)
                 {
                     var dataRange = ws.Cells[1, 1, data.Count + 1, ImgCol];
                     dataRange.Style.Border.BorderAround(ExcelBorderStyle.Thin, Color.FromArgb(0xE2, 0xE8, 0xF0));
-                    // Internal borders
                     for (int r = 2; r <= data.Count + 1; r++)
                         ws.Cells[r, 1, r, ImgCol].Style.Border.Bottom.Style = ExcelBorderStyle.Hair;
                 }
@@ -264,7 +266,7 @@ namespace ItalisaTools.Controllers
 
         private IQueryable<SVN_Italisa_Production> BuildHistoryQuery(
             string? vendor, string? typeValue, string? process,
-            string? color, int? productId,
+            string? color, int? productId, string? defectName,
             string? dateFrom, string? dateTo)
         {
             var query = _context.SVN_Italisa_Production.AsQueryable();
@@ -279,6 +281,8 @@ namespace ItalisaTools.Controllers
                 query = query.Where(x => x.color == color);
             if (productId.HasValue)
                 query = query.Where(x => x.product_id == productId.Value);
+            if (!string.IsNullOrEmpty(defectName))
+                query = query.Where(x => x.defect_name == defectName);
             if (!string.IsNullOrEmpty(dateFrom) && DateTime.TryParse(dateFrom, out var dfrom))
                 query = query.Where(x => x.date_finished >= dfrom);
             if (!string.IsNullOrEmpty(dateTo) && DateTime.TryParse(dateTo, out var dto2))
@@ -420,6 +424,32 @@ namespace ItalisaTools.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> GetDefectNames()
+        {
+            var names = await _context.SVN_Italisa_DefectInfor
+                .OrderBy(d => d.defect_name_en)
+                .Select(d => d.defect_name_en ?? "")
+                .Where(d => d != "")
+                .ToListAsync();
+            return Json(names);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetDefects()
+        {
+            var defects = await _context.SVN_Italisa_DefectInfor
+                .OrderBy(d => d.defect_name_en)
+                .Select(d => new DefectItemDto
+                {
+                    NameEn = d.defect_name_en ?? "",
+                    NameVn = d.defect_name_vn ?? "",
+                    NameCn = d.defect_name_cn ?? ""
+                })
+                .ToListAsync();
+            return Json(defects);
+        }
+
+        [HttpGet]
         public async Task<IActionResult> GetAllCodes()
         {
             var map = await GetCodeMapAsync();
@@ -481,6 +511,13 @@ namespace ItalisaTools.Controllers
 
         // ── DTOs ─────────────────────────────────────────────────────────────
 
+        public class DefectItemDto
+        {
+            public string NameEn { get; set; } = string.Empty;
+            public string NameVn { get; set; } = string.Empty;
+            public string NameCn { get; set; } = string.Empty;
+        }
+
         public class CodeItemDto
         {
             public int    Value { get; set; }
@@ -498,6 +535,7 @@ namespace ItalisaTools.Controllers
             public DateTime?  DateFinished { get; set; }
             public string?    Description  { get; set; }
             public IFormFile? ImageFile    { get; set; }
+            public string?    DefectName   { get; set; }
         }
     }
 }

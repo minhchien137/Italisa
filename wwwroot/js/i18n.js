@@ -93,12 +93,23 @@ const I18N = {
         /* ── Type options ── */
         'type.production' : 'Số lượng sản xuất',
         'type.manpower'   : 'Nhân lực',
+        'type.defect'     : 'Lỗi sản phẩm',
+        
+        /* ── Defect ── */
+        'label.defect'       : 'Loại lỗi',
+        'ph.defect'          : '-- Chọn loại lỗi --',
+        'val.defect'         : 'Vui lòng chọn Loại lỗi.',
+        'modal.defect'       : 'Loại lỗi',
+        'hint.defect.loading': 'Đang tải danh sách lỗi...',
+        'hint.defect.error'  : '❌ Tải danh sách lỗi thất bại.',
         
         /* ── History page ── */
         'hist.title'       : 'Lịch sử Sản xuất',
         'hist.subtitle'    : 'Tất cả bản ghi đã nhập. Dùng bộ lọc để tìm kiếm.',
         'hist.filter.title': '🔍 Bộ lọc tìm kiếm',
-        'hist.label.vendor'   : 'Nhà cung cấp',
+        'hist.label.defect'   : 'Loại lỗi',
+        'hist.all.defects'    : 'Tất cả lỗi',
+        'hist.col.defect'     : 'Loại lỗi',
         'hist.label.process'  : 'Công đoạn',
         'hist.label.type'     : 'Loại',
         'hist.label.color'    : 'Màu sắc',
@@ -320,12 +331,23 @@ const I18N = {
         /* ── Type options ── */
         'type.production' : 'Production Quantity',
         'type.manpower'   : 'Man Power',
+        'type.defect'     : 'Defect',
+        
+        /* ── Defect ── */
+        'label.defect'       : 'Defect Code',
+        'ph.defect'          : '-- Select Defect --',
+        'val.defect'         : 'Please select a Defect.',
+        'modal.defect'       : 'Defect',
+        'hint.defect.loading': 'Loading defect list...',
+        'hint.defect.error'  : '❌ Failed to load defects.',
         
         /* ── History page ── */
         'hist.title'       : 'Production History',
         'hist.subtitle'    : 'All records entered into the system. Use filters to search.',
         'hist.filter.title': '🔍 Search Filters',
-        'hist.label.vendor'   : 'Vendor',
+        'hist.label.defect'   : 'Defect',
+        'hist.all.defects'    : 'All Defects',
+        'hist.col.defect'     : 'Defect',
         'hist.label.process'  : 'Process',
         'hist.label.type'     : 'Type',
         'hist.label.color'    : 'Color',

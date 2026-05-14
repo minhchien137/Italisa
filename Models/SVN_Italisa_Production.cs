@@ -15,6 +15,7 @@ namespace ItalisaTools.Models
         public string? color { get; set; }
         public string? vendor { get; set; }
         public string? type_value { get; set; }
+        public string? defect_name { get; set; }
         public DateTime date_finished { get; set; } = DateTime.Now;
 
         public string? description { get; set; }
