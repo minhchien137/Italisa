@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = "Defect Report";
+    ViewData["Title"] = "Yield Report";
 }
 
 <!DOCTYPE html>
@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="@Url.Content("~/js/i18n.js")"></script>
     <style>
         :root {
             --denim:        #1B4F8A;
@@ -30,66 +31,71 @@
             --danger:       #ef4444;
             --shadow-sm:    0 1px 3px rgba(27,79,138,0.08);
             --shadow-md:    0 4px 20px rgba(27,79,138,0.12);
-            --nav-height:   60px;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'DM Sans', sans-serif;
-            background: var(--gray-50);
-            min-height: 100vh;
+            background: var(--gray-50); min-height: 100vh;
             background-image:
                 radial-gradient(ellipse at 20% 50%, rgba(27,79,138,0.06) 0%, transparent 60%),
                 radial-gradient(ellipse at 80% 20%, rgba(37,99,168,0.05) 0%, transparent 50%);
         }
 
-        /* ── NAV ── */
-        nav {
+        /* ── PAGE HEADER BAR (replaces nav) ── */
+        .page-topbar {
             background: var(--denim-dark);
             padding: 0 1.5rem;
+            height: 56px;
             display: flex; align-items: center; justify-content: space-between;
-            height: var(--nav-height);
             box-shadow: 0 2px 12px rgba(0,0,0,0.2);
             position: sticky; top: 0; z-index: 200;
         }
-        .nav-brand {
+        .topbar-brand {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 1.1rem; font-weight: 700;
-            color: var(--white); letter-spacing: 0.5px;
+            font-size: 1rem; font-weight: 700; color: var(--white);
             display: flex; align-items: center; gap: 8px;
         }
-        .nav-brand span {
+        .topbar-brand .badge-tag {
             background: var(--denim-mid); padding: 2px 8px; border-radius: 4px;
-            font-size: 0.7rem; font-weight: 600; letter-spacing: 1.5px;
+            font-size: 0.68rem; font-weight: 600; letter-spacing: 1.5px;
             text-transform: uppercase; color: #a8d0f8;
         }
-        .nav-links { display: flex; gap: 4px; }
-        .nav-links a {
-            color: rgba(255,255,255,0.7); text-decoration: none;
-            padding: 6px 12px; border-radius: 6px;
-            font-size: 0.84rem; font-weight: 500;
-            transition: all 0.2s; white-space: nowrap;
+        .topbar-right { display: flex; align-items: center; gap: 10px; }
+        /* Lang switcher — circular flags */
+        .lang-group { display: flex; gap: 6px; align-items: center; }
+        .lang-btn {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid transparent;
+            border-radius: 50%;
+            width: 34px; height: 34px;
+            padding: 3px;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s, transform 0.15s;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
         }
-        .nav-links a:hover { background: rgba(255,255,255,0.12); color: var(--white); }
-        .nav-links a.active { background: var(--denim-mid); color: var(--white); }
-        @@media (max-width: 480px) {
-            .nav-links a .nav-label { display: none; }
-            .nav-links a { padding: 6px 10px; font-size: 1rem; }
+        .lang-btn img {
+            width: 22px; height: 22px;
+            border-radius: 50%; object-fit: cover; display: block;
         }
+        .lang-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.08); }
 
         /* ── LAYOUT ── */
         .page-wrapper { max-width: 1700px; margin: 0 auto; padding: 1.5rem 1rem; }
-        @@media (min-width: 600px) { .page-wrapper { padding: 2.5rem 1.5rem; } }
+        @@media (min-width: 600px) { .page-wrapper { padding: 2rem 1.5rem; } }
+
+        /* ── PAGE TITLE ── */
         .page-header { margin-bottom: 1.5rem; }
         .page-header h1 {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 1.5rem; font-weight: 700; color: var(--denim-dark);
+            font-size: 1.45rem; font-weight: 700; color: var(--denim-dark);
         }
-        @@media (min-width: 600px) { .page-header h1 { font-size: 1.75rem; } }
-        .page-header p { color: var(--gray-600); font-size: 0.9rem; margin-top: 6px; }
+        @@media (min-width: 600px) { .page-header h1 { font-size: 1.7rem; } }
+        .page-header p { color: var(--gray-600); font-size: 0.88rem; margin-top: 5px; }
         .header-line {
             width: 48px; height: 4px;
             background: linear-gradient(90deg, var(--denim), var(--denim-mid));
-            border-radius: 2px; margin-top: 12px;
+            border-radius: 2px; margin-top: 10px;
         }
 
         /* ── FILTER ── */
@@ -99,15 +105,14 @@
             box-shadow: var(--shadow-sm); margin-bottom: 1.5rem; overflow: hidden;
         }
         .filter-header {
-            background: var(--denim-xlight); padding: 0.9rem 1.25rem;
+            background: var(--denim-xlight); padding: 0.85rem 1.25rem;
             display: flex; align-items: center; justify-content: space-between;
             border-bottom: 1px solid rgba(27,79,138,0.1);
             cursor: pointer; user-select: none;
         }
         .filter-header h3 {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.92rem; font-weight: 600; color: var(--denim-dark);
-            display: flex; align-items: center; gap: 8px;
+            font-size: 0.9rem; font-weight: 600; color: var(--denim-dark);
         }
         .filter-toggle { font-size: 0.8rem; color: var(--denim); font-weight: 600; transition: transform 0.3s; }
         .filter-toggle.collapsed { transform: rotate(-90deg); }
@@ -118,34 +123,33 @@
         .filter-grid {
             display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;
         }
-        @@media (min-width: 600px) { .filter-grid { grid-template-columns: repeat(3, 1fr); gap: 1rem; } }
-        @@media (min-width: 900px) { .filter-grid { grid-template-columns: repeat(5, 1fr) auto; align-items: end; gap: 1rem; } }
-        .filter-group { display: flex; flex-direction: column; gap: 5px; }
+        @@media (min-width: 600px) { .filter-grid { grid-template-columns: repeat(3, 1fr); gap: 0.85rem; } }
+        @@media (min-width: 1000px) { .filter-grid { grid-template-columns: repeat(7, 1fr) auto; align-items: end; gap: 0.85rem; } }
+        .filter-group { display: flex; flex-direction: column; gap: 4px; }
         .filter-group label {
-            font-size: 0.75rem; font-weight: 600; color: var(--denim-dark);
+            font-size: 0.72rem; font-weight: 600; color: var(--denim-dark);
             letter-spacing: 0.3px; text-transform: uppercase;
         }
         .filter-group select,
         .filter-group input[type="date"] {
-            width: 100%; padding: 0.6rem 0.75rem;
+            width: 100%; padding: 0.55rem 0.7rem;
             border: 1.5px solid var(--gray-200); border-radius: 8px;
-            font-family: 'DM Sans', sans-serif; font-size: 0.88rem;
+            font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
             color: var(--gray-800); background: var(--white);
             outline: none; transition: border-color 0.2s, box-shadow 0.2s;
-            min-height: 40px; cursor: pointer;
+            min-height: 38px; cursor: pointer;
             appearance: none; -webkit-appearance: none;
         }
         .filter-group select:focus,
         .filter-group input[type="date"]:focus {
             border-color: var(--denim); box-shadow: 0 0 0 3px rgba(27,79,138,0.1);
         }
-        .filter-btn-group { justify-content: flex-end; }
-        .filter-actions { display: flex; gap: 8px; }
+        .filter-actions { display: flex; gap: 6px; flex-wrap: wrap; }
         .btn {
-            padding: 0.6rem 1.2rem; border-radius: 8px; border: none;
-            font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 600;
+            padding: 0.55rem 1.1rem; border-radius: 8px; border: none;
+            font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600;
             cursor: pointer; transition: all 0.2s; white-space: nowrap;
-            display: inline-flex; align-items: center; gap: 6px;
+            display: inline-flex; align-items: center; gap: 5px;
         }
         .btn-primary { background: var(--denim); color: var(--white); }
         .btn-primary:hover:not(:disabled) { background: var(--denim-dark); }
@@ -153,36 +157,63 @@
         .btn-outline:hover:not(:disabled) { background: var(--denim-xlight); }
         .btn-success { background: #059669; color: var(--white); }
         .btn-success:hover:not(:disabled) { background: #047857; }
-        .btn:disabled { opacity: 0.55; cursor: not-allowed; }
-        .btn-sm { padding: 0.4rem 0.85rem; font-size: 0.8rem; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-sm { padding: 0.38rem 0.8rem; font-size: 0.78rem; }
 
         /* ── KPI ── */
         .kpi-grid {
             display: grid; grid-template-columns: repeat(2, 1fr);
-            gap: 1rem; margin-bottom: 1.5rem;
+            gap: 0.6rem; margin-bottom: 1.25rem;
         }
-        @@media (min-width: 900px) { .kpi-grid { grid-template-columns: repeat(4, 1fr); } }
+        @@media (min-width: 900px) { .kpi-grid { grid-template-columns: repeat(4, 1fr); gap: 1rem; } }
+
+        /* Mobile: icon row, text column; nhỏ gọn */
         .kpi-card {
-            background: var(--white); border-radius: 14px;
+            background: var(--white); border-radius: 12px;
             border: 1px solid rgba(27,79,138,0.08);
-            box-shadow: var(--shadow-sm); padding: 1.25rem 1.5rem;
-            display: flex; align-items: flex-start; gap: 1rem;
+            box-shadow: var(--shadow-sm);
+            padding: 0.8rem 0.7rem;
+            display: flex; flex-direction: row; align-items: center; gap: 0.55rem;
         }
+        @@media (min-width: 480px) { .kpi-card { padding: 1rem 1.1rem; gap: 0.85rem; align-items: flex-start; } }
+        @@media (min-width: 900px) { .kpi-card { padding: 1.1rem 1.25rem; } }
+
         .kpi-icon {
-            width: 44px; height: 44px; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.3rem; flex-shrink: 0;
+            width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; font-size: 0.95rem;
         }
+        @@media (min-width: 480px) { .kpi-icon { width: 40px; height: 40px; font-size: 1.2rem; border-radius: 10px; } }
+
         .kpi-icon.blue   { background: var(--denim-xlight); }
         .kpi-icon.red    { background: #fef2f2; }
         .kpi-icon.green  { background: #ecfdf5; }
         .kpi-icon.orange { background: #fff7ed; }
-        .kpi-body { flex: 1; min-width: 0; }
-        .kpi-label { font-size: 0.75rem; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.4px; }
-        .kpi-value { font-family: 'Space Grotesk', sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--denim-dark); margin-top: 4px; }
+
+        .kpi-body { min-width: 0; flex: 1; }
+
+        .kpi-label {
+            font-size: 0.62rem; font-weight: 700; color: var(--gray-400);
+            text-transform: uppercase; letter-spacing: 0.2px;
+            line-height: 1.3; white-space: normal;
+        }
+        @@media (min-width: 480px) { .kpi-label { font-size: 0.7rem; white-space: nowrap; } }
+
+        .kpi-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.2rem; font-weight: 700; color: var(--denim-dark);
+            margin-top: 1px; line-height: 1.2;
+        }
+        @@media (min-width: 480px) { .kpi-value { font-size: 1.45rem; margin-top: 2px; } }
+        @@media (min-width: 900px)  { .kpi-value { font-size: 1.55rem; } }
+
         .kpi-value.red   { color: var(--danger); }
         .kpi-value.green { color: var(--success); }
-        .kpi-sub { font-size: 0.78rem; color: var(--gray-400); margin-top: 3px; }
+
+        .kpi-sub {
+            font-size: 0.65rem; color: var(--gray-400); margin-top: 1px;
+            white-space: normal; line-height: 1.3;
+        }
+        @@media (min-width: 480px) { .kpi-sub { font-size: 0.72rem; white-space: nowrap; } }
 
         /* ── CHARTS ── */
         .charts-grid {
@@ -197,15 +228,15 @@
         }
         .chart-card-header {
             background: linear-gradient(135deg, var(--denim-dark) 0%, var(--denim) 100%);
-            padding: 1rem 1.25rem;
+            padding: 0.9rem 1.25rem;
         }
         .chart-card-header h3 {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.9rem; font-weight: 600; color: var(--white);
+            font-size: 0.88rem; font-weight: 600; color: var(--white);
         }
-        .chart-body { padding: 1.25rem; }
+        .chart-body { padding: 1rem 1.25rem; }
 
-        /* ── TABLE ── */
+        /* ── TABLE CARD ── */
         .table-card {
             background: var(--white); border-radius: 14px;
             border: 1px solid rgba(27,79,138,0.08);
@@ -213,84 +244,90 @@
         }
         .table-card-header {
             background: linear-gradient(135deg, var(--denim-dark) 0%, var(--denim) 100%);
-            padding: 1rem 1.5rem;
+            padding: 0.9rem 1.5rem;
             display: flex; align-items: center; justify-content: space-between;
             gap: 1rem; flex-wrap: wrap;
         }
         .table-card-header h3 {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.95rem; font-weight: 600; color: var(--white);
+            font-size: 0.92rem; font-weight: 600; color: var(--white);
             display: flex; align-items: center; gap: 8px;
         }
         .badge {
             background: rgba(255,255,255,0.18); color: var(--white);
-            border-radius: 20px; padding: 3px 10px; font-size: 0.75rem; font-weight: 600;
+            border-radius: 20px; padding: 2px 9px; font-size: 0.72rem; font-weight: 600;
         }
+
+        /* ── TABLE ── */
         .table-scroll { overflow-x: auto; }
-        .defect-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-        .defect-table thead th {
+        .defect-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+
+        /* Header rows */
+        .defect-table thead tr.th-main th {
             background: var(--denim); color: var(--white);
-            padding: 10px 12px; text-align: center; font-weight: 600;
-            white-space: nowrap; border-right: 1px solid rgba(255,255,255,0.15);
-            vertical-align: middle; position: sticky; top: 0; z-index: 10;
+            padding: 8px 10px; text-align: center; font-weight: 600;
+            border-right: 1px solid rgba(255,255,255,0.15);
+            vertical-align: middle; white-space: nowrap;
+            position: sticky; top: 0; z-index: 10;
         }
-        .defect-table thead th.th-left { text-align: left; }
-        .defect-table thead th.th-defect {
-            background: #5b21b6; font-size: 0.75rem; line-height: 1.3;
+        .defect-table thead tr.th-main th.th-left { text-align: left; }
+        .defect-table thead tr.th-main th .th-en  { display: block; font-size: 0.8rem;  font-weight: 700; line-height: 1.4; }
+        .defect-table thead tr.th-main th .th-cn  { display: block; font-size: 0.68rem; font-weight: 400; opacity: 0.8;  line-height: 1.3; }
+        .defect-table thead tr.th-main th .th-vn  { display: block; font-size: 0.68rem; font-weight: 500; opacity: 0.85; line-height: 1.3; color: #a8d0f8; }
+
+        /* Defect columns: purple header */
+        .defect-table thead tr.th-main th.th-defect {
+            background: #5b21b6; font-size: 0.73rem;
         }
-        .defect-table thead th.th-defect-first {
-            border-left: 2px solid rgba(255,255,255,0.4);
-        }
-        .defect-table thead th .th-sub {
-            display: block; font-size: 0.67rem; font-weight: 400; opacity: 0.75; margin-top: 2px;
-        }
+        .defect-table thead tr.th-main th.th-defect-first { border-left: 2px solid rgba(255,255,255,0.4); }
+
+        /* Data rows */
         .defect-table tbody td {
-            padding: 9px 12px; border-bottom: 1px solid var(--gray-100);
+            padding: 8px 10px; border-bottom: 1px solid var(--gray-100);
             border-right: 1px solid var(--gray-100); vertical-align: middle; white-space: nowrap;
         }
-        .defect-table tbody tr:nth-child(even) td { background: var(--gray-50); }
+        .defect-table tbody tr:nth-child(even) td { background: #f8fafc; }
         .defect-table tbody tr:hover td { background: var(--denim-xlight); }
-        .td-num  { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--denim); }
-        .td-zero { text-align: right; font-variant-numeric: tabular-nums; color: var(--gray-300); }
+        .td-num    { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--denim); }
+        .td-zero   { text-align: right; font-variant-numeric: tabular-nums; color: #d1d5db; }
         .td-center { text-align: center; }
         .td-defect { text-align: right; font-variant-numeric: tabular-nums; }
         .td-defect.td-defect-first { border-left: 2px solid #c4b5fd; }
         .td-defect-nz { font-weight: 700; color: var(--danger); }
-        .rate-badge {
-            display: inline-block; padding: 2px 8px;
-            border-radius: 20px; font-size: 0.75rem; font-weight: 700;
-        }
-        .rate-ok  { background: #ecfdf5; color: #065f46; }
-        .rate-mid { background: #fff7ed; color: #92400e; }
-        .rate-bad { background: #fef2f2; color: #991b1b; }
-        .color-tag {
-            display: inline-block; padding: 2px 10px; border-radius: 20px;
-            font-size: 0.73rem; font-weight: 600; white-space: nowrap;
-        }
+
+        /* Rate badges */
+        .rate-badge { display: inline-block; padding: 2px 7px; border-radius: 20px; font-size: 0.73rem; font-weight: 700; }
+        .rate-ok    { background: #ecfdf5; color: #065f46; }
+        .rate-mid   { background: #fff7ed; color: #92400e; }
+        .rate-bad   { background: #fef2f2; color: #991b1b; }
+
+        /* Color tags */
+        .color-tag { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 0.71rem; font-weight: 600; white-space: nowrap; }
         .color-matte  { background: #1e293b; color: #fff; }
         .color-chrome { background: #e2e8f0; color: #1e293b; border: 1px solid #cbd5e1; }
         .color-brass  { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
         .color-beige  { background: #fef9c3; color: #713f12; border: 1px solid #fde68a; }
         .color-other  { background: var(--denim-xlight); color: var(--denim); }
         .color-none   { background: var(--gray-100); color: var(--gray-600); font-style: italic; }
+
+        /* Total row */
         tr.total-row td {
-            background: var(--denim-dark) !important;
-            color: var(--white) !important; font-weight: 700;
+            background: var(--denim-dark) !important; color: var(--white) !important; font-weight: 700;
         }
-        tr.total-row td.td-zero { color: rgba(255,255,255,0.4) !important; }
+        tr.total-row td.td-zero { color: rgba(255,255,255,0.35) !important; }
 
         /* ── PAGINATION ── */
         .pagination-bar {
-            padding: 1rem 1.5rem; border-top: 1px solid var(--gray-100);
+            padding: 0.85rem 1.5rem; border-top: 1px solid var(--gray-100);
             display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
         }
-        .pagination-info { font-size: 0.82rem; color: var(--gray-600); }
+        .pagination-info { font-size: 0.8rem; color: var(--gray-600); }
         .pagination-controls { display: flex; gap: 4px; }
         .pg-btn {
-            min-width: 32px; height: 32px; padding: 0 8px;
+            min-width: 30px; height: 30px; padding: 0 7px;
             border: 1.5px solid var(--gray-200); border-radius: 7px;
             background: var(--white); color: var(--gray-800);
-            font-family: 'DM Sans', sans-serif; font-size: 0.82rem;
+            font-family: 'DM Sans', sans-serif; font-size: 0.8rem;
             cursor: pointer; transition: all 0.15s;
             display: flex; align-items: center; justify-content: center;
         }
@@ -298,48 +335,48 @@
         .pg-btn.active { background: var(--denim); color: var(--white); border-color: var(--denim); font-weight: 700; }
         .pg-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        /* ── MISC ── */
+        /* ── EMPTY ── */
         .empty-state { padding: 3rem; text-align: center; color: var(--gray-400); }
-        .empty-state .empty-icon { font-size: 3rem; margin-bottom: 0.75rem; }
-        .empty-state p { font-size: 0.9rem; }
+        .empty-state .empty-icon { font-size: 2.8rem; margin-bottom: 0.75rem; }
+
+        /* ── LOADING ── */
         .loading-overlay {
-            position: fixed; inset: 0; background: rgba(15,47,82,0.45);
+            position: fixed; inset: 0; background: rgba(15,47,82,0.4);
             display: flex; align-items: center; justify-content: center;
             z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.2s;
         }
         .loading-overlay.show { opacity: 1; pointer-events: all; }
-        .loading-box {
-            background: var(--white); border-radius: 14px;
-            padding: 2rem 2.5rem; text-align: center; box-shadow: var(--shadow-md);
-        }
+        .loading-box { background: var(--white); border-radius: 14px; padding: 2rem 2.5rem; text-align: center; box-shadow: var(--shadow-md); }
         .spinner {
-            width: 40px; height: 40px; margin: 0 auto 1rem;
+            width: 38px; height: 38px; margin: 0 auto 0.9rem;
             border: 3px solid var(--denim-light); border-top-color: var(--denim);
             border-radius: 50%; animation: spin 0.8s linear infinite;
         }
         @@keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── TOAST ── */
         .toast {
             position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9000;
             background: var(--white); border-radius: 10px; box-shadow: var(--shadow-md);
-            padding: 0.85rem 1.25rem; display: flex; align-items: center; gap: 10px;
-            min-width: 280px; max-width: 420px;
-            opacity: 0; transform: translateY(12px);
+            padding: 0.8rem 1.2rem; display: flex; align-items: center; gap: 9px;
+            min-width: 270px; max-width: 400px;
+            opacity: 0; transform: translateY(10px);
             transition: opacity 0.25s, transform 0.25s; pointer-events: none;
         }
         .toast.show { opacity: 1; transform: translateY(0); pointer-events: all; }
         .toast.success { border-left: 4px solid var(--success); }
         .toast.error   { border-left: 4px solid var(--danger);  }
         .toast.info    { border-left: 4px solid var(--denim);   }
-        #toastMsg { font-size: 0.88rem; color: var(--gray-800); }
+        #toastMsg { font-size: 0.85rem; color: var(--gray-800); }
     </style>
 </head>
 <body>
 
-
+<!-- ── LOADING ── -->
 <div class="loading-overlay" id="loadingOverlay">
     <div class="loading-box">
         <div class="spinner"></div>
-        <p style="color:var(--denim-dark);font-weight:600;font-size:0.9rem">Đang tải dữ liệu...</p>
+        <p style="color:var(--denim-dark);font-weight:600;font-size:0.88rem" data-i18n="dr.loading">Loading data...</p>
     </div>
 </div>
 <div class="toast" id="toast">
@@ -347,131 +384,144 @@
 </div>
 
 <div class="page-wrapper">
-    <!-- Header -->
+
+    <!-- Page title -->
     <div class="page-header">
-        <h1>🔍 Defect Report — Báo Cáo Tỷ Lệ Lỗi & Tỷ Lệ Đạt</h1>
-        <p>Phân tích tỷ lệ lỗi, tỷ lệ đạt theo công đoạn, lớp phủ và mã sản phẩm. Dữ liệu từ bảng sản xuất SVN.</p>
+        <h1>🔍 <span data-i18n="dr.page.title">Yield Report — Báo Cáo Tỷ Lệ Đạt</span></h1>
+        <p data-i18n="dr.page.subtitle">Phân tích tỷ lệ lỗi và tỷ lệ đạt theo công đoạn, lớp phủ và mã sản phẩm.</p>
         <div class="header-line"></div>
     </div>
 
-    <!-- Filter -->
+    <!-- ── FILTERS ── -->
     <div class="filter-card">
         <div class="filter-header" onclick="toggleFilter()">
-            <h3>🔎 Bộ lọc dữ liệu / Filters</h3>
+            <h3 data-i18n="dr.filter.title">🔎 Bộ lọc dữ liệu / Filters</h3>
             <span class="filter-toggle" id="filterToggle">▼</span>
         </div>
         <div class="filter-body" id="filterBody">
             <div class="filter-grid">
                 <div class="filter-group">
-                    <label>📅 Từ ngày</label>
+                    <label data-i18n="dr.label.from">📅 Từ ngày</label>
                     <input type="date" id="fDateFrom" />
                 </div>
                 <div class="filter-group">
-                    <label>📅 Đến ngày</label>
+                    <label data-i18n="dr.label.to">📅 Đến ngày</label>
                     <input type="date" id="fDateTo" />
                 </div>
                 <div class="filter-group">
-                    <label>⚙️ Công đoạn / Process</label>
-                    <select id="fProcess"><option value="">-- Tất cả --</option></select>
+                    <label data-i18n="dr.label.process">⚙️ Công đoạn</label>
+                    <select id="fProcess">
+                        <option value="" data-i18n="dr.all.process">-- Tất cả --</option>
+                    </select>
                 </div>
                 <div class="filter-group">
-                    <label>🎨 Lớp phủ / Coating</label>
-                    <select id="fColor"><option value="">-- Tất cả --</option></select>
+                    <label data-i18n="dr.label.coating">🎨 Lớp phủ</label>
+                    <select id="fColor">
+                        <option value="" data-i18n="dr.all.coating">-- Tất cả --</option>
+                    </select>
                 </div>
                 <div class="filter-group">
-                    <label>🔩 Mã sản phẩm</label>
-                    <select id="fProduct"><option value="">-- Tất cả --</option></select>
+                    <label data-i18n="dr.label.partcode">🔩 Mã linh kiện</label>
+                    <select id="fPartCode">
+                        <option value="" data-i18n="dr.all.partcode">-- Tất cả --</option>
+                    </select>
                 </div>
-                <div class="filter-group filter-btn-group">
+                <div class="filter-group">
+                    <label data-i18n="dr.label.product">📦 Sản phẩm</label>
+                    <select id="fProduct">
+                        <option value="" data-i18n="dr.all.product">-- Tất cả --</option>
+                    </select>
+                </div>
+                <div class="filter-group" style="grid-column:span 1">
                     <label>&nbsp;</label>
                     <div class="filter-actions">
-                        <button class="btn btn-outline" onclick="resetFilters()">↺ Reset</button>
-                        <button class="btn btn-primary" id="btnApply" onclick="loadData()">▶ Áp dụng</button>
+                        <button class="btn btn-outline btn-sm" onclick="resetFilters()">↺ <span data-i18n="dr.btn.reset">Reset</span></button>
+                        <button class="btn btn-primary btn-sm" id="btnApply" onclick="loadData()">▶ <span data-i18n="dr.btn.apply">Áp dụng</span></button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- KPI -->
+    <!-- ── KPI CARDS ── -->
     <div class="kpi-grid">
         <div class="kpi-card">
             <div class="kpi-icon blue">📦</div>
             <div class="kpi-body">
-                <div class="kpi-label">Tổng SL đầu vào</div>
+                <div class="kpi-label" data-i18n="dr.kpi.input.label">Tổng SL đầu vào</div>
                 <div class="kpi-value" id="kpiInput">—</div>
-                <div class="kpi-sub">Total Input Quantity</div>
+                <div class="kpi-sub" data-i18n="dr.kpi.input.sub">Total Input Quantity</div>
             </div>
         </div>
         <div class="kpi-card">
             <div class="kpi-icon red">❌</div>
             <div class="kpi-body">
-                <div class="kpi-label">Tổng SL lỗi (NG)</div>
+                <div class="kpi-label" data-i18n="dr.kpi.ng.label">Tổng SL lỗi (NG)</div>
                 <div class="kpi-value red" id="kpiNG">—</div>
-                <div class="kpi-sub">Total NG Quantity</div>
+                <div class="kpi-sub" data-i18n="dr.kpi.ng.sub">Total NG Quantity</div>
             </div>
         </div>
         <div class="kpi-card">
             <div class="kpi-icon orange">📉</div>
             <div class="kpi-body">
-                <div class="kpi-label">Tỷ lệ lỗi</div>
+                <div class="kpi-label" data-i18n="dr.kpi.defrate.label">Tỷ lệ lỗi</div>
                 <div class="kpi-value red" id="kpiDefRate">—</div>
-                <div class="kpi-sub">Overall Defect Rate</div>
+                <div class="kpi-sub" data-i18n="dr.kpi.defrate.sub">Overall Defect Rate</div>
             </div>
         </div>
         <div class="kpi-card">
             <div class="kpi-icon green">✅</div>
             <div class="kpi-body">
-                <div class="kpi-label">Tỷ lệ đạt</div>
+                <div class="kpi-label" data-i18n="dr.kpi.yield.label">Tỷ lệ đạt</div>
                 <div class="kpi-value green" id="kpiYield">—</div>
-                <div class="kpi-sub">Overall Yield Rate</div>
+                <div class="kpi-sub" data-i18n="dr.kpi.yield.sub">Overall Yield Rate</div>
             </div>
         </div>
     </div>
 
-    <!-- Charts -->
+    <!-- ── CHARTS ── -->
     <div class="charts-grid">
         <div class="chart-card">
             <div class="chart-card-header">
-                <h3>📈 Xu hướng tỷ lệ lỗi theo ngày &nbsp;<small style="opacity:0.7;font-weight:400">(Defect Rate Trend)</small></h3>
+                <h3>📈 <span data-i18n="dr.chart.trend">Xu hướng tỷ lệ lỗi theo ngày</span></h3>
             </div>
             <div class="chart-body">
-                <div style="position:relative;height:230px"><canvas id="chartTrend"></canvas></div>
+                <div style="position:relative;height:210px"><canvas id="chartTrend"></canvas></div>
             </div>
         </div>
         <div class="chart-card">
             <div class="chart-card-header">
-                <h3>🔝 Top loại lỗi &nbsp;<small style="opacity:0.7;font-weight:400">(Top Defect Types)</small></h3>
+                <h3>🔝 <span data-i18n="dr.chart.defects">Top loại lỗi</span></h3>
             </div>
             <div class="chart-body">
-                <div style="position:relative;height:230px"><canvas id="chartDefects"></canvas></div>
+                <div style="position:relative;height:210px"><canvas id="chartDefects"></canvas></div>
             </div>
         </div>
         <div class="chart-card">
             <div class="chart-card-header">
-                <h3>⚙️ Tỷ lệ lỗi theo công đoạn</h3>
+                <h3>⚙️ <span data-i18n="dr.chart.process">Tỷ lệ lỗi theo công đoạn</span></h3>
             </div>
             <div class="chart-body">
-                <div style="position:relative;height:230px"><canvas id="chartProcess"></canvas></div>
+                <div style="position:relative;height:210px"><canvas id="chartProcess"></canvas></div>
             </div>
         </div>
     </div>
 
-    <!-- Table -->
+    <!-- ── TABLE ── -->
     <div class="table-card">
         <div class="table-card-header">
             <h3>
-                📋 Chi tiết tỷ lệ lỗi theo sản phẩm &amp; công đoạn
-                <span class="badge" id="rowBadge">0 dòng</span>
+                📋 <span data-i18n="dr.table.title">Chi tiết tỷ lệ lỗi theo sản phẩm</span>
+                <span class="badge" id="rowBadge">0</span>
             </h3>
             <button class="btn btn-success btn-sm" id="btnExcel" onclick="exportExcel()" disabled>
-                📥 Export Excel
+                📥 <span data-i18n="dr.btn.excel">Export Excel</span>
             </button>
         </div>
         <div class="table-scroll" id="tableScroll">
             <div class="empty-state">
                 <div class="empty-icon">📊</div>
-                <p>Chọn bộ lọc và nhấn <strong>Áp dụng</strong> để tải dữ liệu.</p>
+                <p data-i18n="dr.empty.init">Chọn bộ lọc và nhấn Áp dụng để tải dữ liệu.</p>
             </div>
         </div>
         <div class="pagination-bar" id="paginationBar" style="display:none">
@@ -479,445 +529,675 @@
             <div class="pagination-controls" id="pgControls"></div>
         </div>
     </div>
-</div>
+
+</div><!-- /page-wrapper -->
 
 @section Scripts {
 <script>
-    const pathBase = '@Context.Request.PathBase'.replace(/\/$/, '');
+/* ──────────────────────────────────────────────────────────────
+   State
+────────────────────────────────────────────────────────────── */
+const pathBase    = '@Context.Request.PathBase';
+let allRows       = [];
+let defectTypes   = [];   // [{en,vn,cn}]
+let currentPage   = 1;
+const PAGE_SIZE   = 25;
+let chartTrend = null, chartDefects = null, chartProcess = null;
 
-    let allRows     = [];
-    let defectTypes = [];
-    let currentPage = 1;
-    const PAGE_SIZE = 25;
-    let chartTrend = null, chartDefects = null, chartProcess = null;
+// ── Init ──────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    const today = new Date(), from = new Date(today);
+    from.setDate(today.getDate() - 30);
+    document.getElementById('fDateTo').value   = fmtDate(today);
+    document.getElementById('fDateFrom').value = fmtDate(from);
+    loadFilterDropdowns();
+    loadData();
+});
 
-    // ── Init ──────────────────────────────────────────────────────────────────
-    document.addEventListener('DOMContentLoaded', () => {
-        const today = new Date();
-        const from  = new Date(today); from.setDate(today.getDate() - 30);
-        document.getElementById('fDateTo').value   = fmtDate(today);
-        document.getElementById('fDateFrom').value = fmtDate(from);
-        loadFilters();
-        loadData();
+document.addEventListener('langChanged', () => {
+    // Re-apply data-i18n on dynamic select options
+    document.querySelectorAll('select option[data-i18n]').forEach(opt => {
+        opt.textContent = t(opt.dataset.i18n);
+    });
+    // Re-render table if data exists (for translated labels)
+    if (allRows.length) renderTable();
+});
+
+function fmtDate(d) { return d.toISOString().split('T')[0]; }
+
+// ── Load filter dropdowns ─────────────────────────────────────
+async function loadFilterDropdowns() {
+    try {
+        const [pr, cr] = await Promise.all([
+            fetch(`${pathBase}/Production/GetProcesses`),
+            fetch(`${pathBase}/Production/GetColors`)
+        ]);
+        const procs  = await pr.json();
+        const colors = await cr.json();
+
+        const ps = document.getElementById('fProcess');
+        procs.forEach(p => { if (p) ps.insertAdjacentHTML('beforeend', `<option value="${esc(p)}">${esc(p)}</option>`); });
+
+        const cs = document.getElementById('fColor');
+        colors.forEach(c => { if (c) cs.insertAdjacentHTML('beforeend', `<option value="${esc(c)}">${esc(c)}</option>`); });
+    } catch(e) { console.error('loadFilterDropdowns', e); }
+}
+
+// ── Load Data ─────────────────────────────────────────────────
+async function loadData() {
+    const df  = document.getElementById('fDateFrom').value;
+    const dt  = document.getElementById('fDateTo').value;
+    const pr  = document.getElementById('fProcess').value;
+    const cl  = document.getElementById('fColor').value;
+    const pc  = document.getElementById('fPartCode').value;   // productId from part code select
+    const pid = document.getElementById('fProduct').value;
+
+    const params = new URLSearchParams();
+    if (df)         params.append('dateFrom',  df);
+    if (dt)         params.append('dateTo',    dt);
+    if (pr)         params.append('process',   pr);
+    if (cl)         params.append('color',     cl);
+    if (pc)         params.append('productId', pc);
+    else if (pid)   params.append('productId', pid);
+
+    showLoading(true);
+    document.getElementById('btnApply').disabled = true;
+    document.getElementById('btnExcel').disabled = true;
+
+    try {
+        const res  = await fetch(`${pathBase}/Production/GetDefectReportData?` + params);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+
+        allRows     = data.rows        || [];
+        defectTypes = data.defectTypes || [];   // [{en,vn,cn}]
+        currentPage = 1;
+
+        renderKPI();
+        renderCharts();
+        renderTable();
+        refreshDynamicFilters();
+
+        document.getElementById('btnExcel').disabled = !allRows.length;
+        showToast(t('dr.export.ok', {n: allRows.length}).replace('Đã xuất','Tải xong').replace(' ra Excel',''), 'success');
+    } catch(e) {
+        console.error('loadData', e);
+        showToast('Lỗi: ' + e.message, 'error');
+    } finally {
+        showLoading(false);
+        document.getElementById('btnApply').disabled = false;
+    }
+}
+
+// ── Refresh Part Code + Product dropdowns from returned data ──
+function refreshDynamicFilters() {
+    const curPc  = document.getElementById('fPartCode').value;
+    const curPid = document.getElementById('fProduct').value;
+
+    // Part Code dropdown (keyed by productId, label = partCode)
+    const pcSel = document.getElementById('fPartCode');
+    while (pcSel.options.length > 1) pcSel.remove(1);
+    const seenPc = new Map();
+    allRows.forEach(r => {
+        if (r.productId != null && !seenPc.has(r.productId))
+            seenPc.set(r.productId, r.partCode || String(r.productId));
+    });
+    // Sort by partCode
+    [...seenPc.entries()].sort((a,b) => String(a[1]).localeCompare(String(b[1]))).forEach(([v, lbl]) => {
+        pcSel.insertAdjacentHTML('beforeend', `<option value="${v}">${esc(lbl)}</option>`);
+    });
+    if (curPc) pcSel.value = curPc;
+
+    // Product dropdown (keyed by productId, label = product label)
+    const prodSel = document.getElementById('fProduct');
+    while (prodSel.options.length > 1) prodSel.remove(1);
+    const seenProd = new Map();
+    allRows.forEach(r => {
+        if (r.productId != null && !seenProd.has(r.productId))
+            seenProd.set(r.productId, r.product || r.partCode || String(r.productId));
+    });
+    [...seenProd.entries()].sort((a,b) => String(a[1]).localeCompare(String(b[1]))).forEach(([v, lbl]) => {
+        prodSel.insertAdjacentHTML('beforeend', `<option value="${v}">${esc(lbl)}</option>`);
+    });
+    if (curPid) prodSel.value = curPid;
+}
+
+// ── KPI ───────────────────────────────────────────────────────
+function renderKPI() {
+    if (!allRows.length) {
+        ['kpiInput','kpiNG','kpiDefRate','kpiYield'].forEach(id => document.getElementById(id).textContent = '—');
+        return;
+    }
+    const tI = allRows.reduce((s,r) => s+(r.inputQty||0), 0);
+    const tN = allRows.reduce((s,r) => s+(r.ngQty   ||0), 0);
+    const tO = allRows.reduce((s,r) => s+(r.okQty   ||0), 0);
+    const dr = tI > 0 ? tN/tI*100 : 0;
+    const yr = tI > 0 ? tO/tI*100 : 100;
+    document.getElementById('kpiInput').textContent   = fmt(tI);
+    document.getElementById('kpiNG').textContent      = fmt(tN);
+    document.getElementById('kpiDefRate').textContent = dr.toFixed(1)+'%';
+    document.getElementById('kpiYield').textContent   = yr.toFixed(1)+'%';
+}
+
+// ── Charts ────────────────────────────────────────────────────
+function renderCharts() {
+    // 1. Trend
+    const byDate = {};
+    allRows.forEach(r => {
+        if (!byDate[r.date]) byDate[r.date] = {ng:0,input:0};
+        byDate[r.date].ng    += r.ngQty    || 0;
+        byDate[r.date].input += r.inputQty || 0;
+    });
+    const dates = Object.keys(byDate).sort();
+    const rates = dates.map(d => byDate[d].input>0 ? +(byDate[d].ng/byDate[d].input*100).toFixed(1) : 0);
+    const ctx1  = document.getElementById('chartTrend').getContext('2d');
+    if (chartTrend) chartTrend.destroy();
+    chartTrend = new Chart(ctx1, {
+        type:'line',
+        data:{ labels:dates, datasets:[{
+            label:'Defect Rate (%)', data:rates,
+            borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,0.07)',
+            borderWidth:2.5, pointRadius:4, pointBackgroundColor:'#ef4444',
+            tension:0.35, fill:true
+        }]},
+        options:{ responsive:true, maintainAspectRatio:false,
+            plugins:{legend:{display:false}},
+            scales:{
+                x:{ticks:{font:{size:10},maxRotation:45},grid:{display:false}},
+                y:{ticks:{callback:v=>v+'%',font:{size:10}},beginAtZero:true}
+            }
+        }
     });
 
-    function fmtDate(d) { return d.toISOString().split('T')[0]; }
-
-    async function loadFilters() {
-        try {
-            const [pr, cr] = await Promise.all([
-                fetch(`${pathBase}/Production/GetProcesses`),
-                fetch(`${pathBase}/Production/GetColors`)
-            ]);
-            const processes = await pr.json();
-            const colors    = await cr.json();
-
-            const ps = document.getElementById('fProcess');
-            processes.forEach(p => { if (p) ps.insertAdjacentHTML('beforeend', `<option value="${esc(p)}">${esc(p)}</option>`); });
-
-            const cs = document.getElementById('fColor');
-            colors.forEach(c => { if (c) cs.insertAdjacentHTML('beforeend', `<option value="${esc(c)}">${esc(c)}</option>`); });
-        } catch(e) { console.error('loadFilters', e); }
-    }
-
-    // ── Load Data ─────────────────────────────────────────────────────────────
-    async function loadData() {
-        const params = new URLSearchParams();
-        const df  = document.getElementById('fDateFrom').value;
-        const dt  = document.getElementById('fDateTo').value;
-        const pr  = document.getElementById('fProcess').value;
-        const cl  = document.getElementById('fColor').value;
-        const pid = document.getElementById('fProduct').value;
-        if (df)  params.append('dateFrom',  df);
-        if (dt)  params.append('dateTo',    dt);
-        if (pr)  params.append('process',   pr);
-        if (cl)  params.append('color',     cl);
-        if (pid) params.append('productId', pid);
-
-        showLoading(true);
-        document.getElementById('btnApply').disabled  = true;
-        document.getElementById('btnExcel').disabled  = true;
-
-        try {
-            const res  = await fetch(`${pathBase}/Production/GetDefectReportData?` + params);
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            const data = await res.json();
-
-            allRows     = data.rows        || [];
-            defectTypes = data.defectTypes || [];
-            currentPage = 1;
-
-            renderKPI();
-            renderCharts();
-            renderTable();
-            populateProductFilter();
-
-            document.getElementById('btnExcel').disabled = !allRows.length;
-            showToast(`Tải xong ${allRows.length} dòng.`, 'success');
-        } catch(e) {
-            console.error('loadData', e);
-            showToast('Lỗi: ' + e.message, 'error');
-        } finally {
-            showLoading(false);
-            document.getElementById('btnApply').disabled = false;
+    // 2. Defect types (doughnut)
+    const defTot = {};
+    allRows.forEach(r => {
+        if (r.defects) Object.entries(r.defects).forEach(([k,v]) => { defTot[k]=(defTot[k]||0)+v; });
+    });
+    const defSorted = Object.entries(defTot).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    const PAL = ['#ef4444','#f97316','#eab308','#22c55e','#06b6d4','#6366f1','#ec4899','#14b8a6','#f59e0b','#a855f7'];
+    const ctx2 = document.getElementById('chartDefects').getContext('2d');
+    if (chartDefects) chartDefects.destroy();
+    chartDefects = new Chart(ctx2, {
+        type:'doughnut',
+        data:{ labels:defSorted.map(x=>x[0]),
+            datasets:[{data:defSorted.map(x=>x[1]),backgroundColor:PAL,borderWidth:2,borderColor:'#fff'}]
+        },
+        options:{ responsive:true, maintainAspectRatio:false,
+            plugins:{legend:{position:'right',labels:{font:{size:9},boxWidth:11}}}
         }
-    }
+    });
 
-    function populateProductFilter() {
-        const sel = document.getElementById('fProduct');
-        const cur = sel.value;
-        while (sel.options.length > 1) sel.remove(1);
-        const seen = new Map();
-        allRows.forEach(r => {
-            if (r.productId != null && !seen.has(r.productId))
-                seen.set(r.productId, r.partCode || String(r.productId));
-        });
-        seen.forEach((lbl, v) => sel.insertAdjacentHTML('beforeend',
-            `<option value="${v}">${esc(lbl)}</option>`));
-        if (cur) sel.value = cur;
-    }
-
-    // ── KPI ───────────────────────────────────────────────────────────────────
-    function renderKPI() {
-        if (!allRows.length) {
-            ['kpiInput','kpiNG','kpiDefRate','kpiYield'].forEach(id => document.getElementById(id).textContent = '—');
-            return;
+    // 3. Defect rate by process (horizontal bar)
+    const byProc = {};
+    allRows.forEach(r => {
+        const p = r.process || '?';
+        if (!byProc[p]) byProc[p] = {ng:0,input:0};
+        byProc[p].ng    += r.ngQty    || 0;
+        byProc[p].input += r.inputQty || 0;
+    });
+    const procSorted = Object.entries(byProc)
+        .map(([k,v]) => ({k, rate: v.input>0 ? +(v.ng/v.input*100).toFixed(1):0}))
+        .sort((a,b)=>b.rate-a.rate).slice(0,8);
+    const ctx3 = document.getElementById('chartProcess').getContext('2d');
+    if (chartProcess) chartProcess.destroy();
+    chartProcess = new Chart(ctx3, {
+        type:'bar',
+        data:{ labels:procSorted.map(x=>x.k),
+            datasets:[{
+                label:'Defect Rate (%)', data:procSorted.map(x=>x.rate),
+                backgroundColor:procSorted.map(x=>x.rate>=10?'rgba(239,68,68,0.82)':x.rate>=5?'rgba(245,158,11,0.82)':'rgba(16,185,129,0.82)'),
+                borderRadius:4
+            }]
+        },
+        options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+            plugins:{legend:{display:false}},
+            scales:{
+                x:{ticks:{callback:v=>v+'%',font:{size:10}},beginAtZero:true},
+                y:{ticks:{font:{size:9}}}
+            }
         }
-        const totIn = allRows.reduce((s,r) => s + (r.inputQty||0), 0);
-        const totNG = allRows.reduce((s,r) => s + (r.ngQty   ||0), 0);
-        const totOK = allRows.reduce((s,r) => s + (r.okQty   ||0), 0);
-        const dr    = totIn > 0 ? (totNG / totIn * 100) : 0;
-        const yr    = totIn > 0 ? (totOK / totIn * 100) : 100;
-        document.getElementById('kpiInput').textContent   = fmt(totIn);
-        document.getElementById('kpiNG').textContent      = fmt(totNG);
-        document.getElementById('kpiDefRate').textContent = dr.toFixed(1) + '%';
-        document.getElementById('kpiYield').textContent   = yr.toFixed(1) + '%';
+    });
+}
+
+// ── Table ─────────────────────────────────────────────────────
+function renderTable() {
+    const wrap  = document.getElementById('tableScroll');
+    const pgBar = document.getElementById('paginationBar');
+    const badge = document.getElementById('rowBadge');
+
+    badge.textContent = allRows.length;
+
+    if (!allRows.length) {
+        wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>${t('dr.empty.nodata')}</p></div>`;
+        pgBar.style.display = 'none';
+        return;
     }
+    pgBar.style.display = 'flex';
 
-    // ── Charts ────────────────────────────────────────────────────────────────
-    function renderCharts() {
-        // 1. Trend by date
-        const byDate = {};
-        allRows.forEach(r => {
-            if (!byDate[r.date]) byDate[r.date] = { ng:0, input:0 };
-            byDate[r.date].ng    += r.ngQty    || 0;
-            byDate[r.date].input += r.inputQty || 0;
+    const totalPages = Math.ceil(allRows.length / PAGE_SIZE);
+    const start      = (currentPage - 1) * PAGE_SIZE;
+    const rows       = allRows.slice(start, start + PAGE_SIZE);
+
+    // ── Header ──
+    // Trilingual: EN / 中文 / VN
+    const fixedCols = [
+        { en:'Date',        cn:'日期',   vn:'Ngày',          left:true,  w:106 },
+        { en:'Part Code',   cn:'零件代码',vn:'Mã linh kiện',  left:false, w:96  },
+        { en:'Product',     cn:'产品名称',vn:'Sản phẩm',      left:true,  w:150 },
+        { en:'Coating',     cn:'涂层',   vn:'Lớp phủ',       left:false, w:116 },
+        { en:'Process',     cn:'工序',   vn:'Quy trình',     left:true,  w:128 },
+        { en:'Input Qty',   cn:'投入量', vn:'SL đầu vào',    left:false, w:82  },
+        { en:'OK Qty',      cn:'良品数', vn:'SL đạt',        left:false, w:76  },
+        { en:'NG Qty',      cn:'不良数', vn:'SL lỗi',        left:false, w:76  },
+        { en:'Output Qty',  cn:'产出量', vn:'SL đầu ra',     left:false, w:82  },
+        { en:'Defect Rate', cn:'不良率', vn:'Tỷ lệ lỗi',     left:false, w:86  },
+        { en:'Yield Rate',  cn:'良品率', vn:'Tỷ lệ đạt',     left:false, w:86  },
+    ];
+
+    let html = `<table class="defect-table"><thead><tr class="th-main">`;
+    fixedCols.forEach(c => {
+        html += `<th class="${c.left?'th-left':''}" style="min-width:${c.w}px">
+            <span class="th-en">${c.en}</span>
+            <span class="th-cn">${c.cn}</span>
+            <span class="th-vn">${c.vn}</span>
+        </th>`;
+    });
+    defectTypes.forEach((dt, i) => {
+        const en = dt.en || dt.nameEn || '';
+        const cn = dt.cn || dt.nameCn || '';
+        const vn = dt.vn || dt.nameVn || '';
+        html += `<th class="th-defect${i===0?' th-defect-first':''}" style="min-width:82px">
+            <span class="th-en">${esc(en)}</span>
+            <span class="th-cn">${esc(cn)}</span>
+            <span class="th-vn">${esc(vn)}</span>
+        </th>`;
+    });
+    html += `</tr></thead><tbody>`;
+
+    // ── Data rows ──
+    let tI=0, tO=0, tN=0;
+    const tDef = {};
+    // Build key map for defects
+    const defKeys = defectTypes.map(dt => dt.en || dt.nameEn || '');
+
+    rows.forEach(r => {
+        tI += r.inputQty  || 0;
+        tO += r.okQty     || 0;
+        tN += r.ngQty     || 0;
+        const rCls = r.defectRate >= 10 ? 'rate-bad' : r.defectRate >= 5 ? 'rate-mid' : 'rate-ok';
+        const yCls = r.yieldRate  <= 90 ? 'rate-bad' : r.yieldRate  <= 95 ? 'rate-mid' : 'rate-ok';
+        html += `<tr>
+            <td style="color:var(--gray-600);font-size:0.78rem">${esc(r.date||'')}</td>
+            <td class="td-center" style="font-weight:700;color:var(--denim)">${esc(r.partCode||'—')}</td>
+            <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;color:var(--gray-800)" title="${esc(r.product||'')}">${esc(r.product||'—')}</td>
+            <td class="td-center">${colorBadge(r.coating)}</td>
+            <td style="color:var(--gray-700)">${esc(r.process||'—')}</td>
+            <td class="${r.inputQty>0?'td-num':'td-zero'}">${fmt(r.inputQty)}</td>
+            <td class="${r.okQty>0?'td-num':'td-zero'}" style="color:${r.okQty>0?'var(--success)':''}">${fmt(r.okQty)}</td>
+            <td class="${r.ngQty>0?'td-num':'td-zero'}" style="color:${r.ngQty>0?'var(--danger)':''}">${fmt(r.ngQty)}</td>
+            <td class="${r.outputQty>0?'td-num':'td-zero'}">${fmt(r.outputQty)}</td>
+            <td class="td-center"><span class="rate-badge ${rCls}">${(r.defectRate??0).toFixed(1)}%</span></td>
+            <td class="td-center"><span class="rate-badge ${yCls}">${(r.yieldRate??100).toFixed(1)}%</span></td>`;
+        defKeys.forEach((key, i) => {
+            const v = r.defects ? (r.defects[key] || 0) : 0;
+            tDef[key] = (tDef[key]||0) + v;
+            html += `<td class="td-defect${i===0?' td-defect-first':''}${v>0?' td-defect-nz':''}">${v>0?fmt(v):'<span style="color:#e2e8f0">—</span>'}</td>`;
         });
-        const dates = Object.keys(byDate).sort();
-        const rates = dates.map(d => byDate[d].input > 0 ? +(byDate[d].ng/byDate[d].input*100).toFixed(1) : 0);
+        html += `</tr>`;
+    });
 
-        const ctx1 = document.getElementById('chartTrend').getContext('2d');
-        if (chartTrend) chartTrend.destroy();
-        chartTrend = new Chart(ctx1, {
-            type: 'line',
-            data: {
-                labels: dates,
-                datasets: [{
-                    label: 'Defect Rate (%)',
-                    data: rates,
-                    borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.08)',
-                    borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#ef4444',
-                    tension: 0.35, fill: true
-                }]
-            },
-            options: {
-                responsive:true, maintainAspectRatio:false,
-                plugins:{ legend:{display:false} },
-                scales:{
-                    x:{ ticks:{font:{size:10},maxRotation:45}, grid:{display:false} },
-                    y:{ ticks:{callback:v=>v+'%',font:{size:10}}, beginAtZero:true }
-                }
-            }
-        });
+    // ── Total row ──
+    const tDR = tI>0?(tN/tI*100).toFixed(1):'0.0';
+    const tYR = tI>0?(tO/tI*100).toFixed(1):'100.0';
+    html += `<tr class="total-row">
+        <td colspan="5" style="text-align:left;padding-left:14px;letter-spacing:.3px">
+            ${t('dr.total.label')} — ${allRows.length} rows | pg ${currentPage}/${Math.ceil(allRows.length/PAGE_SIZE)}
+        </td>
+        <td style="text-align:right">${fmt(tI)}</td>
+        <td style="text-align:right">${fmt(tO)}</td>
+        <td style="text-align:right">${fmt(tN)}</td>
+        <td style="text-align:right">${fmt(tO)}</td>
+        <td style="text-align:center">${tDR}%</td>
+        <td style="text-align:center">${tYR}%</td>`;
+    defKeys.forEach((key,i) => {
+        const v = tDef[key]||0;
+        html += `<td class="${i===0?'td-defect-first':''}" style="text-align:right${v===0?';color:rgba(255,255,255,0.3)':''}">${v>0?fmt(v):'—'}</td>`;
+    });
+    html += `</tr></tbody></table>`;
+    wrap.innerHTML = html;
+    renderPagination(allRows.length, totalPages);
+}
 
-        // 2. Top defect types (doughnut)
-        const defTot = {};
-        allRows.forEach(r => { if (r.defects) Object.entries(r.defects).forEach(([k,v]) => { defTot[k]=(defTot[k]||0)+v; }); });
-        const defSorted = Object.entries(defTot).sort((a,b)=>b[1]-a[1]).slice(0,10);
-        const PALETTE = ['#ef4444','#f97316','#eab308','#22c55e','#06b6d4','#6366f1','#ec4899','#14b8a6','#f59e0b','#a855f7'];
-        const ctx2 = document.getElementById('chartDefects').getContext('2d');
-        if (chartDefects) chartDefects.destroy();
-        chartDefects = new Chart(ctx2, {
-            type: 'doughnut',
-            data: {
-                labels: defSorted.map(x=>x[0]),
-                datasets: [{ data: defSorted.map(x=>x[1]), backgroundColor: PALETTE, borderWidth:2, borderColor:'#fff' }]
-            },
-            options: {
-                responsive:true, maintainAspectRatio:false,
-                plugins:{ legend:{ position:'right', labels:{font:{size:10},boxWidth:12} } }
-            }
-        });
+function renderPagination(total, totalPages) {
+    const s = (currentPage-1)*PAGE_SIZE+1, e = Math.min(currentPage*PAGE_SIZE, total);
+    document.getElementById('pgInfo').textContent = t('dr.pg.showing',{from:s,to:e,total});
+    const ctrl = document.getElementById('pgControls');
+    ctrl.innerHTML = '';
+    const add = (lbl,pg,dis,act) => {
+        const b = document.createElement('button');
+        b.className='pg-btn'+(act?' active':'');
+        b.textContent=lbl; b.disabled=dis;
+        b.onclick=()=>{ currentPage=pg; renderTable(); };
+        ctrl.appendChild(b);
+    };
+    add('«',1,currentPage===1,false);
+    add('‹',currentPage-1,currentPage===1,false);
+    for (let p=Math.max(1,currentPage-2); p<=Math.min(totalPages,currentPage+2); p++) add(p,p,false,p===currentPage);
+    add('›',currentPage+1,currentPage===totalPages,false);
+    add('»',totalPages,currentPage===totalPages,false);
+}
 
-        // 3. Defect rate by process (horizontal bar)
-        const byProc = {};
-        allRows.forEach(r => {
-            const p = r.process || '(unknown)';
-            if (!byProc[p]) byProc[p] = {ng:0,input:0};
-            byProc[p].ng    += r.ngQty    || 0;
-            byProc[p].input += r.inputQty || 0;
-        });
-        const procSorted = Object.entries(byProc)
-            .map(([k,v]) => ({ k, rate: v.input > 0 ? +(v.ng/v.input*100).toFixed(1) : 0 }))
-            .sort((a,b) => b.rate - a.rate).slice(0, 8);
+// ── Color badge ───────────────────────────────────────────────
+function colorBadge(c) {
+    if (!c||c==='-') return `<span class="color-tag color-none">—</span>`;
+    const l=c.toLowerCase();
+    if (l.includes('matt')||l.includes('black')) return `<span class="color-tag color-matte">${esc(c)}</span>`;
+    if (l.includes('chrome'))                    return `<span class="color-tag color-chrome">${esc(c)}</span>`;
+    if (l.includes('brass'))                     return `<span class="color-tag color-brass">${esc(c)}</span>`;
+    if (l.includes('beige'))                     return `<span class="color-tag color-beige">${esc(c)}</span>`;
+    return `<span class="color-tag color-other">${esc(c)}</span>`;
+}
 
-        const ctx3 = document.getElementById('chartProcess').getContext('2d');
-        if (chartProcess) chartProcess.destroy();
-        chartProcess = new Chart(ctx3, {
-            type: 'bar',
-            data: {
-                labels: procSorted.map(x=>x.k),
-                datasets: [{
-                    label: 'Defect Rate (%)',
-                    data: procSorted.map(x=>x.rate),
-                    backgroundColor: procSorted.map(x =>
-                        x.rate>=10 ? 'rgba(239,68,68,0.8)' : x.rate>=5 ? 'rgba(245,158,11,0.8)' : 'rgba(16,185,129,0.8)'
-                    ),
-                    borderRadius:4, borderSkipped:false
-                }]
-            },
-            options: {
-                indexAxis:'y', responsive:true, maintainAspectRatio:false,
-                plugins:{legend:{display:false}},
-                scales:{
-                    x:{ ticks:{callback:v=>v+'%',font:{size:10}}, beginAtZero:true },
-                    y:{ ticks:{font:{size:9}} }
-                }
-            }
-        });
-    }
+/* ──────────────────────────────────────────────────────────────
+   EXPORT EXCEL — colored + autofilter + trilingual headers
+────────────────────────────────────────────────────────────── */
+function exportExcel() {
+    if (!allRows.length) { showToast(t('dr.export.nodata'), 'error'); return; }
 
-    // ── Table ─────────────────────────────────────────────────────────────────
-    function renderTable() {
-        const wrap  = document.getElementById('tableScroll');
-        const pgBar = document.getElementById('paginationBar');
-        const badge = document.getElementById('rowBadge');
+    const df  = document.getElementById('fDateFrom').value || 'all';
+    const dt  = document.getElementById('fDateTo').value   || fmtDate(new Date());
+    const wb  = XLSX.utils.book_new();
 
-        badge.textContent = `${allRows.length} dòng`;
+    /* ── colour palette ── */
+    const C = {
+        headerDark : '0F2F52',   // denim-dark
+        headerMid  : '1B4F8A',   // denim
+        headerPurp : '5B21B6',   // purple (defect cols)
+        altRow     : 'EFF6FF',   // denim-xlight
+        totalRow   : '0F2F52',
+        greenFill  : 'D1FAE5', greenFont : '065F46',
+        redFill    : 'FEE2E2', redFont   : '991B1B',
+        yellowFill : 'FEF3C7', yellowFont: '92400E',
+        defectFill : 'F5F3FF',  // light purple
+    };
 
-        if (!allRows.length) {
-            wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>Không có dữ liệu trong khoảng thời gian đã chọn.</p></div>`;
-            pgBar.style.display = 'none';
-            return;
-        }
-        pgBar.style.display = 'flex';
+    const sty = (font, fill, align, border) => {
+        const s = {};
+        if (font)   s.font   = font;
+        if (fill)   s.fill   = { fgColor: { rgb: fill } };
+        if (align)  s.alignment = align;
+        if (border) s.border = border;
+        return s;
+    };
+    const sideBorder = (color) => ({ left:{ style:'thin', color:{rgb:color} }, right:{ style:'thin', color:{rgb:color} }, top:{ style:'thin', color:{rgb:color} }, bottom:{ style:'thin', color:{rgb:color} } });
 
-        const totalPages = Math.ceil(allRows.length / PAGE_SIZE);
-        const start      = (currentPage - 1) * PAGE_SIZE;
-        const rows       = allRows.slice(start, start + PAGE_SIZE);
+    const addr = (r,c) => XLSX.utils.encode_cell({r,c});
 
-        // Header
-        let html = `<table class="defect-table"><thead><tr>
-            <th class="th-left" style="min-width:106px">Date<span class="th-sub">Ngày</span></th>
-            <th style="min-width:96px">Part Code<span class="th-sub">Mã linh kiện</span></th>
-            <th class="th-left" style="min-width:150px">Product<span class="th-sub">Sản phẩm</span></th>
-            <th style="min-width:120px">Coating<span class="th-sub">Lớp phủ</span></th>
-            <th class="th-left" style="min-width:130px">Process<span class="th-sub">Quy trình</span></th>
-            <th style="min-width:84px">Input Qty<span class="th-sub">SL đầu vào</span></th>
-            <th style="min-width:78px">OK Qty<span class="th-sub">SL đạt</span></th>
-            <th style="min-width:78px">NG Qty<span class="th-sub">SL lỗi</span></th>
-            <th style="min-width:84px">Output Qty<span class="th-sub">SL đầu ra</span></th>
-            <th style="min-width:88px">Defect Rate<span class="th-sub">Tỷ lệ lỗi</span></th>
-            <th style="min-width:88px">Yield Rate<span class="th-sub">Tỷ lệ đạt</span></th>`;
-        defectTypes.forEach((dt, i) => {
-            html += `<th class="th-defect${i===0?' th-defect-first':''}" style="min-width:88px">${esc(dt)}</th>`;
-        });
-        html += `</tr></thead><tbody>`;
+    /* ── Sheet 1: Defect Report ── */
+    const ws = {};
 
-        // Rows
-        let totIn=0, totOK=0, totNG=0;
-        const totDef = {};
-        defectTypes.forEach(dt => { totDef[dt] = 0; });
+    // Fixed header definitions (multilingual)
+    const fixedHdrs = [
+        { en:'Date',        cn:'日期',    vn:'Ngày'        },
+        { en:'Part Code',   cn:'零件代码', vn:'Mã linh kiện'},
+        { en:'Product',     cn:'产品名称', vn:'Sản phẩm'   },
+        { en:'Coating',     cn:'涂层',    vn:'Lớp phủ'    },
+        { en:'Process',     cn:'工序',    vn:'Quy trình'  },
+        { en:'Input Qty',   cn:'投入量',  vn:'SL đầu vào' },
+        { en:'OK Qty',      cn:'良品数',  vn:'SL đạt'     },
+        { en:'NG Qty',      cn:'不良数',  vn:'SL lỗi'     },
+        { en:'Output Qty',  cn:'产出量',  vn:'SL đầu ra'  },
+        { en:'Defect Rate', cn:'不良率',  vn:'Tỷ lệ lỗi'  },
+        { en:'Yield Rate',  cn:'良品率',  vn:'Tỷ lệ đạt'  },
+    ];
+    const defectHdrs = defectTypes.map(dt => ({
+        en: dt.en || dt.nameEn || '',
+        cn: dt.cn || dt.nameCn || '',
+        vn: dt.vn || dt.nameVn || ''
+    }));
+    const allHdrs   = [...fixedHdrs, ...defectHdrs];
+    const numCols   = allHdrs.length;
+    const lastColL  = XLSX.utils.encode_col(numCols-1);
 
-        rows.forEach(r => {
-            totIn += r.inputQty  || 0;
-            totOK += r.okQty     || 0;
-            totNG += r.ngQty     || 0;
+    // ── Row 0: Big title (merged) ──
+    const titleSty = sty(
+        {name:'Calibri',sz:16,bold:true,color:{rgb:'FFFFFF'}},
+        C.headerDark,
+        {horizontal:'center',vertical:'center'},
+        null
+    );
+    ws[addr(0,0)] = { v:`DEFECT REPORT  —  Báo Cáo Tỷ Lệ Lỗi & Tỷ Lệ Đạt`, t:'s', s:titleSty };
+    for (let c=1;c<numCols;c++) ws[addr(0,c)] = { v:'', t:'s', s:sty(null,C.headerDark,{horizontal:'center',vertical:'center'},null) };
 
-            const rCls = r.defectRate >= 10 ? 'rate-bad' : r.defectRate >= 5 ? 'rate-mid' : 'rate-ok';
-            const yCls = r.yieldRate  <= 90 ? 'rate-bad' : r.yieldRate  <= 95 ? 'rate-mid' : 'rate-ok';
+    // ── Row 1: Period ──
+    const periodSty = sty(
+        {name:'Calibri',sz:11,italic:true,color:{rgb:'C0D9F5'}},
+        C.headerMid,
+        {horizontal:'center',vertical:'center'},
+        null
+    );
+    ws[addr(1,0)] = { v:`Kỳ: ${df}  →  ${dt}`, t:'s', s:periodSty };
+    for (let c=1;c<numCols;c++) ws[addr(1,c)] = { v:'', t:'s', s:sty(null,C.headerMid,null,null) };
 
-            html += `<tr>
-                <td style="color:var(--gray-600);font-size:0.8rem">${esc(r.date||'')}</td>
-                <td class="td-center" style="font-weight:700;color:var(--denim)">${esc(r.partCode||'—')}</td>
-                <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;color:var(--gray-800)" title="${esc(r.product||'')}">${esc(r.product||'—')}</td>
-                <td class="td-center">${colorBadge(r.coating)}</td>
-                <td style="color:var(--gray-700)">${esc(r.process||'—')}</td>
-                <td class="${r.inputQty>0?'td-num':'td-zero'}">${fmt(r.inputQty)}</td>
-                <td class="${r.okQty>0?'td-num':'td-zero'}" style="color:${r.okQty>0?'var(--success)':''}">${fmt(r.okQty)}</td>
-                <td class="${r.ngQty>0?'td-num':'td-zero'}" style="color:${r.ngQty>0?'var(--danger)':''}">${fmt(r.ngQty)}</td>
-                <td class="${r.outputQty>0?'td-num':'td-zero'}">${fmt(r.outputQty)}</td>
-                <td class="td-center"><span class="rate-badge ${rCls}">${(r.defectRate??0).toFixed(1)}%</span></td>
-                <td class="td-center"><span class="rate-badge ${yCls}">${(r.yieldRate??100).toFixed(1)}%</span></td>`;
+    // ── Row 2: Generated ──
+    const genSty = sty(
+        {name:'Calibri',sz:9,color:{rgb:'A0C4E8'}},
+        C.headerMid,
+        {horizontal:'center',vertical:'center'},
+        null
+    );
+    ws[addr(2,0)] = { v:`Xuất lúc: ${new Date().toLocaleString('vi-VN')}`, t:'s', s:genSty };
+    for (let c=1;c<numCols;c++) ws[addr(2,c)] = { v:'', t:'s', s:sty(null,C.headerMid,null,null) };
 
-            defectTypes.forEach((dt, i) => {
-                const v = r.defects ? (r.defects[dt]||0) : 0;
-                totDef[dt] = (totDef[dt]||0) + v;
-                html += `<td class="td-defect${i===0?' td-defect-first':''}${v>0?' td-defect-nz':''}">${v>0?fmt(v):'<span style="color:var(--gray-200)">—</span>'}</td>`;
-            });
-            html += `</tr>`;
-        });
+    // ── Row 3: blank ──
+    for (let c=0;c<numCols;c++) ws[addr(3,c)] = { v:'', t:'s' };
 
-        // Total row
-        const totDR = totIn > 0 ? (totNG/totIn*100).toFixed(1) : '0.0';
-        const totYR = totIn > 0 ? (totOK/totIn*100).toFixed(1) : '100.0';
-        html += `<tr class="total-row">
-            <td colspan="5" style="text-align:left;padding-left:16px;letter-spacing:0.3px">
-                📊 TOTAL — trang ${currentPage}/${Math.ceil(allRows.length/PAGE_SIZE)} &nbsp;|&nbsp; ${allRows.length} dòng
-            </td>
-            <td style="text-align:right">${fmt(totIn)}</td>
-            <td style="text-align:right">${fmt(totOK)}</td>
-            <td style="text-align:right">${fmt(totNG)}</td>
-            <td style="text-align:right">${fmt(totOK)}</td>
-            <td style="text-align:center">${totDR}%</td>
-            <td style="text-align:center">${totYR}%</td>`;
-        defectTypes.forEach((dt,i) => {
-            const v = totDef[dt]||0;
-            html += `<td class="${i===0?'td-defect-first':''}" style="text-align:right${v===0?';color:rgba(255,255,255,0.35)':''}">${v>0?fmt(v):'—'}</td>`;
-        });
-        html += `</tr></tbody></table>`;
-
-        wrap.innerHTML = html;
-        renderPagination(allRows.length, totalPages);
-    }
-
-    function renderPagination(total, totalPages) {
-        const s = (currentPage-1)*PAGE_SIZE+1;
-        const e = Math.min(currentPage*PAGE_SIZE, total);
-        document.getElementById('pgInfo').textContent = `Hiển thị ${s}–${e} / ${total} dòng`;
-
-        const ctrl = document.getElementById('pgControls');
-        ctrl.innerHTML = '';
-        const add = (lbl, pg, dis, act) => {
-            const b = document.createElement('button');
-            b.className = 'pg-btn' + (act?' active':'');
-            b.textContent = lbl; b.disabled = dis;
-            b.onclick = () => { currentPage = pg; renderTable(); };
-            ctrl.appendChild(b);
+    // ── Row 4: HEADER (trilingual, wrapped) ──
+    const HDR_ROW = 4;
+    allHdrs.forEach((h, ci) => {
+        const isDefect = ci >= fixedHdrs.length;
+        const bg       = isDefect ? C.headerPurp : C.headerMid;
+        const val      = `${h.en}\n${h.cn}\n${h.vn}`;
+        ws[addr(HDR_ROW, ci)] = {
+            v: val, t:'s',
+            s: sty(
+                {name:'Calibri',sz:9,bold:true,color:{rgb:'FFFFFF'}},
+                bg,
+                {horizontal:'center',vertical:'center',wrapText:true},
+                {bottom:{style:'medium',color:{rgb:'FFFFFF'}}}
+            )
         };
-        add('«', 1, currentPage===1, false);
-        add('‹', currentPage-1, currentPage===1, false);
-        const lo = Math.max(1, currentPage-2), hi = Math.min(totalPages, currentPage+2);
-        for (let p=lo; p<=hi; p++) add(p, p, false, p===currentPage);
-        add('›', currentPage+1, currentPage===totalPages, false);
-        add('»', totalPages,    currentPage===totalPages, false);
+    });
+
+    // ── Rows 5+: Data ──
+    const DATA_START = 5;
+    const tI = allRows.reduce((s,r)=>s+(r.inputQty||0),0);
+    const tN = allRows.reduce((s,r)=>s+(r.ngQty   ||0),0);
+    const tO = allRows.reduce((s,r)=>s+(r.okQty   ||0),0);
+    const tDef = {};
+    const defKeys = defectHdrs.map(d=>d.en);
+
+    allRows.forEach((r,ri) => {
+        const exlRow = DATA_START + ri;
+        const isEven = ri % 2 === 1;
+        const fillBg  = isEven ? C.altRow : null;
+
+        const baseSty  = (bold,color) => sty({name:'Calibri',sz:10,bold:!!bold,color:{rgb:color||'1E293B'}}, fillBg, {vertical:'center'}, null);
+        const numStyNZ = sty({name:'Calibri',sz:10,bold:true, color:{rgb:'1B4F8A'}}, fillBg, {horizontal:'right',vertical:'center'}, null);
+        const numStyZ  = sty({name:'Calibri',sz:10,bold:false,color:{rgb:'CBD5E1'}}, fillBg, {horizontal:'right',vertical:'center'}, null);
+        const centerSty= sty({name:'Calibri',sz:10,bold:false,color:{rgb:'1E293B'}}, fillBg, {horizontal:'center',vertical:'center'}, null);
+
+        // Rate cells coloured
+        const drSty = (rate) => {
+            const fill = rate>=10?C.redFill:rate>=5?C.yellowFill:C.greenFill;
+            const font = rate>=10?C.redFont:rate>=5?C.yellowFont:C.greenFont;
+            return sty({name:'Calibri',sz:10,bold:true,color:{rgb:font}},fill,{horizontal:'center',vertical:'center'},null);
+        };
+        const yrSty = (rate) => {
+            const fill = rate<=90?C.redFill:rate<=95?C.yellowFill:C.greenFill;
+            const font = rate<=90?C.redFont:rate<=95?C.yellowFont:C.greenFont;
+            return sty({name:'Calibri',sz:10,bold:true,color:{rgb:font}},fill,{horizontal:'center',vertical:'center'},null);
+        };
+
+        ws[addr(exlRow,0)]  = { v:r.date||'',     t:'s', s:sty({name:'Calibri',sz:10,color:{rgb:'475569'}},fillBg,{vertical:'center'},null) };
+        ws[addr(exlRow,1)]  = { v:r.partCode||'', t:'s', s:sty({name:'Calibri',sz:10,bold:true,color:{rgb:'1B4F8A'}},fillBg,{horizontal:'center',vertical:'center'},null) };
+        ws[addr(exlRow,2)]  = { v:r.product||'',  t:'s', s:baseSty(false) };
+        ws[addr(exlRow,3)]  = { v:r.coating||'-', t:'s', s:centerSty };
+        ws[addr(exlRow,4)]  = { v:r.process||'',  t:'s', s:baseSty(false) };
+        ws[addr(exlRow,5)]  = { v:r.inputQty||0,  t:'n', s:r.inputQty>0?numStyNZ:numStyZ, z:'#,##0' };
+        ws[addr(exlRow,6)]  = { v:r.okQty   ||0,  t:'n', s:r.okQty   >0?sty({name:'Calibri',sz:10,bold:true,color:{rgb:'065F46'}},fillBg,{horizontal:'right',vertical:'center'},null):numStyZ, z:'#,##0' };
+        ws[addr(exlRow,7)]  = { v:r.ngQty   ||0,  t:'n', s:r.ngQty   >0?sty({name:'Calibri',sz:10,bold:true,color:{rgb:'991B1B'}},fillBg,{horizontal:'right',vertical:'center'},null):numStyZ, z:'#,##0' };
+        ws[addr(exlRow,8)]  = { v:r.outputQty||0, t:'n', s:r.outputQty>0?numStyNZ:numStyZ, z:'#,##0' };
+        const dr = r.defectRate ?? 0;
+        const yr = r.yieldRate  ?? 100;
+        ws[addr(exlRow,9)]  = { v:dr/100, t:'n', s:drSty(dr), z:'0.0%' };
+        ws[addr(exlRow,10)] = { v:yr/100, t:'n', s:yrSty(yr), z:'0.0%' };
+
+        // Defect columns
+        defKeys.forEach((key,ci) => {
+            const v = r.defects ? (r.defects[key]||0) : 0;
+            tDef[key] = (tDef[key]||0)+v;
+            const defBg = isEven ? 'F5F3FF' : null;
+            const defStyNZ = sty({name:'Calibri',sz:10,bold:true,color:{rgb:'6D28D9'}},defBg,{horizontal:'right',vertical:'center'},null);
+            const defStyZ  = sty({name:'Calibri',sz:10,bold:false,color:{rgb:'DDD6FE'}},defBg,{horizontal:'right',vertical:'center'},null);
+            ws[addr(exlRow,11+ci)] = { v, t:'n', s:v>0?defStyNZ:defStyZ, z:'#,##0' };
+        });
+    });
+
+    // ── Total row ──
+    const totRow = DATA_START + allRows.length;
+    const totSty = sty({name:'Calibri',sz:10,bold:true,color:{rgb:'FFFFFF'}},C.totalRow,{horizontal:'right',vertical:'center'},null);
+    const totLblSty = sty({name:'Calibri',sz:10,bold:true,color:{rgb:'FFFFFF'}},C.totalRow,{horizontal:'left',vertical:'center'},null);
+    ws[addr(totRow,0)] = { v:'TOTAL', t:'s', s:totLblSty };
+    ws[addr(totRow,1)] = { v:`${allRows.length} rows`, t:'s', s:totLblSty };
+    ws[addr(totRow,2)] = { v:'', t:'s', s:totLblSty };
+    ws[addr(totRow,3)] = { v:'', t:'s', s:totLblSty };
+    ws[addr(totRow,4)] = { v:'', t:'s', s:totLblSty };
+    ws[addr(totRow,5)] = { v:tI, t:'n', s:totSty, z:'#,##0' };
+    ws[addr(totRow,6)] = { v:tO, t:'n', s:totSty, z:'#,##0' };
+    ws[addr(totRow,7)] = { v:tN, t:'n', s:totSty, z:'#,##0' };
+    ws[addr(totRow,8)] = { v:tO, t:'n', s:totSty, z:'#,##0' };
+    ws[addr(totRow,9)]  = { v:tI>0?tN/tI:0, t:'n', s:totSty, z:'0.0%' };
+    ws[addr(totRow,10)] = { v:tI>0?tO/tI:1, t:'n', s:totSty, z:'0.0%' };
+    defKeys.forEach((key,ci) => {
+        ws[addr(totRow,11+ci)] = { v:tDef[key]||0, t:'n', s:totSty, z:'#,##0' };
+    });
+
+    // ── Sheet metadata ──
+    ws['!ref'] = XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:totRow,c:numCols-1}});
+
+    // Merges: title/period/gen span full width
+    ws['!merges'] = [
+        {s:{r:0,c:0},e:{r:0,c:numCols-1}},
+        {s:{r:1,c:0},e:{r:1,c:numCols-1}},
+        {s:{r:2,c:0},e:{r:2,c:numCols-1}},
+    ];
+
+    // Row heights
+    ws['!rows'] = [
+        {hpt:28}, // title
+        {hpt:20}, // period
+        {hpt:16}, // gen
+        {hpt:6 }, // blank
+        {hpt:46}, // header (3 lines)
+        ...allRows.map(()=>({hpt:20})),
+        {hpt:20}, // total
+    ];
+
+    // Col widths
+    ws['!cols'] = [
+        {wch:14},{wch:12},{wch:22},{wch:16},{wch:18},
+        {wch:11},{wch:10},{wch:10},{wch:12},{wch:14},{wch:14},
+        ...defectHdrs.map(()=>({wch:13}))
+    ];
+
+    // Autofilter on header row
+    ws['!autofilter'] = { ref: `A${HDR_ROW+1}:${lastColL}${HDR_ROW+1}` };
+
+    // Freeze panes: freeze top 5 rows + first 5 cols
+    ws['!freeze'] = { xSplit:5, ySplit:HDR_ROW+1, topLeftCell: XLSX.utils.encode_cell({r:HDR_ROW+1,c:5}) };
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Defect Report');
+
+    /* ── Sheet 2: Summary ── */
+    const ws2 = {};
+    const defTotArr = Object.entries(
+        allRows.reduce((acc,r) => {
+            if (r.defects) Object.entries(r.defects).forEach(([k,v])=>{ acc[k]=(acc[k]||0)+v; });
+            return acc;
+        }, {})
+    ).sort((a,b)=>b[1]-a[1]);
+    const byProcArr = Object.entries(
+        allRows.reduce((acc,r) => {
+            const p=r.process||'?';
+            if (!acc[p]) acc[p]={ng:0,input:0};
+            acc[p].ng+=r.ngQty||0; acc[p].input+=r.inputQty||0;
+            return acc;
+        }, {})
+    ).sort((a,b)=>(b[1].input>0?b[1].ng/b[1].input:0)-(a[1].input>0?a[1].ng/a[1].input:0));
+
+    const sumData = [
+        ['DEFECT REPORT — SUMMARY', ''],
+        [`Kỳ: ${df} → ${dt}`, ''],
+        [],
+        ['KPI', ''],
+        ['Total Input Qty',  tI],
+        ['Total OK Qty',     tO],
+        ['Total NG Qty',     tN],
+        ['Overall Defect Rate', tI>0?tN/tI:0],
+        ['Overall Yield Rate',  tI>0?tO/tI:1],
+        [],
+        [`TOP DEFECT TYPES (${defTotArr.length} types)`, '', ''],
+        ['Defect Name (EN)', 'Qty'],
+        ...defTotArr.map(([k,v])=>[k,v]),
+        [],
+        ['DEFECT RATE BY PROCESS', '', '', ''],
+        ['Process','Input Qty','NG Qty','Defect Rate'],
+        ...byProcArr.map(([k,v])=>[k,v.input,v.ng,v.input>0?v.ng/v.input:0])
+    ];
+    XLSX.utils.sheet_add_aoa(ws2, sumData, {origin:'A1'});
+    ws2['!cols'] = [{wch:32},{wch:16},{wch:14},{wch:16}];
+    // Format % cells
+    if (ws2['D9']) ws2['D9'].z = '0.0%';
+    if (ws2['D10']) ws2['D10'].z = '0.0%';
+    const procStart = 18; // approx row where process data starts
+    for (let ri=procStart; ri<procStart+byProcArr.length; ri++) {
+        const ref = `D${ri}`; if (ws2[ref]) ws2[ref].z = '0.0%';
     }
+    XLSX.utils.book_append_sheet(wb, ws2, 'Summary');
 
-    // ── Color badge ───────────────────────────────────────────────────────────
-    function colorBadge(c) {
-        if (!c || c==='-') return `<span class="color-tag color-none">—</span>`;
-        const l = c.toLowerCase();
-        if (l.includes('matt')||l.includes('black'))  return `<span class="color-tag color-matte">${esc(c)}</span>`;
-        if (l.includes('chrome'))                     return `<span class="color-tag color-chrome">${esc(c)}</span>`;
-        if (l.includes('brass'))                      return `<span class="color-tag color-brass">${esc(c)}</span>`;
-        if (l.includes('beige'))                      return `<span class="color-tag color-beige">${esc(c)}</span>`;
-        return `<span class="color-tag color-other">${esc(c)}</span>`;
-    }
+    const stamp = new Date().toISOString().slice(0,10);
+    XLSX.writeFile(wb, `DefectReport_${df}_${dt}_${stamp}.xlsx`);
+    showToast(t('dr.export.ok', {n:allRows.length}), 'success');
+}
 
-    // ── Export Excel ──────────────────────────────────────────────────────────
-    function exportExcel() {
-        if (!allRows.length) { showToast('Không có dữ liệu.', 'error'); return; }
-
-        const df = document.getElementById('fDateFrom').value || 'all';
-        const dt = document.getElementById('fDateTo').value   || fmtDate(new Date());
-        const wb = XLSX.utils.book_new();
-
-        // ─ Sheet 1: Detail
-        const hdr = [
-            'Date / Ngày','Part Code / Mã linh kiện','Product / Sản phẩm',
-            'Coating / Lớp phủ','Process / Công đoạn',
-            'Input Qty / SL đầu vào','OK Qty / SL đạt','NG Qty / SL lỗi',
-            'Output Qty / SL đầu ra','Defect Rate / Tỷ lệ lỗi','Yield Rate / Tỷ lệ đạt',
-            ...defectTypes
-        ];
-        const aoa = [];
-        aoa.push([`DEFECT REPORT — BÁO CÁO TỶ LỆ LỖI & TỶ LỆ ĐẠT`]);
-        aoa.push([`Kỳ: ${df}  →  ${dt}   |   Xuất lúc: ${new Date().toLocaleString('vi-VN')}`]);
-        aoa.push([]);
-        aoa.push(hdr);
-        allRows.forEach(r => aoa.push([
-            r.date, r.partCode||'', r.product||'', r.coating||'-', r.process||'',
-            r.inputQty||0, r.okQty||0, r.ngQty||0, r.outputQty||0,
-            r.inputQty>0 ? r.defectRate/100 : 0,
-            r.inputQty>0 ? r.yieldRate /100 : 1,
-            ...defectTypes.map(dt2 => r.defects ? (r.defects[dt2]||0) : 0)
-        ]));
-        // Total
-        const tI = allRows.reduce((s,r)=>s+(r.inputQty||0),0);
-        const tO = allRows.reduce((s,r)=>s+(r.okQty   ||0),0);
-        const tN = allRows.reduce((s,r)=>s+(r.ngQty   ||0),0);
-        aoa.push(['TOTAL',`${allRows.length} dòng`,'','','',tI,tO,tN,tO,
-            tI>0?tN/tI:0, tI>0?tO/tI:1,
-            ...defectTypes.map(dt2=>allRows.reduce((s,r)=>s+(r.defects?r.defects[dt2]||0:0),0))
-        ]);
-        const ws1 = XLSX.utils.aoa_to_sheet(aoa);
-        ws1['!cols'] = [
-            {wch:14},{wch:14},{wch:24},{wch:16},{wch:20},
-            {wch:12},{wch:10},{wch:10},{wch:12},{wch:16},{wch:16},
-            ...defectTypes.map(()=>({wch:14}))
-        ];
-        // Format % columns (col J=index9, K=index10, 0-based header at row 4 → data starts row 5)
-        for (let ri=4; ri<4+allRows.length+2; ri++) {
-            ['J','K'].forEach(col => {
-                const ref = col + (ri+1);
-                if (ws1[ref]) ws1[ref].z = '0.0%';
-            });
-        }
-        XLSX.utils.book_append_sheet(wb, ws1, 'Defect Report');
-
-        // ─ Sheet 2: Summary
-        const defTot={};
-        allRows.forEach(r=>{if(r.defects)Object.entries(r.defects).forEach(([k,v])=>{defTot[k]=(defTot[k]||0)+v;});});
-        const byProc2={};
-        allRows.forEach(r=>{const p=r.process||'?';if(!byProc2[p])byProc2[p]={ng:0,input:0};byProc2[p].ng+=r.ngQty||0;byProc2[p].input+=r.inputQty||0;});
-        const sumAoa=[
-            ['DEFECT REPORT — SUMMARY'],
-            [`Kỳ: ${df} → ${dt}`],[],
-            ['KPI',''],
-            ['Total Input Qty', tI],['Total OK Qty', tO],['Total NG Qty', tN],
-            ['Overall Defect Rate', tI>0?tN/tI:0],['Overall Yield Rate', tI>0?tO/tI:1],
-            [],[`TOP DEFECT TYPES (${Object.keys(defTot).length} loại)`,''],
-            ['Defect Type','Total Qty'],
-            ...Object.entries(defTot).sort((a,b)=>b[1]-a[1]).map(([k,v])=>[k,v]),
-            [],['DEFECT RATE BY PROCESS','','',''],
-            ['Process','Input Qty','NG Qty','Defect Rate'],
-            ...Object.entries(byProc2).sort((a,b)=>b[1].ng-a[1].ng).map(([k,v])=>[k,v.input,v.ng,v.input>0?v.ng/v.input:0])
-        ];
-        const ws2 = XLSX.utils.aoa_to_sheet(sumAoa);
-        ws2['!cols'] = [{wch:30},{wch:16},{wch:14},{wch:16}];
-        XLSX.utils.book_append_sheet(wb, ws2, 'Summary');
-
-        const stamp = new Date().toISOString().slice(0,10);
-        XLSX.writeFile(wb, `DefectReport_${df}_to_${dt}_${stamp}.xlsx`);
-        showToast(`Đã xuất ${allRows.length} dòng ra Excel.`, 'success');
-    }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
-    function toggleFilter() {
-        const b = document.getElementById('filterBody');
-        const t = document.getElementById('filterToggle');
-        b.classList.toggle('collapsed');
-        t.classList.toggle('collapsed', b.classList.contains('collapsed'));
-    }
-    function resetFilters() {
-        const today = new Date(), from = new Date(today);
-        from.setDate(today.getDate()-30);
-        document.getElementById('fDateFrom').value = fmtDate(from);
-        document.getElementById('fDateTo').value   = fmtDate(today);
-        ['fProcess','fColor','fProduct'].forEach(id => document.getElementById(id).value = '');
-        loadData();
-    }
-    function fmt(n) { return n==null||n===0 ? '0' : Number(n).toLocaleString('en-US'); }
-    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-    function showLoading(v) { document.getElementById('loadingOverlay').classList.toggle('show',v); }
-    function showToast(msg, type='info') {
-        const el = document.getElementById('toast');
-        el.className = 'toast ' + type;
-        document.getElementById('toastIcon').textContent = type==='success'?'✅':type==='error'?'❌':'ℹ️';
-        document.getElementById('toastMsg').textContent  = msg;
-        el.classList.add('show');
-        setTimeout(()=>el.classList.remove('show'), 3500);
-    }
+/* ──────────────────────────────────────────────────────────────
+   Helpers
+────────────────────────────────────────────────────────────── */
+function toggleFilter() {
+    const b=document.getElementById('filterBody'), tg=document.getElementById('filterToggle');
+    b.classList.toggle('collapsed');
+    tg.classList.toggle('collapsed', b.classList.contains('collapsed'));
+}
+function resetFilters() {
+    const today=new Date(), from=new Date(today); from.setDate(today.getDate()-30);
+    document.getElementById('fDateFrom').value = fmtDate(from);
+    document.getElementById('fDateTo').value   = fmtDate(today);
+    ['fProcess','fColor','fPartCode','fProduct'].forEach(id => document.getElementById(id).value = '');
+    loadData();
+}
+function fmt(n) { return n==null||n===0?'0':Number(n).toLocaleString('en-US'); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function showLoading(v) { document.getElementById('loadingOverlay').classList.toggle('show',v); }
+function showToast(msg, type='info') {
+    const el=document.getElementById('toast');
+    el.className='toast '+type;
+    document.getElementById('toastIcon').textContent=type==='success'?'✅':type==='error'?'❌':'ℹ️';
+    document.getElementById('toastMsg').textContent=msg;
+    el.classList.add('show');
+    setTimeout(()=>el.classList.remove('show'),3500);
+}
 </script>
 }
 </body>

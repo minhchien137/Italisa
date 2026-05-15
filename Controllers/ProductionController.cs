@@ -460,19 +460,14 @@ namespace ItalisaTools.Controllers
  
 
         // ── YIELD REPORT ──────────────────────────────────────────────────────
+        public IActionResult DefectReport() => View();
 
-
-// ── Defect Report page ───────────────────────────────────────────────────
-    public IActionResult DefectReport() => View();
-     
         [HttpGet]
-        public async Task<IActionResult> GetDefectReportData(
-            string? dateFrom, string? dateTo,
-            string? process, string? color, int? productId)
+        public async Task<IActionResult> GetDefectReportData(string? dateFrom, string? dateTo, string? process, string? color, int? productId)
         {
             try
             {
-                // ── Fetch raw records ─────────────────────────────────────────────
+                // ── Raw records ───────────────────────────────────────────────────
                 var query = _context.SVN_Italisa_Production.AsQueryable();
 
                 if (!string.IsNullOrEmpty(dateFrom) && DateTime.TryParse(dateFrom, out var dfrom))
@@ -488,15 +483,21 @@ namespace ItalisaTools.Controllers
 
                 var records = await query.ToListAsync();
 
-                // ── Lookup tables ─────────────────────────────────────────────────
-                // SVN_Italisa_Code: id → (Italisa_no, Item_code)
+                // ── Lookup: SVN_Italisa_Code (id → Italisa_no, Item_code) ─────────
                 var codeInfo = await _context.SVN_Italisa_Code.ToListAsync();
                 var codeById = codeInfo.ToDictionary(c => c.id, c => c);
 
-                // product_id → Operation label (from stored proc via existing helper)
+                // ── Lookup: product_id → Operation label (via stored proc) ─────────
                 var codeMap = await GetCodeMapAsync();
 
-                // ── Group and aggregate ───────────────────────────────────────────
+                // ── Lookup: defect name dictionary (en → {en, vn, cn}) ────────────
+                var defectInfoAll = await _context.SVN_Italisa_DefectInfor.ToListAsync();
+                // keyed by English name (the key used in Production.defect_name)
+                var defectInfoByEn = defectInfoAll
+                    .Where(d => !string.IsNullOrEmpty(d.defect_name_en))
+                    .ToDictionary(d => d.defect_name_en!, d => d);
+
+                // ── Aggregate ─────────────────────────────────────────────────────
                 var grouped = records
                     .GroupBy(x => new
                     {
@@ -507,19 +508,17 @@ namespace ItalisaTools.Controllers
                     })
                     .Select(g =>
                     {
-                        // Input qty = all non-Defect records
                         var inputQty = g
                             .Where(x => x.type_value != "Defect")
                             .Sum(x => x.product_qty ?? 0);
 
-                        // NG qty = sum of Defect records
                         var ngQty = g
                             .Where(x => x.type_value == "Defect")
                             .Sum(x => x.product_qty ?? 0);
 
                         var okQty = Math.Max(0, inputQty - ngQty);
 
-                        // Defect breakdown by defect_name
+                        // Defect breakdown: keyed by English defect name
                         var defects = g
                             .Where(x => x.type_value == "Defect" && !string.IsNullOrEmpty(x.defect_name))
                             .GroupBy(x => x.defect_name!)
@@ -528,24 +527,28 @@ namespace ItalisaTools.Controllers
                                 dg => dg.Sum(x => x.product_qty ?? 0)
                             );
 
-                        // Code lookup
                         var codeData = g.Key.ProdId.HasValue && codeById.ContainsKey(g.Key.ProdId.Value)
                             ? codeById[g.Key.ProdId.Value]
                             : null;
 
-                        // Operation label (e.g. "De_burring-465(ITA)") → use as product name
                         codeMap.TryGetValue(g.Key.ProdId ?? -1, out var operationLabel);
+
+                        // ▼▼ Part Code: just the Item_code (e.g. "Y0467")
+                        //    or the raw number (e.g. "465") — NO "ID:" prefix
+                        var partCode = codeData?.Item_code
+                                       ?? (g.Key.ProdId.HasValue
+                                           ? g.Key.ProdId.Value.ToString()
+                                           : "-");
 
                         return new
                         {
                             date = g.Key.Date.ToString("dd-MMM-yyyy"),
                             productId = g.Key.ProdId,
-                            partCode = codeData?.Item_code
-                                        ?? (g.Key.ProdId.HasValue ? $"ID:{g.Key.ProdId}" : "-"),
+                            partCode,
                             italisaNo = codeData?.Italisa_no,
                             product = operationLabel
                                         ?? codeData?.Item_code
-                                        ?? (g.Key.ProdId.HasValue ? $"ID:{g.Key.ProdId}" : "-"),
+                                        ?? partCode,
                             coating = g.Key.Color,
                             process = g.Key.Process,
                             inputQty,
@@ -553,11 +556,9 @@ namespace ItalisaTools.Controllers
                             ngQty,
                             outputQty = okQty,
                             defectRate = inputQty > 0
-                                ? Math.Round((double)ngQty / inputQty * 100, 1)
-                                : 0.0,
+                                ? Math.Round((double)ngQty / inputQty * 100, 1) : 0.0,
                             yieldRate = inputQty > 0
-                                ? Math.Round((double)okQty / inputQty * 100, 1)
-                                : 100.0,
+                                ? Math.Round((double)okQty / inputQty * 100, 1) : 100.0,
                             defects
                         };
                     })
@@ -565,12 +566,23 @@ namespace ItalisaTools.Controllers
                     .ThenBy(x => x.partCode)
                     .ToList();
 
-                // ── Collect all defect type names that appear in this dataset ─────
-                var defectTypes = grouped
+                // ── Collect defect types that appear in this dataset, with all languages ──
+                var usedDefectEnNames = grouped
                     .SelectMany(x => x.defects.Keys)
                     .Distinct()
                     .OrderBy(x => x)
                     .ToList();
+
+                var defectTypes = usedDefectEnNames.Select(en =>
+                {
+                    defectInfoByEn.TryGetValue(en, out var info);
+                    return new
+                    {
+                        en = en,
+                        vn = info?.defect_name_vn ?? en,
+                        cn = info?.defect_name_cn ?? en
+                    };
+                }).ToList();
 
                 return Json(new { rows = grouped, defectTypes });
             }
@@ -580,6 +592,7 @@ namespace ItalisaTools.Controllers
                 return StatusCode(500, new { error = ex.Message });
             }
         }
+
 
 
         public IActionResult Report() => View();
