@@ -372,6 +372,7 @@
 </head>
 <body>
 
+
 <!-- ── LOADING ── -->
 <div class="loading-overlay" id="loadingOverlay">
     <div class="loading-box">
@@ -388,7 +389,7 @@
     <!-- Page title -->
     <div class="page-header">
         <h1>🔍 <span data-i18n="dr.page.title">Yield Report — Báo Cáo Tỷ Lệ Đạt</span></h1>
-        <p data-i18n="dr.page.subtitle">Phân tích tỷ lệ lỗi và tỷ lệ đạt theo công đoạn, lớp phủ và mã sản phẩm.</p>
+        <p data-i18n="dr.page.subtitle">Phân tích tỷ lệ đạt theo công đoạn, lớp phủ và mã sản phẩm.</p>
         <div class="header-line"></div>
     </div>
 
@@ -785,6 +786,8 @@ function renderTable() {
         { en:'Date',        cn:'日期',   vn:'Ngày',          left:true,  w:106 },
         { en:'Part Code',   cn:'零件代码',vn:'Mã linh kiện',  left:false, w:96  },
         { en:'Product',     cn:'产品名称',vn:'Sản phẩm',      left:true,  w:150 },
+        { en:'SVN Code',    cn:'SVN编码', vn:'Mã SVN',        left:false, w:110 },
+        { en:'SVN Name',    cn:'SVN名称', vn:'Tên SVN',       left:true,  w:280 },
         { en:'Coating',     cn:'涂层',   vn:'Lớp phủ',       left:false, w:116 },
         { en:'Process',     cn:'工序',   vn:'Quy trình',     left:true,  w:128 },
         { en:'Input Qty',   cn:'投入量', vn:'SL đầu vào',    left:false, w:82  },
@@ -831,6 +834,8 @@ function renderTable() {
             <td style="color:var(--gray-600);font-size:0.78rem">${esc(r.date||'')}</td>
             <td class="td-center" style="font-weight:700;color:var(--denim)">${esc(r.partCode||'—')}</td>
             <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;color:var(--gray-800)" title="${esc(r.product||'')}">${esc(r.product||'—')}</td>
+            <td class="td-center" style="color:var(--denim);font-weight:600;font-size:0.78rem">${esc(r.svnCode||'—')}</td>
+            <td style="min-width:280px;color:var(--gray-600);font-size:0.78rem" title="${esc(r.svnName||'')}">${esc(r.svnName||'—')}</td>
             <td class="td-center">${colorBadge(r.coating)}</td>
             <td style="color:var(--gray-700)">${esc(r.process||'—')}</td>
             <td class="${r.inputQty>0?'td-num':'td-zero'}">${fmt(r.inputQty)}</td>
@@ -851,7 +856,7 @@ function renderTable() {
     const tDR = tI>0?(tN/tI*100).toFixed(1):'0.0';
     const tYR = tI>0?(tO/tI*100).toFixed(1):'100.0';
     html += `<tr class="total-row">
-        <td colspan="5" style="text-align:left;padding-left:14px;letter-spacing:.3px">
+        <td colspan="7" style="text-align:left;padding-left:14px;letter-spacing:.3px">
             ${t('dr.total.label')} — ${allRows.length} rows | pg ${currentPage}/${Math.ceil(allRows.length/PAGE_SIZE)}
         </td>
         <td style="text-align:right">${fmt(tI)}</td>
@@ -942,6 +947,8 @@ function exportExcel() {
         { en:'Date',        cn:'日期',    vn:'Ngày'        },
         { en:'Part Code',   cn:'零件代码', vn:'Mã linh kiện'},
         { en:'Product',     cn:'产品名称', vn:'Sản phẩm'   },
+        { en:'SVN Code',    cn:'SVN编码', vn:'Mã SVN'     },
+        { en:'SVN Name',    cn:'SVN名称', vn:'Tên SVN'    },
         { en:'Coating',     cn:'涂层',    vn:'Lớp phủ'    },
         { en:'Process',     cn:'工序',    vn:'Quy trình'  },
         { en:'Input Qty',   cn:'投入量',  vn:'SL đầu vào' },
@@ -1043,16 +1050,18 @@ function exportExcel() {
         ws[addr(exlRow,0)]  = { v:r.date||'',     t:'s', s:sty({name:'Calibri',sz:10,color:{rgb:'475569'}},fillBg,{vertical:'center'},null) };
         ws[addr(exlRow,1)]  = { v:r.partCode||'', t:'s', s:sty({name:'Calibri',sz:10,bold:true,color:{rgb:'1B4F8A'}},fillBg,{horizontal:'center',vertical:'center'},null) };
         ws[addr(exlRow,2)]  = { v:r.product||'',  t:'s', s:baseSty(false) };
-        ws[addr(exlRow,3)]  = { v:r.coating||'-', t:'s', s:centerSty };
-        ws[addr(exlRow,4)]  = { v:r.process||'',  t:'s', s:baseSty(false) };
-        ws[addr(exlRow,5)]  = { v:r.inputQty||0,  t:'n', s:r.inputQty>0?numStyNZ:numStyZ, z:'#,##0' };
-        ws[addr(exlRow,6)]  = { v:r.okQty   ||0,  t:'n', s:r.okQty   >0?sty({name:'Calibri',sz:10,bold:true,color:{rgb:'065F46'}},fillBg,{horizontal:'right',vertical:'center'},null):numStyZ, z:'#,##0' };
-        ws[addr(exlRow,7)]  = { v:r.ngQty   ||0,  t:'n', s:r.ngQty   >0?sty({name:'Calibri',sz:10,bold:true,color:{rgb:'991B1B'}},fillBg,{horizontal:'right',vertical:'center'},null):numStyZ, z:'#,##0' };
-        ws[addr(exlRow,8)]  = { v:r.outputQty||0, t:'n', s:r.outputQty>0?numStyNZ:numStyZ, z:'#,##0' };
+        ws[addr(exlRow,3)]  = { v:r.svnCode||'',  t:'s', s:sty({name:'Calibri',sz:10,bold:true,color:{rgb:'1B4F8A'}},fillBg,{horizontal:'center',vertical:'center'},null) };
+        ws[addr(exlRow,4)]  = { v:r.svnName||'',  t:'s', s:sty({name:'Calibri',sz:10,color:{rgb:'475569'}},fillBg,{vertical:'center'},null) };
+        ws[addr(exlRow,5)]  = { v:r.coating||'-', t:'s', s:centerSty };
+        ws[addr(exlRow,6)]  = { v:r.process||'',  t:'s', s:baseSty(false) };
+        ws[addr(exlRow,7)]  = { v:r.inputQty||0,  t:'n', s:r.inputQty>0?numStyNZ:numStyZ, z:'#,##0' };
+        ws[addr(exlRow,8)]  = { v:r.okQty   ||0,  t:'n', s:r.okQty   >0?sty({name:'Calibri',sz:10,bold:true,color:{rgb:'065F46'}},fillBg,{horizontal:'right',vertical:'center'},null):numStyZ, z:'#,##0' };
+        ws[addr(exlRow,9)]  = { v:r.ngQty   ||0,  t:'n', s:r.ngQty   >0?sty({name:'Calibri',sz:10,bold:true,color:{rgb:'991B1B'}},fillBg,{horizontal:'right',vertical:'center'},null):numStyZ, z:'#,##0' };
+        ws[addr(exlRow,10)] = { v:r.outputQty||0, t:'n', s:r.outputQty>0?numStyNZ:numStyZ, z:'#,##0' };
         const dr = r.defectRate ?? 0;
         const yr = r.yieldRate  ?? 100;
-        ws[addr(exlRow,9)]  = { v:dr/100, t:'n', s:drSty(dr), z:'0.0%' };
-        ws[addr(exlRow,10)] = { v:yr/100, t:'n', s:yrSty(yr), z:'0.0%' };
+        ws[addr(exlRow,11)] = { v:dr/100, t:'n', s:drSty(dr), z:'0.0%' };
+        ws[addr(exlRow,12)] = { v:yr/100, t:'n', s:yrSty(yr), z:'0.0%' };
 
         // Defect columns
         defKeys.forEach((key,ci) => {
@@ -1061,7 +1070,7 @@ function exportExcel() {
             const defBg = isEven ? 'F5F3FF' : null;
             const defStyNZ = sty({name:'Calibri',sz:10,bold:true,color:{rgb:'6D28D9'}},defBg,{horizontal:'right',vertical:'center'},null);
             const defStyZ  = sty({name:'Calibri',sz:10,bold:false,color:{rgb:'DDD6FE'}},defBg,{horizontal:'right',vertical:'center'},null);
-            ws[addr(exlRow,11+ci)] = { v, t:'n', s:v>0?defStyNZ:defStyZ, z:'#,##0' };
+            ws[addr(exlRow,13+ci)] = { v, t:'n', s:v>0?defStyNZ:defStyZ, z:'#,##0' };
         });
     });
 
@@ -1074,14 +1083,18 @@ function exportExcel() {
     ws[addr(totRow,2)] = { v:'', t:'s', s:totLblSty };
     ws[addr(totRow,3)] = { v:'', t:'s', s:totLblSty };
     ws[addr(totRow,4)] = { v:'', t:'s', s:totLblSty };
-    ws[addr(totRow,5)] = { v:tI, t:'n', s:totSty, z:'#,##0' };
-    ws[addr(totRow,6)] = { v:tO, t:'n', s:totSty, z:'#,##0' };
-    ws[addr(totRow,7)] = { v:tN, t:'n', s:totSty, z:'#,##0' };
+    ws[addr(totRow,2)] = { v:'', t:'s', s:totLblSty };
+    ws[addr(totRow,3)] = { v:'', t:'s', s:totLblSty };
+    ws[addr(totRow,5)] = { v:'', t:'s', s:totLblSty };
+    ws[addr(totRow,6)] = { v:'', t:'s', s:totLblSty };
+    ws[addr(totRow,7)] = { v:tI, t:'n', s:totSty, z:'#,##0' };
     ws[addr(totRow,8)] = { v:tO, t:'n', s:totSty, z:'#,##0' };
-    ws[addr(totRow,9)]  = { v:tI>0?tN/tI:0, t:'n', s:totSty, z:'0.0%' };
-    ws[addr(totRow,10)] = { v:tI>0?tO/tI:1, t:'n', s:totSty, z:'0.0%' };
+    ws[addr(totRow,9)] = { v:tN, t:'n', s:totSty, z:'#,##0' };
+    ws[addr(totRow,10)] = { v:tO, t:'n', s:totSty, z:'#,##0' };
+    ws[addr(totRow,11)]  = { v:tI>0?tN/tI:0, t:'n', s:totSty, z:'0.0%' };
+    ws[addr(totRow,12)] = { v:tI>0?tO/tI:1, t:'n', s:totSty, z:'0.0%' };
     defKeys.forEach((key,ci) => {
-        ws[addr(totRow,11+ci)] = { v:tDef[key]||0, t:'n', s:totSty, z:'#,##0' };
+        ws[addr(totRow,13+ci)] = { v:tDef[key]||0, t:'n', s:totSty, z:'#,##0' };
     });
 
     // ── Sheet metadata ──
@@ -1107,7 +1120,7 @@ function exportExcel() {
 
     // Col widths
     ws['!cols'] = [
-        {wch:14},{wch:12},{wch:22},{wch:16},{wch:18},
+        {wch:14},{wch:12},{wch:22},{wch:14},{wch:28},{wch:16},{wch:18},
         {wch:11},{wch:10},{wch:10},{wch:12},{wch:14},{wch:14},
         ...defectHdrs.map(()=>({wch:13}))
     ];

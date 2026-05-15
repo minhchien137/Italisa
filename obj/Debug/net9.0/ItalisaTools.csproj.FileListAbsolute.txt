@@ -235,4 +235,4 @@ C:\ItalisaTools\obj\Debug\net9.0\refint\ItalisaTools.dll
 C:\ItalisaTools\obj\Debug\net9.0\ItalisaTools.pdb
 C:\ItalisaTools\obj\Debug\net9.0\ItalisaTools.genruntimeconfig.cache
 C:\ItalisaTools\obj\Debug\net9.0\ref\ItalisaTools.dll
-C:\ItalisaTools\obj\Debug\net9.0\compressed\jsvhigdrt3-{0}-3p0f8rh56f-3p0f8rh56f.gz
+C:\ItalisaTools\obj\Debug\net9.0\compressed\jsvhigdrt3-{0}-9kkqm9h1kd-9kkqm9h1kd.gz

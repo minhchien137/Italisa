@@ -460,138 +460,202 @@ namespace ItalisaTools.Controllers
  
 
         // ── YIELD REPORT ──────────────────────────────────────────────────────
-        public IActionResult DefectReport() => View();
 
-        [HttpGet]
-        public async Task<IActionResult> GetDefectReportData(string? dateFrom, string? dateTo, string? process, string? color, int? productId)
+
+// ═══════════════════════════════════════════════════════════════════════════
+// REPLACE GetDefectReportData + ADD GetItemNameFromOverviewAsync
+// Dùng lại stored proc Overview để lấy Item Name — nhất quán với trang Overview
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════════════
+// REPLACE GetDefectReportData + GetItemNameFromOverviewAsync
+// Thêm SVN Code và SVN Name vào kết quả
+// ═══════════════════════════════════════════════════════════════════════════
+
+public IActionResult DefectReport() => View();
+
+[HttpGet]
+public async Task<IActionResult> GetDefectReportData(
+    string? dateFrom, string? dateTo,
+    string? process, string? color, int? productId)
+{
+    try
+    {
+        var query = _context.SVN_Italisa_Production.AsQueryable();
+
+        if (!string.IsNullOrEmpty(dateFrom) && DateTime.TryParse(dateFrom, out var dfrom))
+            query = query.Where(x => x.date_finished >= dfrom);
+        if (!string.IsNullOrEmpty(dateTo) && DateTime.TryParse(dateTo, out var dto2))
+            query = query.Where(x => x.date_finished <= dto2.AddDays(1).AddSeconds(-1));
+        if (!string.IsNullOrEmpty(process))
+            query = query.Where(x => x.process == process);
+        if (!string.IsNullOrEmpty(color))
+            query = query.Where(x => x.color == color);
+        if (productId.HasValue)
+            query = query.Where(x => x.product_id == productId.Value);
+
+        var records = await query.ToListAsync();
+
+        var (italisaNameMap, svnMap, productItalisaMap) = await GetItemNameFromOverviewAsync();
+
+        var defectInfoAll  = await _context.SVN_Italisa_DefectInfor.ToListAsync();
+        var defectInfoByEn = defectInfoAll
+            .Where(d => !string.IsNullOrEmpty(d.defect_name_en))
+            .ToDictionary(d => d.defect_name_en!, d => d);
+
+        var grouped = records
+            .GroupBy(x => new
+            {
+                Date    = x.date_finished.Date,
+                ProdId  = x.product_id,
+                Color   = x.color   ?? "-",
+                Process = x.process ?? "-"
+            })
+            .Select(g =>
+            {
+                // Chỉ tính Production Qty làm input
+                var inputQty = g.Where(x => x.type_value == "Production Qty").Sum(x => x.product_qty ?? 0);
+                var ngQty    = g.Where(x => x.type_value == "Defect").Sum(x => x.product_qty ?? 0);
+                var okQty    = Math.Max(0, inputQty - ngQty);
+
+                var defects = g
+                    .Where(x => x.type_value == "Defect" && !string.IsNullOrEmpty(x.defect_name))
+                    .GroupBy(x => x.defect_name!)
+                    .ToDictionary(dg => dg.Key, dg => dg.Sum(x => x.product_qty ?? 0));
+
+                // product_id → Italisa_no → Item_name
+                productItalisaMap.TryGetValue(g.Key.ProdId ?? -1, out var italisaNo);
+
+                var partCode = italisaNo > 0
+                    ? $"Y{italisaNo:D4}"
+                    : (g.Key.ProdId.HasValue ? g.Key.ProdId.Value.ToString() : "-");
+
+                italisaNameMap.TryGetValue(italisaNo, out var itemName);
+                var product = !string.IsNullOrEmpty(itemName) ? itemName : partCode;
+
+                // SVN Code + SVN Name: key = "ItalisaNo_Color"
+                var svnKey = $"{italisaNo}_{g.Key.Color}";
+                svnMap.TryGetValue(svnKey, out var svnInfo);
+
+                return new
+                {
+                    date      = g.Key.Date.ToString("dd-MMM-yyyy"),
+                    productId = g.Key.ProdId,
+                    italisaNo = italisaNo > 0 ? (int?)italisaNo : null,
+                    partCode,
+                    product,
+                    svnCode   = svnInfo.SvnCode ?? "",
+                    svnName   = svnInfo.SvnName ?? "",
+                    coating   = g.Key.Color,
+                    process   = g.Key.Process,
+                    inputQty,
+                    okQty,
+                    ngQty,
+                    outputQty  = okQty,
+                    defectRate = inputQty > 0 ? Math.Round((double)ngQty / inputQty * 100, 1) : 0.0,
+                    yieldRate  = inputQty > 0 ? Math.Round((double)okQty  / inputQty * 100, 1) : 100.0,
+                    defects
+                };
+            })
+            .Where(x => x.inputQty > 0 || x.ngQty > 0)
+            .OrderByDescending(x => x.date)
+            .ThenBy(x => x.partCode)
+            .ToList();
+
+        var usedDefectEnNames = grouped
+            .SelectMany(x => x.defects.Keys)
+            .Distinct().OrderBy(x => x).ToList();
+
+        var defectTypes = usedDefectEnNames.Select(en =>
         {
+            defectInfoByEn.TryGetValue(en, out var info);
+            return new { en, vn = info?.defect_name_vn ?? en, cn = info?.defect_name_cn ?? en };
+        }).ToList();
+
+        return Json(new { rows = grouped, defectTypes });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"GetDefectReportData Error: {ex.Message}");
+        return StatusCode(500, new { error = ex.Message });
+    }
+}
+
+        // ── Helper: lấy item name + SVN info từ stored proc Overview ─────────────
+        private async Task<(
+            Dictionary<int, string> italisaNameMap,
+            Dictionary<string, (string SvnCode, string SvnName)> svnMap,
+            Dictionary<int, int> productItalisaMap)>
+            GetItemNameFromOverviewAsync()
+        {
+            var italisaNameMap = new Dictionary<int, string>();
+            var svnMap = new Dictionary<string, (string, string)>();
+            var productItalisaMap = new Dictionary<int, int>();
+
+            var connString = _context.Database.GetConnectionString();
             try
             {
-                // ── Raw records ───────────────────────────────────────────────────
-                var query = _context.SVN_Italisa_Production.AsQueryable();
+                using var conn = new SqlConnection(connString);
+                await conn.OpenAsync();
 
-                if (!string.IsNullOrEmpty(dateFrom) && DateTime.TryParse(dateFrom, out var dfrom))
-                    query = query.Where(x => x.date_finished >= dfrom);
-                if (!string.IsNullOrEmpty(dateTo) && DateTime.TryParse(dateTo, out var dto2))
-                    query = query.Where(x => x.date_finished <= dto2.AddDays(1).AddSeconds(-1));
-                if (!string.IsNullOrEmpty(process))
-                    query = query.Where(x => x.process == process);
-                if (!string.IsNullOrEmpty(color))
-                    query = query.Where(x => x.color == color);
-                if (productId.HasValue)
-                    query = query.Where(x => x.product_id == productId.Value);
-
-                var records = await query.ToListAsync();
-
-                // ── Lookup: SVN_Italisa_Code (id → Italisa_no, Item_code) ─────────
-                var codeInfo = await _context.SVN_Italisa_Code.ToListAsync();
-                var codeById = codeInfo.ToDictionary(c => c.id, c => c);
-
-                // ── Lookup: product_id → Operation label (via stored proc) ─────────
-                var codeMap = await GetCodeMapAsync();
-
-                // ── Lookup: defect name dictionary (en → {en, vn, cn}) ────────────
-                var defectInfoAll = await _context.SVN_Italisa_DefectInfor.ToListAsync();
-                // keyed by English name (the key used in Production.defect_name)
-                var defectInfoByEn = defectInfoAll
-                    .Where(d => !string.IsNullOrEmpty(d.defect_name_en))
-                    .ToDictionary(d => d.defect_name_en!, d => d);
-
-                // ── Aggregate ─────────────────────────────────────────────────────
-                var grouped = records
-                    .GroupBy(x => new
-                    {
-                        Date = x.date_finished.Date,
-                        ProdId = x.product_id,
-                        Color = x.color ?? "-",
-                        Process = x.process ?? "-"
-                    })
-                    .Select(g =>
-                    {
-                        var inputQty = g
-                            .Where(x => x.type_value != "Defect")
-                            .Sum(x => x.product_qty ?? 0);
-
-                        var ngQty = g
-                            .Where(x => x.type_value == "Defect")
-                            .Sum(x => x.product_qty ?? 0);
-
-                        var okQty = Math.Max(0, inputQty - ngQty);
-
-                        // Defect breakdown: keyed by English defect name
-                        var defects = g
-                            .Where(x => x.type_value == "Defect" && !string.IsNullOrEmpty(x.defect_name))
-                            .GroupBy(x => x.defect_name!)
-                            .ToDictionary(
-                                dg => dg.Key,
-                                dg => dg.Sum(x => x.product_qty ?? 0)
-                            );
-
-                        var codeData = g.Key.ProdId.HasValue && codeById.ContainsKey(g.Key.ProdId.Value)
-                            ? codeById[g.Key.ProdId.Value]
-                            : null;
-
-                        codeMap.TryGetValue(g.Key.ProdId ?? -1, out var operationLabel);
-
-                        // ▼▼ Part Code: just the Item_code (e.g. "Y0467")
-                        //    or the raw number (e.g. "465") — NO "ID:" prefix
-                        var partCode = codeData?.Item_code
-                                       ?? (g.Key.ProdId.HasValue
-                                           ? g.Key.ProdId.Value.ToString()
-                                           : "-");
-
-                        return new
-                        {
-                            date = g.Key.Date.ToString("dd-MMM-yyyy"),
-                            productId = g.Key.ProdId,
-                            partCode,
-                            italisaNo = codeData?.Italisa_no,
-                            product = operationLabel
-                                        ?? codeData?.Item_code
-                                        ?? partCode,
-                            coating = g.Key.Color,
-                            process = g.Key.Process,
-                            inputQty,
-                            okQty,
-                            ngQty,
-                            outputQty = okQty,
-                            defectRate = inputQty > 0
-                                ? Math.Round((double)ngQty / inputQty * 100, 1) : 0.0,
-                            yieldRate = inputQty > 0
-                                ? Math.Round((double)okQty / inputQty * 100, 1) : 100.0,
-                            defects
-                        };
-                    })
-                    .OrderByDescending(x => x.date)
-                    .ThenBy(x => x.partCode)
-                    .ToList();
-
-                // ── Collect defect types that appear in this dataset, with all languages ──
-                var usedDefectEnNames = grouped
-                    .SelectMany(x => x.defects.Keys)
-                    .Distinct()
-                    .OrderBy(x => x)
-                    .ToList();
-
-                var defectTypes = usedDefectEnNames.Select(en =>
+                // Step 1: Italisa_no → Item_name + SVN Code + SVN Name
+                using (var cmd = new SqlCommand("sp_Get_Italisa_Production_Report_Color", conn)
+                { CommandType = CommandType.StoredProcedure })
                 {
-                    defectInfoByEn.TryGetValue(en, out var info);
-                    return new
-                    {
-                        en = en,
-                        vn = info?.defect_name_vn ?? en,
-                        cn = info?.defect_name_cn ?? en
-                    };
-                }).ToList();
+                    cmd.Parameters.Add(new SqlParameter("@StartDate", SqlDbType.Date) { Value = new DateTime(2000, 1, 1) });
+                    cmd.Parameters.Add(new SqlParameter("@EndDate", SqlDbType.Date) { Value = DateTime.Today });
 
-                return Json(new { rows = grouped, defectTypes });
+                    using var reader = await cmd.ExecuteReaderAsync();
+
+                    int pnIdx = -1, nameIdx = -1, colorIdx = -1, svnCodeIdx = -1, svnNameIdx = -1;
+                    for (int i = 0; i < reader.FieldCount; i++)
+                    {
+                        var col = reader.GetName(i);
+                        if (col == "Italisa PN#") pnIdx = i;
+                        if (col == "Item Name") nameIdx = i;
+                        if (col == "Color") colorIdx = i;
+                        if (col == "SVN Code") svnCodeIdx = i;
+                        if (col == "SVN Name") svnNameIdx = i;
+                    }
+
+                    if (pnIdx >= 0 && nameIdx >= 0)
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            if (reader.IsDBNull(pnIdx)) continue;
+                            var pn = Convert.ToInt32(reader.GetValue(pnIdx));
+                            var name = nameIdx >= 0 && !reader.IsDBNull(nameIdx) ? reader.GetString(nameIdx) : "";
+                            var col2 = colorIdx >= 0 && !reader.IsDBNull(colorIdx) ? reader.GetString(colorIdx) : "";
+                            var svnCode = svnCodeIdx >= 0 && !reader.IsDBNull(svnCodeIdx) ? reader.GetString(svnCodeIdx) : "";
+                            var svnName = svnNameIdx >= 0 && !reader.IsDBNull(svnNameIdx) ? reader.GetString(svnNameIdx) : "";
+
+                            italisaNameMap.TryAdd(pn, name);
+
+                            // Key: "ItalisaNo_Color" — vì cùng sản phẩm màu khác → SVN Code khác
+                            var key = $"{pn}_{col2}";
+                            svnMap.TryAdd(key, (svnCode, svnName));
+                        }
+                    }
+                }
+
+                // Step 2: product_id → Italisa_no từ ProductMapping
+                using (var cmd2 = new SqlCommand("SELECT product_id, Italisa_no FROM dbo.ProductMapping", conn))
+                using (var reader2 = await cmd2.ExecuteReaderAsync())
+                {
+                    while (await reader2.ReadAsync())
+                        productItalisaMap.TryAdd(reader2.GetInt32(0), reader2.GetInt32(1));
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"GetDefectReportData Error: {ex.Message}");
-                return StatusCode(500, new { error = ex.Message });
+                Console.WriteLine($"GetItemNameFromOverviewAsync Error: {ex.Message}");
             }
+
+            return (italisaNameMap, svnMap, productItalisaMap);
         }
+
+
+
 
 
 
