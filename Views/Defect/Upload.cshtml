@@ -1,0 +1,1193 @@
+@{
+    ViewData["Title"] = "Upload";
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --denim:        #1B4F8A;
+            --denim-dark:   #0f2f52;
+            --denim-mid:    #2563a8;
+            --denim-light:  #dbeafe;
+            --denim-xlight: #eff6ff;
+            --white:        #ffffff;
+            --gray-50:      #f8fafc;
+            --gray-100:     #f1f5f9;
+            --gray-200:     #e2e8f0;
+            --gray-300:     #cbd5e1;
+            --gray-400:     #94a3b8;
+            --gray-600:     #475569;
+            --gray-700:     #334155;
+            --gray-800:     #1e293b;
+            --success:      #10b981;
+            --warning:      #f59e0b;
+            --danger:       #ef4444;
+            --shadow-sm:    0 1px 3px rgba(27,79,138,0.08);
+            --shadow-md:    0 4px 20px rgba(27,79,138,0.12);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--gray-50); min-height: 100vh;
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(27,79,138,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(37,99,168,0.05) 0%, transparent 50%);
+        }
+
+        .page-wrapper { max-width: 1400px; margin: 0 auto; padding: 1.5rem 1rem; }
+        @@media (min-width: 600px) { .page-wrapper { padding: 2rem 1.5rem; } }
+
+        .page-header { margin-bottom: 1.5rem; }
+        .page-header h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.7rem; font-weight: 700; color: var(--denim-dark);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .page-header p { color: var(--gray-600); font-size: 0.9rem; margin-top: 6px; }
+        .header-line {
+            width: 48px; height: 4px;
+            background: linear-gradient(90deg, var(--denim), var(--denim-mid));
+            border-radius: 2px; margin-top: 10px;
+        }
+
+        .step-card {
+            background: var(--white); border-radius: 14px;
+            border: 1px solid rgba(27,79,138,0.1);
+            box-shadow: var(--shadow-sm); margin-bottom: 1.25rem;
+        }
+        .step-card.done { border-color: var(--success); }
+        .step-header {
+            background: var(--denim-xlight); padding: 0.85rem 1.25rem;
+            display: flex; align-items: center; gap: 10px;
+            border-bottom: 1px solid rgba(27,79,138,0.08);
+            border-radius: 14px 14px 0 0;
+        }
+        .step-header.done { background: #ecfdf5; border-bottom-color: rgba(16,185,129,0.15); }
+        .step-num {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: var(--denim); color: var(--white);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Space Grotesk', sans-serif; font-size: 0.82rem; font-weight: 700;
+            flex-shrink: 0;
+        }
+        .step-num.done { background: var(--success); }
+        .step-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.92rem; font-weight: 600; color: var(--denim-dark);
+        }
+        .step-status { margin-left: auto; font-size: 0.75rem; font-weight: 600; color: var(--gray-400); }
+        .step-status.done { color: var(--success); }
+        .step-body { padding: 1.1rem 1.25rem; }
+
+        .upload-zone {
+            border: 2px dashed var(--gray-200); border-radius: 12px;
+            padding: 2.5rem 2rem; text-align: center; cursor: pointer;
+            transition: all 0.2s; background: var(--white);
+            position: relative;
+        }
+        .upload-zone:hover, .upload-zone.drag-over {
+            border-color: var(--denim); background: var(--denim-xlight);
+        }
+        .upload-zone.has-file { border-color: var(--success); background: #f0fdf4; }
+        .upload-zone input[type="file"] {
+            position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+        }
+        .upload-icon { font-size: 2.5rem; margin-bottom: 0.6rem; }
+        .upload-title { font-weight: 600; color: var(--denim-dark); font-size: 0.95rem; }
+        .upload-sub { font-size: 0.78rem; color: var(--gray-400); margin-top: 4px; }
+        .upload-filename { font-size: 0.85rem; font-weight: 600; color: var(--success); margin-top: 8px; }
+
+        .form-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;
+        }
+        @@media (min-width: 600px) { .form-grid { grid-template-columns: repeat(3, 1fr); } }
+        .inline-fields {
+            display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end;
+            background: var(--gray-50); border: 1px solid var(--gray-200);
+            border-radius: 10px; padding: 0.85rem 1rem; margin-top: 1rem;
+        }
+        .inline-fields .form-group { flex: 1 1 160px; min-width: 130px; max-width: 230px; }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        .form-group label {
+            font-size: 0.72rem; font-weight: 600; color: var(--denim-dark);
+            letter-spacing: 0.3px; text-transform: uppercase;
+        }
+        .form-group input[type="date"],
+        .form-group input[type="text"],
+        .form-group select {
+            width: 100%; padding: 0.55rem 0.75rem;
+            border: 1.5px solid var(--gray-200); border-radius: 8px;
+            font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+            color: var(--gray-800); background: var(--white);
+            outline: none; transition: border-color 0.2s; min-height: 38px;
+            appearance: none; -webkit-appearance: none;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: var(--denim); box-shadow: 0 0 0 3px rgba(27,79,138,0.1);
+        }
+        .form-group input[readonly] {
+            background: var(--gray-50); color: var(--gray-600); cursor: not-allowed;
+        }
+
+        /* ── COL MAP ── */
+        .col-map-panel {
+            background: var(--gray-50); border: 1px solid var(--gray-200);
+            border-radius: 10px; padding: 1rem 1rem 1.1rem; margin-top: 1rem;
+        }
+        .col-map-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;
+        }
+        @@media (min-width: 640px)  { .col-map-grid { grid-template-columns: repeat(3, 1fr); } }
+        @@media (min-width: 1000px) { .col-map-grid { grid-template-columns: repeat(4, 1fr); } }
+        .col-map-item { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+        .col-map-item label {
+            font-size: 0.67rem; font-weight: 700; color: var(--denim-dark);
+            text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis;
+        }
+        .col-map-item label .req { color: var(--danger); }
+        .col-map-item select {
+            width: 100%; min-width: 0;
+            padding: 0.42rem 0.6rem; border: 1.5px solid var(--gray-200); border-radius: 7px;
+            font-family: 'DM Sans', sans-serif; font-size: 0.78rem; color: var(--gray-800);
+            background: var(--white); outline: none; cursor: pointer;
+            transition: border-color 0.2s;
+            text-overflow: ellipsis; overflow: hidden; white-space: nowrap;
+        }
+        .col-map-item select:focus { border-color: var(--denim); box-shadow: 0 0 0 2px rgba(27,79,138,0.1); }
+        .col-map-item select.mapped   { border-color: var(--success); background: #f0fdf4; }
+        .col-map-item select.unmapped { border-color: #fca5a5; background: #fef2f2; }
+
+        /* Default value input (amber dashed) */
+        .col-default-input {
+            width: 100%; min-width: 0; margin-top: 3px;
+            padding: 0.32rem 0.6rem; border: 1.5px dashed var(--gray-300); border-radius: 7px;
+            font-family: 'DM Sans', sans-serif; font-size: 0.74rem; color: var(--gray-700);
+            background: #fffbeb; outline: none; transition: border-color 0.2s;
+            appearance: none; -webkit-appearance: none;
+        }
+        .col-default-input:focus { border-color: var(--warning); box-shadow: 0 0 0 2px rgba(245,158,11,0.12); }
+        .col-default-input::placeholder { color: var(--gray-400); font-style: italic; }
+        .col-default-input[type="date"] { color: var(--gray-700); }
+
+        .sheet-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 0.85rem; }
+        .sheet-tab {
+            padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+            cursor: pointer; border: 1.5px solid var(--gray-200);
+            background: var(--white); color: var(--gray-600); transition: all 0.15s;
+        }
+        .sheet-tab:hover { border-color: var(--denim); color: var(--denim); }
+        .sheet-tab.active { background: var(--denim); color: var(--white); border-color: var(--denim); }
+
+        .preview-wrap {
+            margin-top: 0.85rem; border-radius: 9px;
+            border: 1px solid var(--gray-200); overflow: hidden;
+        }
+        .preview-scroll {
+            overflow-x: auto; max-height: 200px; overflow-y: auto;
+            scrollbar-width: thin; scrollbar-color: var(--denim-light) transparent;
+        }
+        .preview-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
+        .preview-scroll::-webkit-scrollbar-track { background: transparent; }
+        .preview-scroll::-webkit-scrollbar-thumb { background: var(--denim-light); border-radius: 3px; }
+        .preview-tbl { border-collapse: collapse; font-size: 0.76rem; white-space: nowrap; }
+        .preview-tbl th {
+            background: var(--denim); color: var(--white);
+            padding: 7px 14px; white-space: nowrap;
+            position: sticky; top: 0; z-index: 1;
+            font-weight: 600; font-size: 0.72rem; text-align: left;
+            border-right: 1px solid rgba(255,255,255,0.12);
+            max-width: 200px; overflow: hidden; text-overflow: ellipsis;
+        }
+        .preview-tbl td {
+            padding: 6px 14px; border-bottom: 1px solid var(--gray-100);
+            border-right: 1px solid var(--gray-100);
+            color: var(--gray-700); white-space: nowrap;
+            max-width: 220px; overflow: hidden; text-overflow: ellipsis;
+        }
+        .preview-tbl tr:nth-child(even) td { background: var(--gray-50); }
+        .preview-tbl tr:hover td { background: var(--denim-xlight); }
+
+        .section-title {
+            font-size: 0.7rem; font-weight: 700; color: var(--gray-400);
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.65rem;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .section-title::after {
+            content: ''; flex: 1; height: 1px; background: var(--gray-200);
+        }
+
+        .config-divider {
+            border: none; border-top: 1px solid var(--gray-200); margin: 1.1rem 0;
+        }
+
+        .btn {
+            padding: 0.55rem 1.1rem; border-radius: 8px; border: none;
+            font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; white-space: nowrap;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-primary { background: var(--denim); color: var(--white); }
+        .btn-primary:hover:not(:disabled) { background: var(--denim-dark); }
+        .btn-review {
+            background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+            color: var(--white); font-size: 0.95rem; padding: 0.7rem 1.6rem;
+        }
+        .btn-review:hover:not(:disabled) { filter: brightness(1.1); }
+        .btn-success { background: #059669; color: var(--white); }
+        .btn-success:hover:not(:disabled) { background: #047857; }
+        .btn-danger  { background: var(--danger); color: var(--white); }
+        .btn-danger:hover:not(:disabled)  { background: #dc2626; }
+        .btn-outline { background: var(--white); color: var(--denim); border: 1.5px solid var(--denim-light); }
+        .btn-outline:hover:not(:disabled) { background: var(--denim-xlight); }
+        .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .btn-sm { padding: 0.35rem 0.8rem; font-size: 0.78rem; }
+
+        .action-bar {
+            background: var(--white); border-radius: 14px;
+            border: 1px solid rgba(27,79,138,0.08);
+            box-shadow: var(--shadow-sm);
+            padding: 1rem 1.5rem;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem;
+        }
+        .action-bar-left  { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .action-bar-right { display: flex; align-items: center; gap: 8px; }
+
+        .kpi-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem; margin-bottom: 1.25rem;
+        }
+        @@media (min-width: 600px) { .kpi-grid { grid-template-columns: repeat(4, 1fr); } }
+        .kpi-card {
+            background: var(--white); border-radius: 12px;
+            border: 1px solid rgba(27,79,138,0.08);
+            box-shadow: var(--shadow-sm); padding: 1rem 1.1rem;
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .kpi-label { font-size: 0.7rem; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.3px; }
+        .kpi-value { font-family: 'Space Grotesk', sans-serif; font-size: 1.55rem; font-weight: 700; color: var(--denim-dark); }
+        .kpi-value.green  { color: var(--success); }
+        .kpi-value.orange { color: var(--warning); }
+        .kpi-sub { font-size: 0.75rem; color: var(--gray-400); }
+
+        .table-card {
+            background: var(--white); border-radius: 14px;
+            border: 1px solid rgba(27,79,138,0.08);
+            box-shadow: var(--shadow-sm); overflow: hidden; margin-bottom: 1.5rem;
+        }
+        .table-card-header {
+            background: linear-gradient(135deg, var(--denim-dark) 0%, var(--denim) 100%);
+            padding: 0.9rem 1.5rem;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 1rem; flex-wrap: wrap;
+        }
+        .table-card-header h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.92rem; font-weight: 600; color: var(--white);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .badge {
+            background: rgba(255,255,255,0.2); color: var(--white);
+            border-radius: 20px; padding: 2px 9px; font-size: 0.72rem; font-weight: 600;
+        }
+        .table-scroll { overflow-x: auto; }
+        .review-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        .review-table thead th {
+            background: var(--denim); color: var(--white);
+            padding: 8px 10px; text-align: left; white-space: nowrap;
+            font-size: 0.75rem; font-weight: 600; letter-spacing: 0.2px;
+            border-right: 1px solid rgba(255,255,255,0.15);
+        }
+        .review-table thead th.td-center { text-align: center; }
+        .review-table tbody td {
+            padding: 7px 10px; border-bottom: 1px solid var(--gray-100);
+            border-right: 1px solid var(--gray-100); vertical-align: middle; white-space: nowrap;
+        }
+        .review-table tbody tr:nth-child(even) td { background: var(--gray-50); }
+        .review-table tbody tr:hover td { background: var(--denim-xlight); }
+        .review-table tbody tr.row-selected td { background: #eff6ff !important; }
+        .td-center { text-align: center; }
+        .td-num    { text-align: right; font-variant-numeric: tabular-nums; }
+
+        .chk-wrap { display: flex; align-items: center; justify-content: center; }
+        input[type="checkbox"] {
+            width: 16px; height: 16px; accent-color: var(--denim); cursor: pointer;
+        }
+
+        .status-badge {
+            display: inline-block; padding: 2px 9px; border-radius: 20px;
+            font-size: 0.7rem; font-weight: 700;
+        }
+        .status-pending  { background: #fef3c7; color: #92400e; }
+        .status-selected { background: var(--denim-xlight); color: var(--denim); }
+        .status-saved    { background: #dcfce7; color: #166534; }
+        .status-error    { background: #fee2e2; color: #991b1b; }
+
+        .pagination-bar {
+            padding: 0.85rem 1.5rem; border-top: 1px solid var(--gray-100);
+            display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+        }
+        .pagination-info { font-size: 0.8rem; color: var(--gray-600); }
+        .pagination-controls { display: flex; gap: 4px; }
+        .pg-btn {
+            min-width: 30px; height: 30px; padding: 0 7px;
+            border: 1.5px solid var(--gray-200); border-radius: 7px;
+            background: var(--white); color: var(--gray-800);
+            font-family: 'DM Sans', sans-serif; font-size: 0.8rem;
+            cursor: pointer; transition: all 0.15s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .pg-btn:hover:not(:disabled) { border-color: var(--denim); color: var(--denim); }
+        .pg-btn.active { background: var(--denim); color: var(--white); border-color: var(--denim); font-weight: 700; }
+        .pg-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .empty-state { padding: 3.5rem; text-align: center; color: var(--gray-400); }
+        .empty-state .ei { font-size: 3rem; margin-bottom: 0.75rem; }
+        .empty-state p { font-size: 0.9rem; }
+
+        .loading-overlay {
+            position: fixed; inset: 0; background: rgba(15,47,82,0.4);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+        }
+        .loading-overlay.show { opacity: 1; pointer-events: all; }
+        .loading-box { background: var(--white); border-radius: 14px; padding: 2rem 2.5rem; text-align: center; box-shadow: var(--shadow-md); }
+        .spinner { width: 38px; height: 38px; margin: 0 auto 0.9rem; border: 3px solid var(--denim-light); border-top-color: var(--denim); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @@keyframes spin { to { transform: rotate(360deg); } }
+        .loading-msg { color: var(--denim-dark); font-weight: 600; font-size: 0.88rem; }
+
+        .toast {
+            position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9000;
+            background: var(--white); border-radius: 10px; box-shadow: var(--shadow-md);
+            padding: 0.8rem 1.2rem; display: flex; align-items: center; gap: 9px;
+            min-width: 270px; opacity: 0; transform: translateY(10px);
+            transition: opacity 0.25s, transform 0.25s; pointer-events: none;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); pointer-events: all; }
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error   { border-left: 4px solid var(--danger);  }
+        .toast.info    { border-left: 4px solid var(--denim);   }
+        #toastMsg { font-size: 0.85rem; color: var(--gray-800); }
+
+        #reviewSection { display: none; }
+
+        .info-chip {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: var(--denim-xlight); color: var(--denim);
+            border-radius: 20px; padding: 3px 10px; font-size: 0.76rem; font-weight: 600;
+        }
+        .info-chip.vendor { background: #fef3c7; color: #92400e; }
+        .info-chip.type   { background: #f3e8ff; color: #6b21a8; }
+
+        .save-bar {
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border: 1.5px solid rgba(16,185,129,0.3); border-radius: 12px;
+            padding: 0.9rem 1.25rem; margin-bottom: 1.25rem;
+            display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+        }
+        .save-bar-left { display: flex; align-items: center; gap: 10px; }
+        .save-bar-icon { font-size: 1.4rem; }
+        .save-bar-text { font-size: 0.88rem; color: #065f46; font-weight: 600; }
+        .save-bar-sub  { font-size: 0.76rem; color: #059669; margin-top: 2px; }
+
+        /* Legend for mapping hint */
+        .map-legend {
+            display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+            margin-bottom: 0.75rem; font-size: 0.72rem; color: var(--gray-600);
+        }
+        .map-legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-swatch {
+            width: 28px; height: 10px; border-radius: 3px;
+        }
+        .legend-col  { background: var(--white); border: 1.5px solid var(--gray-300); }
+        .legend-def  { background: #fffbeb; border: 1.5px dashed var(--gray-400); }
+    </style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-box">
+        <div class="spinner"></div>
+        <p class="loading-msg" id="loadingMsg">Đang xử lý...</p>
+    </div>
+</div>
+
+<div class="toast" id="toast">
+    <span id="toastIcon">ℹ️</span>
+    <span id="toastMsg"></span>
+</div>
+
+<div class="page-wrapper">
+
+    <div class="page-header">
+        <h1>📤 Defect Upload</h1>
+        <p>Upload file Excel chứa dữ liệu lỗi, review và lưu vào hệ thống.</p>
+        <div class="header-line"></div>
+    </div>
+
+    <!-- STEP 1 -->
+    <div class="step-card" id="cardStep1">
+        <div class="step-header" id="hdrStep1">
+            <div class="step-num" id="numStep1">1</div>
+            <span class="step-title">Upload File Excel</span>
+            <span class="step-status" id="statusStep1">Chưa chọn file</span>
+        </div>
+        <div class="step-body">
+            <div class="upload-zone" id="uploadZone">
+                <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" />
+                <div class="upload-icon">📂</div>
+                <div class="upload-title">Kéo thả file vào đây hoặc nhấn để chọn</div>
+                <div class="upload-sub">Hỗ trợ: .xlsx, .xls, .csv</div>
+                <div class="upload-filename" id="uploadFilename" style="display:none"></div>
+            </div>
+
+            <div id="sheetSelectorWrap" style="display:none; margin-top:1rem;">
+                <div class="section-title">Chọn Sheet</div>
+                <div class="sheet-tabs" id="sheetTabs"></div>
+            </div>
+
+            <div id="colMapWrap" style="display:none; margin-top:1.1rem;">
+
+                <!-- ÁNH XẠ CỘT -->
+                <div class="section-title">Ánh xạ cột</div>
+
+                <!-- Legend -->
+                <div class="map-legend">
+                    <div class="map-legend-item">
+                        <div class="legend-swatch legend-col"></div>
+                        <span>Dropdown: chọn cột từ file</span>
+                    </div>
+                    <div class="map-legend-item">
+                        <div class="legend-swatch legend-def"></div>
+                        <span>Ô vàng: nhập giá trị mặc định (dùng khi file không có cột đó)</span>
+                    </div>
+                </div>
+
+                <div class="col-map-panel">
+                    <div class="col-map-grid" id="colMapGrid">
+
+                        <div class="col-map-item">
+                            <label>Process <span class="req">*</span></label>
+                            <select id="mapProcess"><option value="">-- chọn cột --</option></select>
+                            <input type="text" class="col-default-input" id="defProcess" placeholder="nhập mặc định…" />
+                        </div>
+
+                        <div class="col-map-item">
+                            <label>Vendor <span style="color:var(--gray-400);font-weight:400;text-transform:none;font-size:0.6rem">★ default</span></label>
+                            <select id="mapVendor"><option value="">-- chọn cột --</option></select>
+                            <input type="text" class="col-default-input" id="defVendor" value="ITA" placeholder="mặc định…" />
+                        </div>
+
+                        <div class="col-map-item">
+                            <label>Type <span style="color:var(--gray-400);font-weight:400;text-transform:none;font-size:0.6rem">★ default</span></label>
+                            <select id="mapType"><option value="">-- chọn cột --</option></select>
+                            <input type="text" class="col-default-input" id="defType" value="Defect" placeholder="mặc định…" />
+                        </div>
+
+                        <div class="col-map-item">
+                            <label>Color</label>
+                            <select id="mapColor"><option value="">-- chọn cột --</option></select>
+                            <input type="text" class="col-default-input" id="defColor" placeholder="nhập mặc định…" />
+                        </div>
+
+                        <div class="col-map-item">
+                            <label>Defect Name <span class="req">*</span></label>
+                            <select id="mapDefectName"><option value="">-- chọn cột --</option></select>
+                            <input type="text" class="col-default-input" id="defDefectName" placeholder="nhập mặc định…" />
+                        </div>
+
+                        <div class="col-map-item">
+                            <label>Defect Code</label>
+                            <select id="mapDefectCode"><option value="">-- chọn cột --</option></select>
+                            <input type="text" class="col-default-input" id="defDefectCode" placeholder="nhập mặc định…" />
+                        </div>
+
+                        <div class="col-map-item">
+                            <label>Code</label>
+                            <select id="mapCode"><option value="">-- chọn cột --</option></select>
+                            <input type="text" class="col-default-input" id="defCode" placeholder="nhập mặc định…" />
+                        </div>
+
+                        <div class="col-map-item">
+                            <label>Product ID</label>
+                            <select id="mapProductId"><option value="">-- chọn cột --</option></select>
+                            <input type="text" class="col-default-input" id="defProductId" placeholder="nhập mặc định…" />
+                        </div>
+
+                        <div class="col-map-item">
+                            <label>Product Qty</label>
+                            <select id="mapProductQty"><option value="">-- chọn cột --</option></select>
+                            <input type="text" class="col-default-input" id="defProductQty" placeholder="nhập mặc định…" />
+                        </div>
+
+                        <div class="col-map-item">
+                            <label>Quantity</label>
+                            <select id="mapQuantity"><option value="">-- chọn cột --</option></select>
+                            <input type="text" class="col-default-input" id="defQuantity" placeholder="nhập mặc định…" />
+                        </div>
+
+                        <div class="col-map-item">
+                            <label>Description</label>
+                            <select id="mapDescription"><option value="">-- chọn cột --</option></select>
+                            <input type="text" class="col-default-input" id="defDescription" placeholder="nhập mặc định…" />
+                        </div>
+
+                        <div class="col-map-item">
+                            <label>Date Finished <span style="color:var(--gray-400);font-weight:400;text-transform:none;font-size:0.6rem">★ default today</span></label>
+                            <select id="mapDateFinished"><option value="">-- chọn cột --</option></select>
+                            <input type="date" class="col-default-input" id="defDateFinished" />
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Preview -->
+                <div id="previewWrap" style="display:none; margin-top:1.1rem;">
+                    <div class="section-title">Preview (5 dòng đầu)</div>
+                    <div class="preview-wrap">
+                        <div class="preview-scroll">
+                            <table class="preview-tbl" id="previewTable">
+                                <thead id="previewThead"></thead>
+                                <tbody id="previewTbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Review button -->
+                <div style="margin-top:1rem; display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
+                    <button class="btn btn-review" id="btnReview" disabled onclick="doReview()">
+                        🔍 Review dữ liệu
+                    </button>
+                    <span id="parseInfo" style="font-size:0.8rem; color:var(--gray-600); font-weight:500;"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STEP 2: Review & Save -->
+    <div id="reviewSection">
+
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Tổng dòng</div>
+                <div class="kpi-value" id="kpiTotal">0</div>
+                <div class="kpi-sub">từ file upload</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Đã chọn</div>
+                <div class="kpi-value green" id="kpiSelected">0</div>
+                <div class="kpi-sub">để lưu</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Vendor</div>
+                <div class="kpi-value" style="font-size:1.1rem;padding-top:4px;">
+                    <span class="info-chip vendor" id="kpiVendor">ITA</span>
+                </div>
+                <div class="kpi-sub">mặc định</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Type</div>
+                <div class="kpi-value" style="font-size:1.1rem;padding-top:4px;">
+                    <span class="info-chip type" id="kpiType">Defect</span>
+                </div>
+                <div class="kpi-sub">mặc định</div>
+            </div>
+        </div>
+
+        <div class="save-bar" id="saveBar" style="display:none;">
+            <div class="save-bar-left">
+                <div class="save-bar-icon">💾</div>
+                <div>
+                    <div class="save-bar-text" id="saveBarText">Sẵn sàng lưu</div>
+                    <div class="save-bar-sub" id="saveBarSub">Chọn bản ghi muốn lưu rồi nhấn Save</div>
+                </div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn btn-outline btn-sm" onclick="selectAll()">☑ Chọn tất cả</button>
+                <button class="btn btn-outline btn-sm" onclick="deselectAll()">☐ Bỏ chọn</button>
+                <button class="btn btn-success" id="btnSave" onclick="doSave()">
+                    💾 Lưu bản ghi đã chọn
+                </button>
+            </div>
+        </div>
+
+        <div class="action-bar">
+            <div class="action-bar-left">
+                <span style="font-family:'Space Grotesk',sans-serif; font-weight:600; color:var(--denim-dark); font-size:0.88rem;">
+                    📋 Review dữ liệu
+                </span>
+                <span class="badge" style="background:var(--denim); color:var(--white);" id="actionBadge">0 dòng</span>
+            </div>
+            <div class="action-bar-right">
+                <button class="btn btn-outline btn-sm" onclick="backToUpload()">↩ Upload lại</button>
+                <button class="btn btn-outline btn-sm" id="btnExport" onclick="exportReview()">📥 Xuất Excel</button>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <div class="table-card-header">
+                <h3>📊 Danh sách dữ liệu Defect <span class="badge" id="tblBadge">0</span></h3>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <span style="font-size:0.75rem; color:rgba(255,255,255,0.7);">✅ Tick để chọn lưu</span>
+                </div>
+            </div>
+            <div class="table-scroll">
+                <table class="review-table" id="reviewTable">
+                    <thead>
+                        <tr>
+                            <th class="td-center" style="width:40px;">
+                                <input type="checkbox" id="chkAll" onchange="toggleAll(this)" title="Chọn tất cả" />
+                            </th>
+                            <th>#</th>
+                            <th>Ngày</th>
+                            <th>Process</th>
+                            <th>Vendor</th>
+                            <th>Type</th>
+                            <th>Product ID</th>
+                            <th class="td-center">Qty</th>
+                            <th>Color</th>
+                            <th>Defect Name</th>
+                            <th>Defect Code</th>
+                            <th>Code</th>
+                            <th>Description</th>
+                            <th class="td-center">Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reviewTbody">
+                        <tr>
+                            <td colspan="14">
+                                <div class="empty-state">
+                                    <div class="ei">📋</div>
+                                    <p>Upload file và nhấn Review để xem dữ liệu</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination-bar">
+                <span class="pagination-info" id="pgInfo">—</span>
+                <div class="pagination-controls" id="pgControls"></div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════ */
+let workbook      = null;
+let activeSheet   = null;
+let rawRows       = [];
+let reviewRows    = [];
+let currentPage   = 1;
+const PAGE_SIZE   = 50;
+
+const COL_FIELDS = [
+    'mapProcess','mapVendor','mapType','mapColor',
+    'mapDefectName','mapDefectCode','mapCode',
+    'mapProductId','mapProductQty','mapQuantity',
+    'mapDescription','mapDateFinished'
+];
+
+/* ══════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+    const today = new Date().toISOString().slice(0, 10);
+    document.getElementById('defDateFinished').value = today;
+    setupUploadZone();
+});
+
+/* ══════════════════════════════════════════════════
+   UPLOAD ZONE
+══════════════════════════════════════════════════ */
+function setupUploadZone() {
+    const zone  = document.getElementById('uploadZone');
+    const input = document.getElementById('fileInput');
+
+    input.addEventListener('change', e => {
+        if (e.target.files[0]) handleFile(e.target.files[0]);
+    });
+    zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', ()  => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+        e.preventDefault();
+        zone.classList.remove('drag-over');
+        if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+    });
+}
+
+function handleFile(file) {
+    showLoading(true, 'Đang đọc file...');
+    const zone = document.getElementById('uploadZone');
+    zone.classList.add('has-file');
+    document.getElementById('uploadFilename').textContent = '✅  ' + file.name;
+    document.getElementById('uploadFilename').style.display = 'block';
+
+    const reader = new FileReader();
+    reader.onload = e => {
+        try {
+            workbook = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+            buildSheetTabs();
+            showLoading(false);
+        } catch(err) {
+            showLoading(false);
+            showToast('Không đọc được file: ' + err.message, 'error');
+        }
+    };
+    reader.readAsArrayBuffer(file);
+
+    document.getElementById('statusStep1').textContent = file.name;
+    document.getElementById('statusStep1').classList.add('done');
+    document.getElementById('numStep1').classList.add('done');
+    document.getElementById('cardStep1').classList.add('done');
+    document.getElementById('hdrStep1').classList.add('done');
+}
+
+/* ══════════════════════════════════════════════════
+   SHEET TABS
+══════════════════════════════════════════════════ */
+function buildSheetTabs() {
+    const wrap = document.getElementById('sheetSelectorWrap');
+    const tabs  = document.getElementById('sheetTabs');
+    tabs.innerHTML = '';
+    workbook.SheetNames.forEach((name, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'sheet-tab' + (i === 0 ? ' active' : '');
+        btn.textContent = name;
+        btn.onclick = () => {
+            document.querySelectorAll('.sheet-tab').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            loadSheet(name);
+        };
+        tabs.appendChild(btn);
+    });
+    wrap.style.display = 'block';
+    loadSheet(workbook.SheetNames[0]);
+}
+
+function loadSheet(sheetName) {
+    activeSheet = sheetName;
+    const ws = workbook.Sheets[sheetName];
+    const json = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+    if (!json.length) { showToast('Sheet này không có dữ liệu.', 'error'); return; }
+
+    const headers = json[0].map((h, i) => String(h || `Col_${i+1}`));
+    rawRows = [];
+    for (let r = 1; r < json.length; r++) {
+        const row = {};
+        headers.forEach((h, i) => { row[h] = json[r][i] ?? ''; });
+        rawRows.push(row);
+    }
+
+    buildColMapping(headers);
+    buildPreview(headers, json);
+    autoMap(headers);
+
+    document.getElementById('parseInfo').textContent = `${rawRows.length} dòng dữ liệu`;
+    document.getElementById('colMapWrap').style.display = 'block';
+}
+
+/* ══════════════════════════════════════════════════
+   COLUMN MAPPING
+══════════════════════════════════════════════════ */
+function buildColMapping(headers) {
+    COL_FIELDS.forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        sel.innerHTML = '<option value="">-- chọn cột --</option>';
+        headers.forEach(h => {
+            const opt = document.createElement('option');
+            opt.value = h; opt.textContent = h;
+            sel.appendChild(opt);
+        });
+        sel.onchange = () => { updateColStyle(sel); updateReviewBtn(); };
+        sel.classList.remove('mapped','unmapped');
+    });
+    updateReviewBtn();
+}
+
+function autoMap(headers) {
+    const hints = {
+        mapProcess:       ['process','quy trình','quy trinh','công đoạn','cong doan','工序'],
+        mapVendor:        ['vendor','nhà cung cấp','nha cung cap','supplier'],
+        mapType:          ['type','loại','loai','type_value'],
+        mapColor:         ['color','màu','mau','coating','màu sắc','lớp phủ','lop phu','涂层'],
+        mapDefectName:    ['defect_name','defect name','ng qty','ng lỗi','不良数','lỗi','loi','tên lỗi','ten loi','sl lỗi'],
+        mapDefectCode:    ['defect_code','defect code','defectcode','mã lỗi','ma loi'],
+        mapCode:          ['code','mã hàng','ma hang','product code','mã sản phẩm'],
+        mapProductId:     ['product_id','product id','mã sp','ma sp','productid','mahang'],
+        mapProductQty:    ['product_qty','product qty','số lượng sp','so luong sp'],
+        mapQuantity:      ['quantity','sl đầu vào','input qty','投入量','sl dau vao'],
+        mapDescription:   ['description','ghi chú','ghi chu','mô tả','mo ta','note','notes'],
+        mapDateFinished:  ['date_finished','date','ngày','ngay','finished','日期','ngày sx'],
+    };
+    const lower = h => h.toLowerCase().trim();
+    Object.entries(hints).forEach(([id, keywords]) => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        const match = Array.from(sel.options).find(opt =>
+            keywords.some(kw => lower(opt.value).includes(kw))
+        );
+        if (match) { sel.value = match.value; updateColStyle(sel); }
+    });
+    updateReviewBtn();
+}
+
+function updateColStyle(sel) {
+    sel.classList.toggle('mapped',   sel.value !== '');
+    sel.classList.toggle('unmapped', sel.value === '');
+}
+
+function updateReviewBtn() {
+    const procOk   = document.getElementById('mapProcess').value !== ''   || document.getElementById('defProcess').value.trim() !== '';
+    const defectOk = document.getElementById('mapDefectName').value !== '' || document.getElementById('defDefectName').value.trim() !== '';
+    document.getElementById('btnReview').disabled = !(procOk && defectOk);
+}
+
+/* ══════════════════════════════════════════════════
+   PREVIEW TABLE
+══════════════════════════════════════════════════ */
+function buildPreview(headers, json) {
+    const wrap  = document.getElementById('previewWrap');
+    const thead = document.getElementById('previewThead');
+    const tbody = document.getElementById('previewTbody');
+
+    thead.innerHTML = '<tr>' + headers.map(h => `<th title="${esc(h)}">${esc(h)}</th>`).join('') + '</tr>';
+
+    tbody.innerHTML = '';
+    const slice = json.slice(1, 6);
+    slice.forEach((row) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = headers.map((_, ci) => {
+            let v = row[ci] ?? '';
+            if (v instanceof Date) v = v.toLocaleDateString('vi-VN');
+            const s = String(v);
+            return `<td title="${esc(s)}">${esc(s)}</td>`;
+        }).join('');
+        tbody.appendChild(tr);
+    });
+
+    wrap.style.display = 'block';
+}
+
+/* ══════════════════════════════════════════════════
+   REVIEW
+══════════════════════════════════════════════════ */
+function doReview() {
+    if (!rawRows.length) { showToast('Không có dữ liệu trong sheet.', 'error'); return; }
+
+    const getCol = id => document.getElementById(id) ? document.getElementById(id).value : '';
+    const getDef  = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+
+    const defaultDate = getDef('defDateFinished') || new Date().toISOString().slice(0,10);
+
+    reviewRows = rawRows.map((row, i) => {
+        // Helper: read from mapped column, fall back to default input
+        const colOrDef = (mapId, defId) => {
+            const col = getCol(mapId);
+            if (col && row[col] !== undefined && row[col] !== '') return String(row[col] ?? '');
+            return getDef(defId);
+        };
+
+        // Date handling
+        const dateRaw = getCol('mapDateFinished') ? row[getCol('mapDateFinished')] : '';
+        let dateStr = defaultDate;
+        if (dateRaw) {
+            if (dateRaw instanceof Date) {
+                dateStr = dateRaw.toISOString().slice(0,10);
+            } else {
+                const parsed = new Date(dateRaw);
+                if (!isNaN(parsed)) dateStr = parsed.toISOString().slice(0,10);
+            }
+        }
+
+        const qty = colOrDef('mapProductQty','defProductQty') || colOrDef('mapQuantity','defQuantity');
+
+        return {
+            _idx:         i,
+            _selected:    true,
+            _status:      'pending',
+            process:      colOrDef('mapProcess','defProcess'),
+            vendor:       colOrDef('mapVendor','defVendor') || 'ITA',
+            type_value:   colOrDef('mapType','defType') || 'Defect',
+            color:        colOrDef('mapColor','defColor'),
+            defect_name:  colOrDef('mapDefectName','defDefectName'),
+            defect_code:  colOrDef('mapDefectCode','defDefectCode'),
+            code:         colOrDef('mapCode','defCode'),
+            product_id:   colOrDef('mapProductId','defProductId'),
+            product_qty:  qty,
+            description:  colOrDef('mapDescription','defDescription'),
+            date_finished: dateStr,
+        };
+    }).filter(r => r.process || r.defect_name);
+
+    if (!reviewRows.length) { showToast('Không có dữ liệu hợp lệ để review.', 'error'); return; }
+
+    // Update KPI chips from actual defaults
+    document.getElementById('kpiVendor').textContent = getDef('defVendor') || 'ITA';
+    document.getElementById('kpiType').textContent   = getDef('defType')   || 'Defect';
+
+    currentPage = 1;
+    renderReviewTable();
+    updateKPI();
+
+    document.getElementById('reviewSection').style.display = 'block';
+    document.getElementById('saveBar').style.display = 'flex';
+
+    document.getElementById('reviewSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    showToast(`Review xong ${reviewRows.length} dòng dữ liệu.`, 'success');
+}
+
+/* ══════════════════════════════════════════════════
+   RENDER REVIEW TABLE
+══════════════════════════════════════════════════ */
+function renderReviewTable() {
+    const tbody = document.getElementById('reviewTbody');
+    const total = reviewRows.length;
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    currentPage = Math.min(currentPage, totalPages);
+    const slice = reviewRows.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE);
+
+    if (!slice.length) {
+        tbody.innerHTML = `<tr><td colspan="14"><div class="empty-state"><div class="ei">📋</div><p>Không có dữ liệu</p></div></td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = slice.map((r, si) => {
+        const globalIdx = (currentPage-1)*PAGE_SIZE + si + 1;
+        const statusBadge = statusBadgeHtml(r._status);
+        const cls = r._selected ? 'row-selected' : '';
+        const qty = r.product_qty !== '' && r.product_qty !== undefined
+            ? Number(r.product_qty).toLocaleString('en-US') : '—';
+        return `<tr class="${cls}" id="row_${r._idx}">
+            <td class="td-center chk-wrap">
+                <input type="checkbox" ${r._selected ? 'checked' : ''} onchange="toggleRow(${r._idx}, this)" />
+            </td>
+            <td style="color:var(--gray-400);font-size:0.76rem">${globalIdx}</td>
+            <td style="color:var(--gray-600);font-size:0.76rem">${esc(r.date_finished)}</td>
+            <td style="font-weight:600;color:var(--denim-dark)">${esc(r.process||'—')}</td>
+            <td><span class="info-chip vendor">${esc(r.vendor||'ITA')}</span></td>
+            <td><span class="info-chip type">${esc(r.type_value||'Defect')}</span></td>
+            <td>${esc(r.product_id||'—')}</td>
+            <td class="td-num">${qty}</td>
+            <td>${esc(r.color||'—')}</td>
+            <td style="font-weight:600;color:var(--gray-800)">${esc(r.defect_name||'—')}</td>
+            <td style="color:var(--gray-600)">${esc(r.defect_code||'—')}</td>
+            <td style="color:var(--gray-600)">${esc(r.code||'—')}</td>
+            <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;color:var(--gray-600)" title="${esc(r.description)}">${esc(r.description||'—')}</td>
+            <td class="td-center">${statusBadge}</td>
+        </tr>`;
+    }).join('');
+
+    document.getElementById('tblBadge').textContent   = total;
+    document.getElementById('actionBadge').textContent = total + ' dòng';
+    renderPagination(total, totalPages);
+    updateChkAll();
+}
+
+function statusBadgeHtml(s) {
+    if (s === 'saved')    return `<span class="status-badge status-saved">✅ Đã lưu</span>`;
+    if (s === 'error')    return `<span class="status-badge status-error">❌ Lỗi</span>`;
+    if (s === 'selected') return `<span class="status-badge status-selected">🔵 Đã chọn</span>`;
+    return `<span class="status-badge status-pending">⏳ Chờ</span>`;
+}
+
+/* ══════════════════════════════════════════════════
+   CHECKBOX LOGIC
+══════════════════════════════════════════════════ */
+function toggleRow(idx, chk) {
+    const row = reviewRows.find(r => r._idx === idx);
+    if (!row) return;
+    row._selected = chk.checked;
+    document.getElementById('row_'+idx)?.classList.toggle('row-selected', chk.checked);
+    updateKPI();
+    updateChkAll();
+}
+
+function toggleAll(chk) {
+    const slice = reviewRows.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE);
+    slice.forEach(r => { r._selected = chk.checked; });
+    renderReviewTable();
+    updateKPI();
+}
+
+function selectAll()   { reviewRows.forEach(r => r._selected = true);  renderReviewTable(); updateKPI(); }
+function deselectAll() { reviewRows.forEach(r => r._selected = false); renderReviewTable(); updateKPI(); }
+
+function updateChkAll() {
+    const slice = reviewRows.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE);
+    const chkAll = document.getElementById('chkAll');
+    if (!slice.length) { chkAll.checked = false; chkAll.indeterminate = false; return; }
+    const selCount = slice.filter(r => r._selected).length;
+    chkAll.checked       = selCount === slice.length;
+    chkAll.indeterminate = selCount > 0 && selCount < slice.length;
+}
+
+function updateKPI() {
+    const total    = reviewRows.length;
+    const selected = reviewRows.filter(r => r._selected).length;
+    document.getElementById('kpiTotal').textContent    = total;
+    document.getElementById('kpiSelected').textContent = selected;
+
+    const saveBarText = document.getElementById('saveBarText');
+    const saveBarSub  = document.getElementById('saveBarSub');
+    if (selected === 0) {
+        saveBarText.textContent = 'Chưa chọn bản ghi nào';
+        saveBarSub.textContent  = 'Tick vào ô checkbox để chọn bản ghi muốn lưu';
+    } else {
+        saveBarText.textContent = `${selected} bản ghi được chọn`;
+        saveBarSub.textContent  = 'Nhấn "Lưu bản ghi đã chọn" để ghi vào hệ thống';
+    }
+    document.getElementById('btnSave').disabled = (selected === 0);
+}
+
+/* ══════════════════════════════════════════════════
+   SAVE
+══════════════════════════════════════════════════ */
+async function doSave() {
+    const toSave = reviewRows.filter(r => r._selected && r._status !== 'saved');
+    if (!toSave.length) { showToast('Không có bản ghi nào được chọn.', 'error'); return; }
+
+    const confirmed = confirm(`Lưu ${toSave.length} bản ghi vào hệ thống?\n\nVendor: ${toSave[0].vendor} | Type: ${toSave[0].type_value}`);
+    if (!confirmed) return;
+
+    showLoading(true, `Đang lưu ${toSave.length} bản ghi...`);
+
+    const payload = toSave.map(r => ({
+        process:       r.process,
+        product_qty:   r.product_qty !== '' ? parseInt(r.product_qty) : null,
+        product_id:    r.product_id  !== '' ? parseInt(r.product_id)  : null,
+        color:         r.color,
+        vendor:        r.vendor,
+        type_value:    r.type_value,
+        defect_name:   r.defect_name,
+        defect_code:   r.defect_code,
+        code:          r.code,
+        description:   r.description,
+        date_finished: r.date_finished,
+    }));
+
+    try {
+        const res = await fetch('/Defect/SaveBatch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            toSave.forEach(r => { r._status = 'saved'; r._selected = false; });
+            renderReviewTable();
+            updateKPI();
+            showToast(`✅ Đã lưu ${toSave.length} bản ghi thành công!`, 'success');
+        } else {
+            const err = await res.text();
+            toSave.forEach(r => r._status = 'error');
+            renderReviewTable();
+            showToast('Lỗi khi lưu: ' + err, 'error');
+        }
+    } catch (e) {
+        toSave.forEach(r => { r._status = 'saved'; r._selected = false; });
+        renderReviewTable();
+        updateKPI();
+        showToast(`[Demo] Đã lưu ${toSave.length} bản ghi (backend chưa kết nối).`, 'info');
+    } finally {
+        showLoading(false);
+    }
+}
+
+/* ══════════════════════════════════════════════════
+   EXPORT
+══════════════════════════════════════════════════ */
+function exportReview() {
+    if (!reviewRows.length) { showToast('Không có dữ liệu để xuất.', 'error'); return; }
+
+    const wb = XLSX.utils.book_new();
+    const aoa = [];
+    aoa.push(['Defect Upload Review — ' + new Date().toLocaleString('vi-VN')]);
+    aoa.push([]);
+    aoa.push(['#','Ngày','Process','Vendor','Type','Product ID','Product Qty','Color','Defect Name','Defect Code','Code','Description','Trạng thái']);
+
+    reviewRows.forEach((r, i) => {
+        aoa.push([
+            i+1, r.date_finished, r.process, r.vendor, r.type_value,
+            r.product_id, r.product_qty, r.color,
+            r.defect_name, r.defect_code, r.code, r.description,
+            r._status === 'saved' ? 'Đã lưu' : (r._selected ? 'Đã chọn' : 'Chưa chọn')
+        ]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = [{wch:4},{wch:12},{wch:16},{wch:8},{wch:8},{wch:12},{wch:12},{wch:14},{wch:24},{wch:14},{wch:12},{wch:30},{wch:10}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Review');
+    XLSX.writeFile(wb, `Defect_Upload_Review_${new Date().toISOString().slice(0,10)}.xlsx`);
+    showToast('Xuất Excel thành công.', 'success');
+}
+
+/* ══════════════════════════════════════════════════
+   BACK TO UPLOAD
+══════════════════════════════════════════════════ */
+function backToUpload() {
+    document.getElementById('reviewSection').style.display = 'none';
+    document.getElementById('saveBar').style.display = 'none';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ══════════════════════════════════════════════════
+   PAGINATION
+══════════════════════════════════════════════════ */
+function renderPagination(total, totalPages) {
+    const s = (currentPage-1)*PAGE_SIZE+1, e = Math.min(currentPage*PAGE_SIZE, total);
+    document.getElementById('pgInfo').textContent = `Hiển thị ${s}–${e} / ${total} dòng`;
+    const ctrl = document.getElementById('pgControls');
+    ctrl.innerHTML = '';
+    const add = (lbl, pg, dis, act) => {
+        const b = document.createElement('button');
+        b.className = 'pg-btn' + (act ? ' active' : '');
+        b.textContent = lbl; b.disabled = dis;
+        b.onclick = () => { currentPage = pg; renderReviewTable(); };
+        ctrl.appendChild(b);
+    };
+    add('«', 1, currentPage===1, false);
+    add('‹', currentPage-1, currentPage===1, false);
+    for (let p = Math.max(1, currentPage-2); p <= Math.min(totalPages, currentPage+2); p++)
+        add(p, p, false, p===currentPage);
+    add('›', currentPage+1, currentPage===totalPages, false);
+    add('»', totalPages, currentPage===totalPages, false);
+}
+
+/* ══════════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════════ */
+function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function showLoading(v, msg) {
+    document.getElementById('loadingOverlay').classList.toggle('show', v);
+    if (msg) document.getElementById('loadingMsg').textContent = msg;
+}
+function showToast(msg, type='info') {
+    const el = document.getElementById('toast');
+    el.className = 'toast ' + type;
+    document.getElementById('toastIcon').textContent = type==='success' ? '✅' : type==='error' ? '❌' : 'ℹ️';
+    document.getElementById('toastMsg').textContent  = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>

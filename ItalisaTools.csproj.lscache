@@ -54,7 +54,7 @@ TemporaryDependencyNodeTargetIdentifier=net9.0
 
 [sourceFiles]
 Controllers/
- ComparisonController.cs
+ DefectController.cs
  HomeController.cs
  ProductionController.cs
 Models/
@@ -441,39 +441,43 @@ Program.cs
 obj/Debug/net9.0/ItalisaTools.GeneratedMSBuildEditorConfig.editorconfig
 
 [additionalFiles]
+Views/Defect/
+ Comparation.cshtml
+ Upload.cshtml
+Views/Home/
+ Index.cshtml
+ Privacy.cshtml
+Views/Production/
+ Create.cshtml
+ DefectReport.cshtml
+ History.cshtml
+ Overview.cshtml
+ Report.cshtml
+Views/Shared/
+ Error.cshtml
+ _Layout.cshtml
+ _ValidationScriptsPartial.cshtml
 Views/
- Comparison/Index.cshtml
- Home/
-  Index.cshtml
-  Privacy.cshtml
- Production/
-  Create.cshtml
-  DefectReport.cshtml
-  History.cshtml
-  Overview.cshtml
-  Report.cshtml
- Shared/
-  Error.cshtml
-  _Layout.cshtml
-  _ValidationScriptsPartial.cshtml
  _ViewImports.cshtml
  _ViewStart.cshtml
 
 [dynamicFiles]
+Views/Defect/
+ Comparation.cshtml
+ Upload.cshtml
+Views/Home/
+ Index.cshtml
+ Privacy.cshtml
+Views/Production/
+ Create.cshtml
+ DefectReport.cshtml
+ History.cshtml
+ Overview.cshtml
+ Report.cshtml
+Views/Shared/
+ Error.cshtml
+ _Layout.cshtml
+ _ValidationScriptsPartial.cshtml
 Views/
- Comparison/Index.cshtml
- Home/
-  Index.cshtml
-  Privacy.cshtml
- Production/
-  Create.cshtml
-  DefectReport.cshtml
-  History.cshtml
-  Overview.cshtml
-  Report.cshtml
- Shared/
-  Error.cshtml
-  _Layout.cshtml
-  _ValidationScriptsPartial.cshtml
  _ViewImports.cshtml
  _ViewStart.cshtml
