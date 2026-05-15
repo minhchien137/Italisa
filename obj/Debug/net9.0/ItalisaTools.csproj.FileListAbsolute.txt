@@ -161,6 +161,7 @@ C:\ItalisaTools\obj\Debug\net9.0\scopedcss\bundle\ItalisaTools.styles.css
 C:\ItalisaTools\obj\Debug\net9.0\scopedcss\projectbundle\ItalisaTools.bundle.scp.css
 C:\ItalisaTools\obj\Debug\net9.0\compressed\8erc8x6z7v-{0}-b9sayid5wm-b9sayid5wm.gz
 C:\ItalisaTools\obj\Debug\net9.0\compressed\ghhk14pmia-{0}-61n19gt1b8-61n19gt1b8.gz
+C:\ItalisaTools\obj\Debug\net9.0\compressed\jsvhigdrt3-{0}-9kkqm9h1kd-9kkqm9h1kd.gz
 C:\ItalisaTools\obj\Debug\net9.0\compressed\ixrtzpa0n1-{0}-xtxxf3hu2r-xtxxf3hu2r.gz
 C:\ItalisaTools\obj\Debug\net9.0\compressed\p0kg5lz94k-{0}-bqjiyaj88i-bqjiyaj88i.gz
 C:\ItalisaTools\obj\Debug\net9.0\compressed\jstj6lnp0p-{0}-c2jlpeoesf-c2jlpeoesf.gz
@@ -235,4 +236,3 @@ C:\ItalisaTools\obj\Debug\net9.0\refint\ItalisaTools.dll
 C:\ItalisaTools\obj\Debug\net9.0\ItalisaTools.pdb
 C:\ItalisaTools\obj\Debug\net9.0\ItalisaTools.genruntimeconfig.cache
 C:\ItalisaTools\obj\Debug\net9.0\ref\ItalisaTools.dll
-C:\ItalisaTools\obj\Debug\net9.0\compressed\jsvhigdrt3-{0}-9kkqm9h1kd-9kkqm9h1kd.gz
