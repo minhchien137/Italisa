@@ -146,13 +146,40 @@
         .filter-body.collapsed { display: none; }
         @@media (min-width: 768px) { .filter-body { display: block !important; } }
 
+        /* Row 1 — date inputs (2 cols) */
         .filter-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 0.75rem;
         }
-        @@media (min-width: 600px) { .filter-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; } }
-        @@media (min-width: 768px) { .filter-grid { grid-template-columns: 1fr 1fr auto; align-items: end; gap: 1rem; } }
+        @@media (min-width: 600px) { .filter-grid { gap: 1rem; } }
+
+        /* Row 2 — 4 column filters */
+        .filter-grid-4 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px dashed var(--gray-200);
+        }
+        @@media (min-width: 600px) { .filter-grid-4 { grid-template-columns: repeat(2, 1fr); gap: 1rem; } }
+        @@media (min-width: 900px) { .filter-grid-4 { grid-template-columns: repeat(4, 1fr); gap: 1rem; } }
+
+        /* Row 3 — buttons always at bottom */
+        .filter-btn-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px dashed var(--gray-200);
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+        @@media (max-width: 599px) {
+            .filter-btn-row { justify-content: stretch; }
+            .filter-btn-row .btn { flex: 1; }
+        }
 
         .filter-group { display: flex; flex-direction: column; gap: 5px; }
         .filter-group label {
@@ -162,7 +189,9 @@
             letter-spacing: 0.3px;
             text-transform: uppercase;
         }
-        .filter-group input[type="date"] {
+        .filter-group input[type="date"],
+        .filter-group input[type="text"],
+        .filter-group select {
             width: 100%;
             padding: 0.6rem 0.75rem;
             border: 1.5px solid var(--gray-200);
@@ -176,22 +205,28 @@
             min-height: 40px;
             cursor: pointer;
         }
-        .filter-group input[type="date"]:focus {
+        .filter-group input[type="date"]:focus,
+        .filter-group input[type="text"]:focus,
+        .filter-group select:focus {
             border-color: var(--denim);
             box-shadow: 0 0 0 3px rgba(27,79,138,0.1);
         }
+        /* Custom chevron for selects */
+        .filter-group select {
+            padding-right: 2.2rem;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.65rem center;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+        .filter-group select:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            background-color: var(--gray-50);
+        }
 
-        .filter-btn-group { justify-content: flex-end; }
-        .filter-actions {
-            display: flex;
-            gap: 8px;
-            flex-wrap: nowrap;
-            align-items: stretch;
-        }
-        @@media (max-width: 767px) {
-            .filter-btn-group { grid-column: 1 / -1; }
-            .filter-actions .btn { flex: 1; }
-        }
+
 
         .btn {
             padding: 0.6rem 1.1rem;
@@ -410,7 +445,6 @@
             border-right: 1px solid var(--gray-200);
         }
 
-
         table.pivot-table thead th.col-min {
             background: #fef9c3;
             color: #854d0e;
@@ -495,8 +529,6 @@
         }
 
         /* ── MOBILE: disable sticky columns ── */
-        .mobile-card-list { display: none; }
-
         @@media (max-width: 639px) {
             table.pivot-table thead th.col-fixed,
             table.pivot-table thead th.col-fixed-2,
@@ -634,7 +666,6 @@
     <span id="toastMsg"></span>
 </div>
 
-
 <div class="page-wrapper">
 
     <!-- Page Header -->
@@ -651,6 +682,8 @@
             <span class="filter-toggle" id="filterToggleIcon">▼</span>
         </div>
         <div class="filter-body" id="filterBody">
+
+            <!-- Row 1: Date range -->
             <div class="filter-grid">
                 <div class="filter-group">
                     <label data-i18n="overview.label.from">From Date</label>
@@ -660,20 +693,50 @@
                     <label data-i18n="overview.label.to">To Date</label>
                     <input type="date" id="fToDate" />
                 </div>
-                <div class="filter-group filter-btn-group">
-                    <div class="filter-actions">
-                        <button class="btn btn-primary" onclick="applyFilter()" id="btnApply" data-i18n="overview.btn.apply">
-                            🔍 Apply
-                        </button>
-                        <button class="btn btn-outline" onclick="resetFilter()" data-i18n="overview.btn.reset">
-                            ↺ Reset
-                        </button>
-                        <button class="btn btn-excel" onclick="exportExcel()" id="btnExcel" data-i18n="overview.btn.excel">
-                            ⬇ Excel
-                        </button>
-                    </div>
+            </div>
+
+            <!-- Row 2: Column filters — auto-populated after data loads -->
+            <div class="filter-grid-4">
+                <div class="filter-group">
+                    <label data-i18n="overview.label.pn">Italisa PN#</label>
+                    <select id="fPN" onchange="applyLocalFilters()" disabled>
+                        <option value="" data-i18n="overview.ph.pn">-- All PN --</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label data-i18n="overview.label.itemname">Item Name</label>
+                    <input type="text" id="fItemName"
+                           data-i18n-ph="overview.ph.itemname"
+                           placeholder="Search item name…"
+                           oninput="applyLocalFilters()" />
+                </div>
+                <div class="filter-group">
+                    <label data-i18n="overview.label.color">Color</label>
+                    <select id="fColor" onchange="applyLocalFilters()" disabled>
+                        <option value="" data-i18n="overview.ph.color">-- All Colors --</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label data-i18n="overview.label.svncode">SVN Code</label>
+                    <select id="fSvnCode" onchange="applyLocalFilters()" disabled>
+                        <option value="" data-i18n="overview.ph.svncode">-- All SVN Codes --</option>
+                    </select>
                 </div>
             </div>
+
+            <!-- Row 3: Action buttons — always at the bottom -->
+            <div class="filter-btn-row">
+                <button class="btn btn-primary" onclick="applyFilter()" id="btnApply" data-i18n="overview.btn.apply">
+                    🔍 Apply
+                </button>
+                <button class="btn btn-outline" onclick="resetFilter()" data-i18n="overview.btn.reset">
+                    ↺ Reset
+                </button>
+                <button class="btn btn-excel" onclick="exportExcel()" id="btnExcel" data-i18n="overview.btn.excel">
+                    ⬇ Excel
+                </button>
+            </div>
+
         </div>
     </div>
 
@@ -715,7 +778,10 @@
         <div class="table-toolbar">
             <div class="search-box">
                 <span>🔍</span>
-                <input type="text" id="tableSearch" placeholder="Search product name or PN…" oninput="filterTable(this.value)" />
+                <input type="text" id="tableSearch"
+                       data-i18n-ph="overview.search.ph"
+                       placeholder="Search product name or PN…"
+                       oninput="applyLocalFilters()" />
             </div>
             <span style="font-size:0.8rem;color:var(--gray-400)" id="rowCountLabel"></span>
         </div>
@@ -725,8 +791,8 @@
             <div id="tableContainer">
                 <div class="state-box">
                     <div class="state-icon">📆</div>
-                    <h4>Select a date range and click Apply</h4>
-                    <p>The report will load production quantities per work-centre.</p>
+                    <h4 data-i18n="overview.state.init.title">Select a date range and click Apply</h4>
+                    <p data-i18n="overview.state.init.sub">The report will load production quantities per work-centre.</p>
                 </div>
             </div>
         </div>
@@ -754,6 +820,11 @@
 
     document.addEventListener('DOMContentLoaded', () => applyFilter());
 
+    // Refresh translated placeholders when language changes
+    document.addEventListener('langChanged', () => {
+        refreshSelectPlaceholders();
+    });
+
     // ── Filter toggle (mobile) ───────────────────────────────────────────────
     document.getElementById('filterToggleBtn').addEventListener('click', () => {
         const body = document.getElementById('filterBody');
@@ -762,13 +833,13 @@
         icon.classList.toggle('collapsed');
     });
 
-    // ── Apply filter ────────────────────────────────────────────────────────
+    // ── Apply server filter (fetch new data) ─────────────────────────────────
     async function applyFilter() {
         const from = document.getElementById('fFromDate').value;
         const to   = document.getElementById('fToDate').value;
 
-        if (!to) { showToast('Please select a To Date.', 'error'); return; }
-        if (from && from > to) { showToast('From Date must be before To Date.', 'error'); return; }
+        if (!to)           { showToast(t('overview.toast.no_to'),     'error'); return; }
+        if (from && from > to) { showToast(t('overview.toast.date_order'), 'error'); return; }
 
         showLoading(true);
         setButtons(false);
@@ -779,38 +850,132 @@
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
             const json = await res.json();
-            reportCols   = json.columns || [];
-            reportData   = json.rows    || [];
-            filteredRows = [...reportData];
+            reportCols = json.columns || [];
+            reportData = json.rows    || [];
 
-            renderStats(reportData, reportCols);
-            renderTable(filteredRows, reportCols);
+            // Reset local filters, then populate dropdowns from fresh data
             document.getElementById('tableSearch').value = '';
+            document.getElementById('fItemName').value   = '';
+            resetSelectFilters(true); // true = silent (don't re-render yet)
+            populateSelectFilters(reportData, reportCols);
+
+            filteredRows = [...reportData];
+            renderStats(filteredRows, reportCols);
+            renderTable(filteredRows, reportCols);
 
         } catch (err) {
             console.error('applyFilter', err);
-            showToast('Failed to load report: ' + err.message, 'error');
+            showToast(t('overview.toast.load_fail', { msg: err.message }), 'error');
             document.getElementById('tableContainer').innerHTML =
-                `<div class="state-box"><div class="state-icon">⚠️</div><h4>Error loading data</h4><p>${err.message}</p></div>`;
+                `<div class="state-box"><div class="state-icon">⚠️</div>
+                 <h4>${escHtml(t('overview.state.error.title'))}</h4>
+                 <p>${escHtml(err.message)}</p></div>`;
         } finally {
             showLoading(false);
             setButtons(true);
         }
     }
 
-    // ── Reset ────────────────────────────────────────────────────────────────
+    // ── Full reset ────────────────────────────────────────────────────────────
     function resetFilter() {
         const today = new Date();
         const fmt   = d => d.toISOString().slice(0, 10);
         document.getElementById('fFromDate').value   = '';
         document.getElementById('fToDate').value     = fmt(today);
         document.getElementById('tableSearch').value = '';
+        document.getElementById('fItemName').value   = '';
+        resetSelectFilters(true);
         applyFilter();
     }
 
-    // ── Column metadata ──────────────────────────────────────────────────────
-    // cols layout: [0]=PN, [1]=Name, [2]=Color, [3..n-2]=WC columns, [n-1]=MinOutputQty
-    
+    // Reset the 3 select filters back to placeholder + disabled state
+    function resetSelectFilters(silent) {
+        ['fPN', 'fColor', 'fSvnCode'].forEach(id => {
+            const sel = document.getElementById(id);
+            // keep only the first <option value=""> placeholder
+            while (sel.options.length > 1) sel.remove(1);
+            sel.value    = '';
+            sel.disabled = true;
+        });
+        if (!silent) applyLocalFilters();
+    }
+
+    // ── Populate the 3 selects from loaded data ───────────────────────────────
+    function populateSelectFilters(rows, cols) {
+        if (!rows.length || !cols.length) return;
+        const { pnCol, colorCol, svnCodeCol } = getColMeta(cols);
+
+        const uniq = key =>
+            [...new Set(rows.map(r => String(r[key] ?? '')).filter(v => v !== '' && v !== 'null'))]
+            .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+        fillSelect('fPN',      uniq(pnCol));
+        fillSelect('fColor',   uniq(colorCol));
+        fillSelect('fSvnCode', uniq(svnCodeCol));
+    }
+
+    function fillSelect(id, options) {
+        const sel = document.getElementById(id);
+        const cur = sel.value;
+        // Remove all but first option (placeholder)
+        while (sel.options.length > 1) sel.remove(1);
+        options.forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v; opt.textContent = v;
+            sel.appendChild(opt);
+        });
+        if (cur && options.includes(cur)) sel.value = cur;
+        sel.disabled = options.length === 0;
+    }
+
+    // Keep the placeholder <option> text in sync when language changes
+    function refreshSelectPlaceholders() {
+        const map = {
+            fPN      : 'overview.ph.pn',
+            fColor   : 'overview.ph.color',
+            fSvnCode : 'overview.ph.svncode',
+        };
+        Object.entries(map).forEach(([id, key]) => {
+            const sel  = document.getElementById(id);
+            const opt0 = sel && sel.querySelector('option[value=""]');
+            if (opt0) opt0.textContent = t(key);
+        });
+    }
+
+    // ── Combined local filter: selects + item-name text + table search ────────
+    function applyLocalFilters() {
+        if (!reportData.length) return;
+
+        const pnVal      = document.getElementById('fPN').value.toLowerCase();
+        const nameVal    = document.getElementById('fItemName').value.trim().toLowerCase();
+        const colorVal   = document.getElementById('fColor').value.toLowerCase();
+        const svnVal     = document.getElementById('fSvnCode').value.toLowerCase();
+        const searchTerm = document.getElementById('tableSearch').value.trim().toLowerCase();
+
+        const { pnCol, nameCol, colorCol, svnCodeCol, svnNameCol } = getColMeta(reportCols);
+
+        filteredRows = reportData.filter(r => {
+            // Exact match for selects (empty = show all)
+            if (pnVal    && String(r[pnCol]      ?? '').toLowerCase() !== pnVal)    return false;
+            if (colorVal && String(r[colorCol]   ?? '').toLowerCase() !== colorVal) return false;
+            if (svnVal   && String(r[svnCodeCol] ?? '').toLowerCase() !== svnVal)   return false;
+            // Contains match for item name text input
+            if (nameVal  && !String(r[nameCol]   ?? '').toLowerCase().includes(nameVal)) return false;
+            // Free-text search across all visible text columns
+            if (searchTerm) {
+                const hay = [r[pnCol], r[nameCol], r[colorCol], r[svnCodeCol], r[svnNameCol]]
+                    .map(v => String(v ?? '')).join(' ').toLowerCase();
+                if (!hay.includes(searchTerm)) return false;
+            }
+            return true;
+        });
+
+        renderStats(filteredRows, reportCols);
+        renderTable(filteredRows, reportCols, searchTerm);
+    }
+
+    // ── Column metadata ───────────────────────────────────────────────────────
+    // cols: [0]=PN, [1]=Name, [2]=Color, [3]=SVNCode, [4]=SVNName, [5..n-2]=WC, [n-1]=MinQty
     function getColMeta(cols) {
         const pnCol      = cols[0] || '';
         const nameCol    = cols[1] || '';
@@ -822,8 +987,7 @@
         return { pnCol, nameCol, colorCol, svnCodeCol, svnNameCol, minCol, wcCols };
     }
 
-
-    // ── Render summary stats ─────────────────────────────────────────────────
+    // ── Render summary stats ──────────────────────────────────────────────────
     function renderStats(rows, cols) {
         if (!rows.length) { clearStats(); return; }
         const { wcCols, minCol } = getColMeta(cols);
@@ -854,18 +1018,20 @@
         return `<span class="color-badge ${cls}">${escHtml(v)}</span>`;
     }
 
-    // ── Render desktop pivot table ───────────────────────────────────────────
+    // ── Render pivot table ────────────────────────────────────────────────────
     function renderTable(rows, cols, highlight = '') {
         const container = document.getElementById('tableContainer');
-        document.getElementById('recordBadge').textContent  = rows.length + ' rows';
-        document.getElementById('rowCountLabel').textContent = rows.length + ' product(s) shown';
+        document.getElementById('recordBadge').textContent   = t('overview.rows',       { n: rows.length });
+        document.getElementById('rowCountLabel').textContent = t('overview.rows.shown',  { n: rows.length });
 
         if (!rows.length) {
-            container.innerHTML = `<div class="state-box"><div class="state-icon">📭</div><h4>No data found</h4><p>Try adjusting the date range.</p></div>`;
+            container.innerHTML = `<div class="state-box">
+                <div class="state-icon">📭</div>
+                <h4>${escHtml(t('overview.state.empty.title'))}</h4>
+                <p>${escHtml(t('overview.state.empty.sub'))}</p></div>`;
             return;
         }
 
-        // ✅ FIX: destructure colorCol here
         const { pnCol, nameCol, colorCol, minCol, wcCols, svnCodeCol, svnNameCol } = getColMeta(cols);
         const pnWidth = 64;
 
@@ -874,9 +1040,9 @@
         rows.forEach(r => { cols.slice(3).forEach(c => { totals[c] += (Number(r[c]) || 0); }); });
 
         let html = `<table class="pivot-table"><thead><tr>
-            <th class="col-fixed" style="min-width:${pnWidth}px">${escHtml(pnCol)}</th>
-            <th class="col-fixed-2" style="min-width:200px">${escHtml(nameCol)}</th>
-            <th class="col-color" style="min-width:130px">${escHtml(colorCol)}</th>
+            <th class="col-fixed"    style="min-width:${pnWidth}px">${escHtml(pnCol)}</th>
+            <th class="col-fixed-2"  style="min-width:200px">${escHtml(nameCol)}</th>
+            <th class="col-color"    style="min-width:130px">${escHtml(colorCol)}</th>
             <th class="col-svn-code" style="min-width:110px">${escHtml(svnCodeCol)}</th>
             <th class="col-svn-name" style="min-width:315px">${escHtml(svnNameCol)}</th>`;
 
@@ -894,7 +1060,7 @@
                 <td class="col-fixed-2" title="${escHtml(String(nameVal))}">${nameDisp}</td>
                 <td class="col-color">${colorBadge(r[colorCol] ?? '')}</td>
                 <td class="col-svn-code">${escHtml(String(r[svnCodeCol] ?? ''))}</td>
-                <td class="col-svn-name">${escHtml(String(r[svnNameCol] ?? ''))}</td>`;
+                <td class="col-svn-name" title="${escHtml(String(r[svnNameCol] ?? ''))}">${escHtml(String(r[svnNameCol] ?? ''))}</td>`;
 
             wcCols.forEach(c => {
                 const v = Number(r[c]) || 0;
@@ -905,113 +1071,74 @@
         });
 
         html += `</tbody><tfoot><tr>
-            <td class="col-fixed" colspan="1">TOTAL</td>
+            <td class="col-fixed">${escHtml(t('overview.tfoot.total'))}</td>
             <td class="col-fixed-2" style="left:${pnWidth}px;text-align:left"></td>
             <td class="col-color"></td>
             <td class="col-svn-code"></td>
-            <td class="col-svn-name"></td>
-        `;
+            <td class="col-svn-name"></td>`;
         wcCols.forEach(c => { html += `<td style="text-align:right">${(totals[c] || 0).toLocaleString()}</td>`; });
         html += `<td class="col-min">${(totals[minCol] || 0).toLocaleString()}</td></tr></tfoot></table>`;
 
         container.innerHTML = html;
     }
 
-    // ── Client-side search ───────────────────────────────────────────────────
-    function filterTable(term) {
-        if (!reportData.length) return;
-        const q = term.trim().toLowerCase();
-        if (!q) {
-            filteredRows = [...reportData];
-        } else {
-            // ✅ FIX: destructure colorCol here
-            const { pnCol, nameCol, colorCol, svnCodeCol, svnNameCol } = getColMeta(reportCols);
-            filteredRows = reportData.filter(r =>
-                String(r[pnCol]    ?? '').toLowerCase().includes(q) ||
-                String(r[nameCol]  ?? '').toLowerCase().includes(q) ||
-                String(r[colorCol] ?? '').toLowerCase().includes(q) ||
-                String(r[svnCodeCol]  ?? '').toLowerCase().includes(q) ||
-                String(r[svnNameCol]  ?? '').toLowerCase().includes(q)
-            );
-        }
-        renderTable(filteredRows, reportCols, term.trim());
-    }
-
-    // ── Excel Export (styled) ────────────────────────────────────────────────
+    // ── Excel Export (styled) ─────────────────────────────────────────────────
     function exportExcel() {
         if (!filteredRows.length) {
-            showToast('No data to export.', 'error');
+            showToast(t('overview.toast.no_export'), 'error');
             return;
         }
 
         const fromVal  = document.getElementById('fFromDate').value;
         const toVal    = document.getElementById('fToDate').value || new Date().toISOString().slice(0, 10);
-        const fromDisp = fromVal ? fromVal : 'All time';
-        const toDisp   = toVal;
+        const fromDisp = fromVal || 'All time';
 
         const { pnCol, nameCol, colorCol, svnCodeCol, svnNameCol, minCol, wcCols } = getColMeta(reportCols);
         const wb = XLSX.utils.book_new();
 
+        // dataHeader: PN(0) Name(1) Color(2) SVNCode(3) SVNName(4) WC...(5+) Min(last)
         const dataHeader  = [pnCol, nameCol, colorCol, svnCodeCol, svnNameCol, ...wcCols, minCol];
         const numDataCols = dataHeader.length;
+        const WC_START    = 5; // WC columns start at index 5
 
         const aoa = [];
-
-        // Row 0 – Title
         aoa.push(['PRODUCTION OVERVIEW REPORT', ...Array(numDataCols - 1).fill('')]);
-        // Row 1 – Date range
-        aoa.push([`Period: ${fromDisp}  →  ${toDisp}`, ...Array(numDataCols - 1).fill('')]);
-        // Row 2 – Generated
+        aoa.push([`Period: ${fromDisp}  →  ${toVal}`, ...Array(numDataCols - 1).fill('')]);
         const genTime = new Date().toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
         aoa.push([`Generated: ${genTime}`, ...Array(numDataCols - 1).fill('')]);
-        // Row 3 – blank spacer
         aoa.push(Array(numDataCols).fill(''));
-        // Row 4 – Column headers
         aoa.push(dataHeader);
 
-        // Data rows
         const totals = {};
         dataHeader.forEach(c => { totals[c] = 0; });
 
         filteredRows.forEach(r => {
-            const row = [
-                r[pnCol]    ?? '',
-                r[nameCol]  ?? '',
-                r[colorCol] ?? '',
+            aoa.push([
+                r[pnCol]       ?? '',
+                r[nameCol]     ?? '',
+                r[colorCol]    ?? '',
                 r[svnCodeCol]  ?? '',
                 r[svnNameCol]  ?? '',
                 ...wcCols.map(c => { const v = Number(r[c]) || 0; totals[c] += v; return v; }),
                 (() => { const v = Number(r[minCol]) || 0; totals[minCol] += v; return v; })()
-            ];
-            aoa.push(row);
+            ]);
         });
 
-        // Total row
-        aoa.push(['TOTAL', '', '', '', '', ...wcCols.map(c => totals[c] || 0), totals[minCol] || 0]);
+        aoa.push(['TOTAL', `${filteredRows.length} products`, '', '', '', ...wcCols.map(c => totals[c] || 0), totals[minCol] || 0]);
 
         const ws = XLSX.utils.aoa_to_sheet(aoa);
 
-        // ── Column widths ──
         ws['!cols'] = [
-            { wch: 12 },   // PN#
-            { wch: 30 },   // Item Name
-            { wch: 16 },   // Color
-            { wch: 16 },   // SVN Code
-            { wch: 40 },   // SVN Name
+            { wch: 12 },  // PN#
+            { wch: 30 },  // Item Name
+            { wch: 16 },  // Color
+            { wch: 16 },  // SVN Code
+            { wch: 40 },  // SVN Name
             ...wcCols.map(() => ({ wch: 14 })),
-            { wch: 18 }    // Min Output Qty
+            { wch: 18 }   // Min Output Qty
         ];
+        ws['!rows'] = [{ hpt: 28 }, { hpt: 18 }, { hpt: 16 }, { hpt: 8 }, { hpt: 22 }];
 
-        // ── Row heights ──
-        ws['!rows'] = [
-            { hpt: 28 },
-            { hpt: 18 },
-            { hpt: 16 },
-            { hpt: 8  },
-            { hpt: 22 },
-        ];
-
-        // ── Merge title/date/generated across all columns ──
         const endCol = numDataCols - 1;
         ws['!merges'] = [
             { s: { r: 0, c: 0 }, e: { r: 0, c: endCol } },
@@ -1021,163 +1148,82 @@
 
         const addr = (r, c) => XLSX.utils.encode_cell({ r, c });
 
-        const titleStyle = {
-            font:      { name: 'Calibri', sz: 16, bold: true, color: { rgb: 'FFFFFF' } },
-            fill:      { fgColor: { rgb: '0F2F52' } },
-            alignment: { horizontal: 'center', vertical: 'center' },
-        };
-        ws[addr(0, 0)] = { v: aoa[0][0], t: 's', s: titleStyle };
+        // ── Header row styles ──
+        ws[addr(0, 0)] = { v: aoa[0][0], t: 's', s: { font: { name: 'Calibri', sz: 16, bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '0F2F52' } }, alignment: { horizontal: 'center', vertical: 'center' } } };
+        ws[addr(1, 0)] = { v: aoa[1][0], t: 's', s: { font: { name: 'Calibri', sz: 11, italic: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '1B4F8A' } }, alignment: { horizontal: 'center', vertical: 'center' } } };
+        ws[addr(2, 0)] = { v: aoa[2][0], t: 's', s: { font: { name: 'Calibri', sz: 9, color: { rgb: 'C0D9F5' } }, fill: { fgColor: { rgb: '1B4F8A' } }, alignment: { horizontal: 'center', vertical: 'center' } } };
 
-        const dateStyle = {
-            font:      { name: 'Calibri', sz: 11, italic: true, color: { rgb: 'FFFFFF' } },
-            fill:      { fgColor: { rgb: '1B4F8A' } },
-            alignment: { horizontal: 'center', vertical: 'center' },
-        };
-        ws[addr(1, 0)] = { v: aoa[1][0], t: 's', s: dateStyle };
+        const HR = 4;
+        const sHdr     = { font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '1B4F8A' } }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true }, border: { bottom: { style: 'medium', color: { rgb: 'FFFFFF' } } } };
+        const sHdrL    = { ...sHdr, alignment: { horizontal: 'left', vertical: 'center', wrapText: true } };
+        const sHdrMin  = { font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '854D0E' } }, fill: { fgColor: { rgb: 'FEF9C3' } }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true }, border: { left: { style: 'medium', color: { rgb: 'FDE68A' } }, bottom: { style: 'medium', color: { rgb: 'FDE68A' } } } };
 
-        const genStyle = {
-            font:      { name: 'Calibri', sz: 9, color: { rgb: 'C0D9F5' } },
-            fill:      { fgColor: { rgb: '1B4F8A' } },
-            alignment: { horizontal: 'center', vertical: 'center' },
-        };
-        ws[addr(2, 0)] = { v: aoa[2][0], t: 's', s: genStyle };
+        ws[addr(HR, 0)] = { v: pnCol,      t: 's', s: sHdr  };
+        ws[addr(HR, 1)] = { v: nameCol,    t: 's', s: sHdrL };
+        ws[addr(HR, 2)] = { v: colorCol,   t: 's', s: sHdr  };
+        ws[addr(HR, 3)] = { v: svnCodeCol, t: 's', s: sHdr  };
+        ws[addr(HR, 4)] = { v: svnNameCol, t: 's', s: sHdrL };
+        wcCols.forEach((c, i) => { ws[addr(HR, WC_START + i)] = { v: c, t: 's', s: sHdr }; });
+        ws[addr(HR, numDataCols - 1)] = { v: minCol, t: 's', s: sHdrMin };
 
-        const headerRowIdx  = 4;
-        const headerStylePN = {
-            font:      { name: 'Calibri', sz: 10, bold: true, color: { rgb: 'FFFFFF' } },
-            fill:      { fgColor: { rgb: '1B4F8A' } },
-            alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-            border:    { bottom: { style: 'medium', color: { rgb: 'FFFFFF' } } }
-        };
-        const headerStyleName  = { ...headerStylePN, alignment: { horizontal: 'left',   vertical: 'center', wrapText: true } };
-        const headerStyleColor = { ...headerStylePN, alignment: { horizontal: 'center', vertical: 'center', wrapText: true } };
-        const headerStyleMin   = {
-            font:      { name: 'Calibri', sz: 10, bold: true, color: { rgb: '854D0E' } },
-            fill:      { fgColor: { rgb: 'FEF9C3' } },
-            alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-            border:    { left: { style: 'medium', color: { rgb: 'FDE68A' } }, bottom: { style: 'medium', color: { rgb: 'FDE68A' } } }
-        };
+        // ── Data row styles ──
+        const sTxtPN   = { font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '1B4F8A' } }, alignment: { horizontal: 'center', vertical: 'center' } };
+        const sTxtL    = { font: { name: 'Calibri', sz: 10, color: { rgb: '1E293B' } }, alignment: { horizontal: 'left', vertical: 'center' } };
+        const sTxtLEv  = { ...sTxtL, fill: { fgColor: { rgb: 'F8FAFC' } } };
+        const sNumNZ   = { font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '1B4F8A' } }, alignment: { horizontal: 'right', vertical: 'center' }, numFmt: '#,##0' };
+        const sNumZero = { font: { name: 'Calibri', sz: 10, color: { rgb: '94A3B8' } },              alignment: { horizontal: 'right', vertical: 'center' }, numFmt: '#,##0' };
+        const sMin     = { font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '854D0E' } }, fill: { fgColor: { rgb: 'FEFCE8' } }, alignment: { horizontal: 'right', vertical: 'center' }, numFmt: '#,##0', border: { left: { style: 'thin', color: { rgb: 'FDE68A' } } } };
 
-        ws[addr(headerRowIdx, 0)] = { v: pnCol,    t: 's', s: headerStylePN };
-        ws[addr(headerRowIdx, 1)] = { v: nameCol,  t: 's', s: headerStyleName };
-        ws[addr(headerRowIdx, 2)] = { v: colorCol, t: 's', s: headerStyleColor };
-        wcCols.forEach((c, i) => {
-            ws[addr(headerRowIdx, 3 + i)] = { v: c, t: 's', s: headerStylePN };
-        });
-        ws[addr(headerRowIdx, numDataCols - 1)] = { v: minCol, t: 's', s: headerStyleMin };
-
-        // Data rows
-        const dataStartRow = 5;
-        const dataStylePN = {
-            font:      { name: 'Calibri', sz: 10, bold: true, color: { rgb: '1B4F8A' } },
-            alignment: { horizontal: 'center', vertical: 'center' },
-        };
-        const dataStyleNameEven = {
-            font:      { name: 'Calibri', sz: 10, color: { rgb: '1E293B' } },
-            fill:      { fgColor: { rgb: 'F8FAFC' } },
-            alignment: { horizontal: 'left', vertical: 'center' },
-        };
-        const dataStyleNameOdd = {
-            font:      { name: 'Calibri', sz: 10, color: { rgb: '1E293B' } },
-            alignment: { horizontal: 'left', vertical: 'center' },
-        };
-        const dataStyleNumZero = {
-            font:      { name: 'Calibri', sz: 10, color: { rgb: '94A3B8' } },
-            alignment: { horizontal: 'right', vertical: 'center' },
-            numFmt:    '#,##0',
-        };
-        const dataStyleNumNZ = {
-            font:      { name: 'Calibri', sz: 10, bold: true, color: { rgb: '1B4F8A' } },
-            alignment: { horizontal: 'right', vertical: 'center' },
-            numFmt:    '#,##0',
-        };
-        const dataStyleMin = {
-            font:      { name: 'Calibri', sz: 10, bold: true, color: { rgb: '854D0E' } },
-            fill:      { fgColor: { rgb: 'FEFCE8' } },
-            alignment: { horizontal: 'right', vertical: 'center' },
-            numFmt:    '#,##0',
-            border:    { left: { style: 'thin', color: { rgb: 'FDE68A' } } }
-        };
-
+        const DR = 5; // data start row in sheet
         filteredRows.forEach((r, ri) => {
-            const rowIdx = dataStartRow + ri;
+            const row    = DR + ri;
             const isEven = ri % 2 === 1;
-            const evenFill = isEven ? { fgColor: { rgb: 'F8FAFC' } } : undefined;
+            const evFill = isEven ? { fgColor: { rgb: 'F8FAFC' } } : undefined;
+            const sL     = isEven ? sTxtLEv : sTxtL;
 
-            ws[addr(rowIdx, 0)] = {
-                v: r[pnCol] ?? '', t: 's',
-                s: { ...dataStylePN, fill: isEven ? evenFill : undefined }
-            };
-            ws[addr(rowIdx, 1)] = {
-                v: r[nameCol] ?? '', t: 's',
-                s: isEven ? dataStyleNameEven : dataStyleNameOdd
-            };
-            ws[addr(rowIdx, 2)] = {
-                v: r[colorCol] ?? '', t: 's',
-                s: { ...(isEven ? dataStyleNameEven : dataStyleNameOdd), alignment: { horizontal: 'center', vertical: 'center' } }
-            };
+            ws[addr(row, 0)] = { v: r[pnCol]      ?? '', t: 's', s: { ...sTxtPN, fill: evFill } };
+            ws[addr(row, 1)] = { v: r[nameCol]    ?? '', t: 's', s: sL };
+            ws[addr(row, 2)] = { v: r[colorCol]   ?? '', t: 's', s: { ...sL, alignment: { horizontal: 'center', vertical: 'center' } } };
+            ws[addr(row, 3)] = { v: r[svnCodeCol] ?? '', t: 's', s: { ...sTxtPN, fill: evFill } };
+            ws[addr(row, 4)] = { v: r[svnNameCol] ?? '', t: 's', s: sL };
             wcCols.forEach((c, ci) => {
                 const v = Number(r[c]) || 0;
-                ws[addr(rowIdx, 3 + ci)] = {
-                    v, t: 'n',
-                    s: { ...(v > 0 ? dataStyleNumNZ : dataStyleNumZero), fill: isEven ? evenFill : undefined },
-                    z: '#,##0'
-                };
+                ws[addr(row, WC_START + ci)] = { v, t: 'n', s: { ...(v > 0 ? sNumNZ : sNumZero), fill: evFill }, z: '#,##0' };
             });
-            const minV = Number(r[minCol]) || 0;
-            ws[addr(rowIdx, numDataCols - 1)] = { v: minV, t: 'n', s: dataStyleMin, z: '#,##0' };
+            ws[addr(row, numDataCols - 1)] = { v: Number(r[minCol]) || 0, t: 'n', s: sMin, z: '#,##0' };
         });
 
-        // Total row
-        const totalRowIdx     = dataStartRow + filteredRows.length;
-        const totalStyleLabel = {
-            font:      { name: 'Calibri', sz: 10, bold: true, color: { rgb: 'FFFFFF' } },
-            fill:      { fgColor: { rgb: '1B4F8A' } },
-            alignment: { horizontal: 'left', vertical: 'center' },
-            border:    { top: { style: 'medium', color: { rgb: 'DBEAFE' } } }
-        };
-        const totalStyleNum = {
-            font:      { name: 'Calibri', sz: 10, bold: true, color: { rgb: 'FFFFFF' } },
-            fill:      { fgColor: { rgb: '1B4F8A' } },
-            alignment: { horizontal: 'right', vertical: 'center' },
-            numFmt:    '#,##0',
-            border:    { top: { style: 'medium', color: { rgb: 'DBEAFE' } } }
-        };
-        const totalStyleMin = {
-            font:      { name: 'Calibri', sz: 10, bold: true, color: { rgb: '854D0E' } },
-            fill:      { fgColor: { rgb: 'FEF9C3' } },
-            alignment: { horizontal: 'right', vertical: 'center' },
-            numFmt:    '#,##0',
-            border:    { top: { style: 'medium', color: { rgb: 'FDE68A' } }, left: { style: 'medium', color: { rgb: 'FDE68A' } } }
-        };
+        // ── Total row styles ──
+        const TR   = DR + filteredRows.length;
+        const sTL  = { font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '1B4F8A' } }, alignment: { horizontal: 'left',  vertical: 'center' }, border: { top: { style: 'medium', color: { rgb: 'DBEAFE' } } } };
+        const sTR  = { ...sTL, alignment: { horizontal: 'right', vertical: 'center' }, numFmt: '#,##0' };
+        const sTM  = { font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '854D0E' } }, fill: { fgColor: { rgb: 'FEF9C3' } }, alignment: { horizontal: 'right', vertical: 'center' }, numFmt: '#,##0', border: { top: { style: 'medium', color: { rgb: 'FDE68A' } }, left: { style: 'medium', color: { rgb: 'FDE68A' } } } };
 
-        ws[addr(totalRowIdx, 0)] = { v: 'TOTAL', t: 's', s: totalStyleLabel };
-        ws[addr(totalRowIdx, 1)] = { v: `${filteredRows.length} products`, t: 's', s: totalStyleLabel };
-        ws[addr(totalRowIdx, 2)] = { v: '', t: 's', s: totalStyleLabel };
-        wcCols.forEach((c, ci) => {
-            ws[addr(totalRowIdx, 3 + ci)] = { v: totals[c] || 0, t: 'n', s: totalStyleNum, z: '#,##0' };
-        });
-        ws[addr(totalRowIdx, numDataCols - 1)] = { v: totals[minCol] || 0, t: 'n', s: totalStyleMin, z: '#,##0' };
+        ws[addr(TR, 0)] = { v: 'TOTAL',                        t: 's', s: sTL };
+        ws[addr(TR, 1)] = { v: `${filteredRows.length} products`, t: 's', s: sTL };
+        ws[addr(TR, 2)] = { v: '', t: 's', s: sTL };
+        ws[addr(TR, 3)] = { v: '', t: 's', s: sTL };
+        ws[addr(TR, 4)] = { v: '', t: 's', s: sTL };
+        wcCols.forEach((c, ci) => { ws[addr(TR, WC_START + ci)] = { v: totals[c] || 0, t: 'n', s: sTR, z: '#,##0' }; });
+        ws[addr(TR, numDataCols - 1)] = { v: totals[minCol] || 0, t: 'n', s: sTM, z: '#,##0' };
 
         XLSX.utils.book_append_sheet(wb, ws, 'Overview');
 
-        const now     = new Date();
-        const stamp   = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-        const fromStr = fromVal || 'alltime';
-        XLSX.writeFile(wb, `Production_Overview_${fromStr}_${toVal}_${stamp}.xlsx`);
-        showToast(`Exported ${filteredRows.length} rows to Excel.`, 'success');
+        const now   = new Date();
+        const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+        XLSX.writeFile(wb, `Production_Overview_${fromVal || 'alltime'}_${toVal}_${stamp}.xlsx`);
+        showToast(t('overview.toast.export_ok', { n: filteredRows.length }), 'success');
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // ── Helpers ───────────────────────────────────────────────────────────────
     function escHtml(str) {
         return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
     function hlText(str, term) {
         if (!term) return escHtml(str);
-        const escaped   = escHtml(str);
-        const escapedTm = escHtml(term);
-        const regex     = new RegExp(escapedTm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+        const escaped = escHtml(str);
+        const regex   = new RegExp(escHtml(term).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
         return escaped.replace(regex, m => `<mark class="hl">${m}</mark>`);
     }
 

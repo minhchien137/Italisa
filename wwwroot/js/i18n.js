@@ -209,6 +209,18 @@ const I18N = {
         'overview.filter.title'        : '🔎 Bộ lọc & Xuất',
         'overview.label.from'          : 'Từ ngày',
         'overview.label.to'            : 'Đến ngày',
+        /* ── Overview column filter labels (NEW) ── */
+        'overview.label.col_filter'    : 'Bộ lọc cột',
+        'overview.label.pn'            : 'Italisa PN#',
+        'overview.label.itemname'      : 'Tên sản phẩm',
+        'overview.label.color'         : 'Màu sắc',
+        'overview.label.svncode'       : 'Mã SVN',
+        /* ── Overview column filter placeholders (NEW) ── */
+        'overview.ph.pn'               : '-- Tất cả PN --',
+        'overview.ph.itemname'         : 'Tìm tên sản phẩm…',
+        'overview.ph.color'            : '-- Tất cả màu --',
+        'overview.ph.svncode'          : '-- Tất cả mã SVN --',
+        /* ── Overview buttons / stats / table ── */
         'overview.btn.apply'           : '🔍 Áp dụng',
         'overview.btn.reset'           : '↺ Đặt lại',
         'overview.btn.excel'           : '⬇ Excel',
@@ -226,7 +238,7 @@ const I18N = {
         'overview.state.init.title'    : 'Chọn khoảng ngày và nhấn Áp dụng',
         'overview.state.init.sub'      : 'Báo cáo sẽ hiển thị số lượng sản xuất theo trung tâm làm việc.',
         'overview.state.empty.title'   : 'Không tìm thấy dữ liệu',
-        'overview.state.empty.sub'     : 'Thử điều chỉnh khoảng ngày hoặc từ khóa tìm kiếm.',
+        'overview.state.empty.sub'     : 'Thử điều chỉnh khoảng ngày hoặc bộ lọc cột.',
         'overview.state.error.title'   : 'Lỗi tải dữ liệu',
         'overview.loading'             : 'Đang tải dữ liệu báo cáo…',
         'overview.tfoot.total'         : 'Tổng',
@@ -487,6 +499,18 @@ const I18N = {
         'overview.filter.title'        : '🔎 Filter & Export',
         'overview.label.from'          : 'From Date',
         'overview.label.to'            : 'To Date',
+        /* ── Overview column filter labels (NEW) ── */
+        'overview.label.col_filter'    : 'Column Filters',
+        'overview.label.pn'            : 'Italisa PN#',
+        'overview.label.itemname'      : 'Item Name',
+        'overview.label.color'         : 'Color',
+        'overview.label.svncode'       : 'SVN Code',
+        /* ── Overview column filter placeholders (NEW) ── */
+        'overview.ph.pn'               : '-- All PN --',
+        'overview.ph.itemname'         : 'Search item name…',
+        'overview.ph.color'            : '-- All Colors --',
+        'overview.ph.svncode'          : '-- All SVN Codes --',
+        /* ── Overview buttons / stats / table ── */
         'overview.btn.apply'           : '🔍 Apply',
         'overview.btn.reset'           : '↺ Reset',
         'overview.btn.excel'           : '⬇ Excel',
@@ -496,7 +520,7 @@ const I18N = {
         'overview.stat.totalqty.sub'   : 'Sum across all WC',
         'overview.stat.wc'             : 'Work Centres',
         'overview.stat.wc.sub'         : 'Active columns',
-        'overview.stat.minqty'         : 'Shippable quantity for SVN',
+        'overview.stat.minqty'         : 'Shippable Qty for SVN',
         'overview.stat.minqty.sub'     : 'Total shippable quantity for SVN',
         'overview.table.title'         : '📋 Work-Centre Production Matrix',
         'overview.table.sub'           : 'Qty produced per item per work centre',
@@ -504,13 +528,13 @@ const I18N = {
         'overview.state.init.title'    : 'Select a date range and click Apply',
         'overview.state.init.sub'      : 'The report will load production quantities per work-centre.',
         'overview.state.empty.title'   : 'No data found',
-        'overview.state.empty.sub'     : 'Try adjusting the date range or search term.',
+        'overview.state.empty.sub'     : 'Try adjusting the date range or column filters.',
         'overview.state.error.title'   : 'Error loading data',
         'overview.loading'             : 'Loading report data…',
         'overview.tfoot.total'         : 'Total',
         'overview.rows'                : '{n} rows',
         'overview.rows.shown'          : '{n} product(s) shown',
-        'overview.toast.no_to'         : 'Please select To Date.',
+        'overview.toast.no_to'         : 'Please select a To Date.',
         'overview.toast.date_order'    : 'From Date must be ≤ To Date.',
         'overview.toast.load_fail'     : 'Failed to load report: {msg}',
         'overview.toast.no_export'     : 'No data to export. Apply the filter first.',
@@ -560,7 +584,7 @@ const I18N = {
 
 let _currentLang = 'en';
 
-/** Translate a key, with optional {v} / {n} interpolation */
+/** Translate a key, with optional {v} / {n} / {msg} etc. interpolation */
 function t(key, vars) {
     const dict = I18N[_currentLang] || I18N.en;
     let str = dict[key] ?? I18N.en[key] ?? key;
@@ -602,7 +626,7 @@ function applyLang(lang) {
         btn.classList.toggle('active', btn.dataset.lang === lang);
     });
     
-    /* notify pages (e.g. for Select2 re-init) */
+    /* notify pages (e.g. for Select2 re-init, Overview column filter refresh) */
     document.dispatchEvent(new CustomEvent('langChanged', { detail: { lang } }));
 }
 
