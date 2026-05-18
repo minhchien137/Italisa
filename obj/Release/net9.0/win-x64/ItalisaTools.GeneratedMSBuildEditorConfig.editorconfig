@@ -30,6 +30,14 @@ build_property._RazorSourceGeneratorDebug =
 build_property.EffectiveAnalysisLevelStyle = 9.0
 build_property.EnableCodeStyleSeverity = 
 
+[C:/ItalisaTools/Views/Defect/Comparation.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGVmZWN0XENvbXBhcmF0aW9uLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/ItalisaTools/Views/Defect/Upload.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGVmZWN0XFVwbG9hZC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/ItalisaTools/Views/Home/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 

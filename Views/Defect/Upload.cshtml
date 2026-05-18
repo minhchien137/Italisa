@@ -5,276 +5,259 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"]</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <style>
-        :root {
-            --denim:#1B4F8A;--denim-dark:#0f2f52;--denim-mid:#2563a8;
-            --denim-light:#dbeafe;--denim-xlight:#eff6ff;
-            --white:#fff;--gray-50:#f8fafc;--gray-100:#f1f5f9;
-            --gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;
-            --gray-600:#475569;--gray-700:#334155;--gray-800:#1e293b;
-            --success:#10b981;--warning:#f59e0b;--danger:#ef4444;
-            --shadow-sm:0 1px 3px rgba(27,79,138,.08);
-            --shadow-md:0 4px 20px rgba(27,79,138,.12);
-        }
-        *{box-sizing:border-box;margin:0;padding:0}
-        body{font-family:'DM Sans',sans-serif;background:var(--gray-50);min-height:100vh;
-            background-image:radial-gradient(ellipse at 20% 50%,rgba(27,79,138,.06) 0%,transparent 60%),
-                             radial-gradient(ellipse at 80% 20%,rgba(37,99,168,.05) 0%,transparent 50%)}
-        .page-wrapper{max-width:1400px;margin:0 auto;padding:2rem 1.5rem}
-        .page-header{margin-bottom:1.5rem}
-        .page-header h1{font-family:'Space Grotesk',sans-serif;font-size:1.7rem;font-weight:700;color:var(--denim-dark);display:flex;align-items:center;gap:10px}
-        .page-header p{color:var(--gray-600);font-size:.9rem;margin-top:6px}
-        .header-line{width:48px;height:4px;background:linear-gradient(90deg,var(--denim),var(--denim-mid));border-radius:2px;margin-top:10px}
-        .step-card{background:var(--white);border-radius:14px;border:1px solid rgba(27,79,138,.1);box-shadow:var(--shadow-sm);margin-bottom:1.25rem}
-        .step-card.done{border-color:var(--success)}
-        .step-header{background:var(--denim-xlight);padding:.85rem 1.25rem;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(27,79,138,.08);border-radius:14px 14px 0 0}
-        .step-header.done{background:#ecfdf5;border-bottom-color:rgba(16,185,129,.15)}
-        .step-num{width:28px;height:28px;border-radius:50%;background:var(--denim);color:var(--white);display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-size:.82rem;font-weight:700;flex-shrink:0}
-        .step-num.done{background:var(--success)}
-        .step-title{font-family:'Space Grotesk',sans-serif;font-size:.92rem;font-weight:600;color:var(--denim-dark)}
-        .step-status{margin-left:auto;font-size:.75rem;font-weight:600;color:var(--gray-400)}
-        .step-status.done{color:var(--success)}
-        .step-body{padding:1.1rem 1.25rem}
-        .upload-zone{border:2px dashed var(--gray-200);border-radius:12px;padding:2.5rem 2rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--white);position:relative}
-        .upload-zone:hover,.upload-zone.drag-over{border-color:var(--denim);background:var(--denim-xlight)}
-        .upload-zone.has-file{border-color:var(--success);background:#f0fdf4}
-        .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-        .upload-icon{font-size:2.5rem;margin-bottom:.6rem}
-        .upload-title{font-weight:600;color:var(--denim-dark);font-size:.95rem}
-        .upload-sub{font-size:.78rem;color:var(--gray-400);margin-top:4px}
-        .upload-filename{font-size:.85rem;font-weight:600;color:var(--success);margin-top:8px}
-        .sheet-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.85rem}
-        .sheet-tab{padding:4px 12px;border-radius:20px;font-size:.78rem;font-weight:600;cursor:pointer;border:1.5px solid var(--gray-200);background:var(--white);color:var(--gray-600);transition:all .15s}
-        .sheet-tab:hover{border-color:var(--denim);color:var(--denim)}
-        .sheet-tab.active{background:var(--denim);color:var(--white);border-color:var(--denim)}
-        .section-title{font-size:.7rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.65rem;display:flex;align-items:center;gap:8px}
-        .section-title::after{content:'';flex:1;height:1px;background:var(--gray-200)}
-        .col-map-panel{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:10px;padding:1rem;margin-top:1rem}
-        .col-map-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem}
-        @@media(min-width:640px){.col-map-grid{grid-template-columns:repeat(3,1fr)}}
-        @@media(min-width:1000px){.col-map-grid{grid-template-columns:repeat(4,1fr)}}
-        .col-map-item{display:flex;flex-direction:column;gap:4px}
-        .col-map-item label{font-size:.67rem;font-weight:700;color:var(--denim-dark);text-transform:uppercase;letter-spacing:.3px}
-        .col-map-item label .req{color:var(--danger)}
-        .col-map-item select{width:100%;padding:.42rem .6rem;border:1.5px solid var(--gray-200);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--gray-800);background:var(--white);outline:none;cursor:pointer;transition:border-color .2s;appearance:none}
-        .col-map-item select:focus{border-color:var(--denim)}
-        .col-map-item select.mapped{border-color:var(--success);background:#f0fdf4}
-        .col-def{width:100%;margin-top:3px;padding:.32rem .6rem;border:1.5px dashed var(--gray-300);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.74rem;color:var(--gray-700);background:#fffbeb;outline:none;appearance:none}
-        .col-def:focus{border-color:var(--warning)}
-        .col-def::placeholder{color:var(--gray-400);font-style:italic}
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>@ViewData["Title"]</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{--denim:#1B4F8A;--denim-dark:#0f2f52;--denim-mid:#2563a8;--denim-light:#dbeafe;--denim-xlight:#eff6ff;--white:#fff;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-600:#475569;--gray-700:#334155;--gray-800:#1e293b;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--shadow-sm:0 1px 3px rgba(27,79,138,.08);--shadow-md:0 4px 20px rgba(27,79,138,.12)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--gray-50);min-height:100vh;background-image:radial-gradient(ellipse at 20% 50%,rgba(27,79,138,.06) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(37,99,168,.05) 0%,transparent 50%)}
+.page-wrapper{max-width:1400px;margin:0 auto;padding:2rem 1.5rem}
+.page-header{margin-bottom:1.5rem}
+.page-header h1{font-family:'Space Grotesk',sans-serif;font-size:1.7rem;font-weight:700;color:var(--denim-dark)}
+.page-header p{color:var(--gray-600);font-size:.9rem;margin-top:6px}
+.header-line{width:48px;height:4px;background:linear-gradient(90deg,var(--denim),var(--denim-mid));border-radius:2px;margin-top:10px}
+.card{background:var(--white);border-radius:14px;border:1px solid rgba(27,79,138,.1);box-shadow:var(--shadow-sm);margin-bottom:1.25rem}
+.card.done{border-color:var(--success)}
+.card-h{background:var(--denim-xlight);padding:.85rem 1.25rem;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(27,79,138,.08);border-radius:14px 14px 0 0}
+.card-h.done{background:#ecfdf5;border-bottom-color:rgba(16,185,129,.15)}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--denim);color:var(--white);display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-size:.82rem;font-weight:700;flex-shrink:0}
+.step-num.done{background:var(--success)}
+.step-title{font-family:'Space Grotesk',sans-serif;font-size:.92rem;font-weight:600;color:var(--denim-dark)}
+.step-status{margin-left:auto;font-size:.75rem;font-weight:600;color:var(--gray-400)}
+.step-status.done{color:var(--success)}
+.card-b{padding:1.1rem 1.25rem}
+.upload-zone{border:2px dashed var(--gray-200);border-radius:12px;padding:2.5rem 2rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--white);position:relative}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--denim);background:var(--denim-xlight)}
+.upload-zone.has-file{border-color:var(--success);background:#f0fdf4}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{font-size:2.5rem;margin-bottom:.6rem}
+.upload-title{font-weight:600;color:var(--denim-dark);font-size:.95rem}
+.upload-sub{font-size:.78rem;color:var(--gray-400);margin-top:4px}
+.upload-filename{font-size:.85rem;font-weight:600;color:var(--success);margin-top:8px}
+.sheet-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.85rem}
+.sheet-tab{padding:4px 12px;border-radius:20px;font-size:.78rem;font-weight:600;cursor:pointer;border:1.5px solid var(--gray-200);background:var(--white);color:var(--gray-600)}
+.sheet-tab:hover{border-color:var(--denim);color:var(--denim)}
+.sheet-tab.active{background:var(--denim);color:var(--white);border-color:var(--denim)}
+.section-title{font-size:.7rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.65rem;display:flex;align-items:center;gap:8px}
+.section-title::after{content:'';flex:1;height:1px;background:var(--gray-200)}
 
-        /* Defect column chips */
-        .defect-cols-panel{background:#faf5ff;border:1.5px solid #e9d5ff;border-radius:10px;padding:1rem;margin-top:1rem}
-        .defect-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:.65rem}
-        .defect-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:.74rem;font-weight:600;cursor:pointer;border:1.5px solid #c4b5fd;background:#f5f3ff;color:#5b21b6;transition:all .15s;user-select:none}
-        .defect-chip:hover{background:#ede9fe}
-        .defect-chip.selected{background:#7c3aed;color:var(--white);border-color:#7c3aed}
-        .defect-chip input[type=checkbox]{display:none}
-        .chip-count{font-size:.65rem;opacity:.7}
+/* Detected cols panel */
+.detect-panel{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:10px;padding:1rem;margin-top:1rem}
+.detect-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem}
+@@media(min-width:640px){.detect-grid{grid-template-columns:repeat(4,1fr)}}
+.detect-item{display:flex;flex-direction:column;gap:5px;padding:.65rem .85rem;border-radius:8px;border:1.5px solid var(--gray-200);background:var(--white)}
+.detect-item.ok{border-color:var(--success);background:#f0fdf4}
+.detect-item.bad{border-color:var(--danger);background:#fef2f2}
+.detect-label{font-size:.67rem;font-weight:700;color:var(--denim-dark);text-transform:uppercase;letter-spacing:.3px}
+.detect-value{font-size:.85rem;font-weight:600;color:var(--gray-800)}
+.detect-item.bad .detect-value{color:var(--danger)}
+.detect-empty{color:var(--gray-400);font-style:italic;font-size:.78rem;font-weight:400}
 
-        /* Preview */
-        .preview-wrap{margin-top:.85rem;border-radius:9px;border:1px solid var(--gray-200);overflow:hidden}
-        .preview-scroll{overflow-x:auto;max-height:180px;overflow-y:auto}
-        .preview-tbl{border-collapse:collapse;font-size:.75rem;white-space:nowrap}
-        .preview-tbl th{background:var(--denim);color:var(--white);padding:7px 12px;position:sticky;top:0;z-index:1;font-size:.71rem;font-weight:600;border-right:1px solid rgba(255,255,255,.12)}
-        .preview-tbl td{padding:5px 12px;border-bottom:1px solid var(--gray-100);border-right:1px solid var(--gray-100);color:var(--gray-700)}
-        .preview-tbl tr:nth-child(even) td{background:var(--gray-50)}
+/* Vendor selector */
+.vendor-row{display:flex;align-items:center;gap:1rem;margin-top:1rem;flex-wrap:wrap;padding:.85rem 1rem;background:#fffbeb;border:1px dashed #fbbf24;border-radius:8px}
+.vendor-row label{font-size:.74rem;font-weight:700;color:#92400e;text-transform:uppercase}
+.vendor-row select{flex:1;min-width:180px;padding:.45rem .65rem;border:1.5px solid #fbbf24;border-radius:7px;background:var(--white);font-family:'DM Sans',sans-serif;font-size:.85rem;cursor:pointer}
 
-        .btn{padding:.55rem 1.1rem;border-radius:8px;border:none;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
-        .btn-primary{background:var(--denim);color:var(--white)}
-        .btn-primary:hover:not(:disabled){background:var(--denim-dark)}
-        .btn-review{background:linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%);color:var(--white);font-size:.95rem;padding:.7rem 1.6rem}
-        .btn-review:hover:not(:disabled){filter:brightness(1.1)}
-        .btn-success{background:#059669;color:var(--white)}
-        .btn-success:hover:not(:disabled){background:#047857}
-        .btn-outline{background:var(--white);color:var(--denim);border:1.5px solid var(--denim-light)}
-        .btn-outline:hover:not(:disabled){background:var(--denim-xlight)}
-        .btn:disabled{opacity:.45;cursor:not-allowed}
-        .btn-sm{padding:.35rem .8rem;font-size:.78rem}
+/* Defect chips */
+.defect-panel{background:#faf5ff;border:1.5px solid #e9d5ff;border-radius:10px;padding:1rem;margin-top:1rem}
+.defect-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:.65rem}
+.defect-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;font-size:.74rem;font-weight:600;cursor:pointer;border:1.5px solid #c4b5fd;background:#f5f3ff;color:#5b21b6;user-select:none;transition:all .15s}
+.defect-chip:hover{background:#ede9fe}
+.defect-chip.selected{background:#7c3aed;color:var(--white);border-color:#7c3aed}
+.defect-chip.unmatched{border-color:#fbbf24;background:#fffbeb;color:#92400e}
+.defect-chip.unmatched.selected{background:#f59e0b;color:var(--white);border-color:#f59e0b}
+.defect-chip input{display:none}
+.chip-count{font-size:.65rem;opacity:.7}
 
-        .kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem;margin-bottom:1.25rem}
-        @@media(min-width:600px){.kpi-grid{grid-template-columns:repeat(4,1fr)}}
-        .kpi-card{background:var(--white);border-radius:12px;border:1px solid rgba(27,79,138,.08);box-shadow:var(--shadow-sm);padding:1rem 1.1rem;display:flex;flex-direction:column;gap:4px}
-        .kpi-label{font-size:.7rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.3px}
-        .kpi-value{font-family:'Space Grotesk',sans-serif;font-size:1.55rem;font-weight:700;color:var(--denim-dark)}
-        .kpi-value.green{color:var(--success)}
-        .kpi-sub{font-size:.75rem;color:var(--gray-400)}
-        .info-chip{display:inline-flex;align-items:center;gap:5px;background:var(--denim-xlight);color:var(--denim);border-radius:20px;padding:3px 10px;font-size:.76rem;font-weight:600}
-        .info-chip.vendor{background:#fef3c7;color:#92400e}
-        .info-chip.type{background:#f3e8ff;color:#6b21a8}
+.btn{padding:.55rem 1.1rem;border-radius:8px;border:none;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:all .2s}
+.btn-primary{background:var(--denim);color:var(--white)}
+.btn-primary:hover:not(:disabled){background:var(--denim-dark)}
+.btn-review{background:linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%);color:var(--white);font-size:.95rem;padding:.7rem 1.6rem}
+.btn-review:hover:not(:disabled){filter:brightness(1.1)}
+.btn-success{background:#059669;color:var(--white)}
+.btn-success:hover:not(:disabled){background:#047857}
+.btn-outline{background:var(--white);color:var(--denim);border:1.5px solid var(--denim-light)}
+.btn-outline:hover:not(:disabled){background:var(--denim-xlight)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-sm{padding:.35rem .8rem;font-size:.78rem}
 
-        .save-bar{background:linear-gradient(135deg,#ecfdf5 0%,#d1fae5 100%);border:1.5px solid rgba(16,185,129,.3);border-radius:12px;padding:.9rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
-        .action-bar{background:var(--white);border-radius:14px;border:1px solid rgba(27,79,138,.08);box-shadow:var(--shadow-sm);padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem}
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem;margin-bottom:1.25rem}
+@@media(min-width:600px){.kpi-grid{grid-template-columns:repeat(4,1fr)}}
+.kpi-card{background:var(--white);border-radius:12px;border:1px solid rgba(27,79,138,.08);box-shadow:var(--shadow-sm);padding:1rem 1.1rem;display:flex;flex-direction:column;gap:4px}
+.kpi-label{font-size:.7rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.3px}
+.kpi-value{font-family:'Space Grotesk',sans-serif;font-size:1.55rem;font-weight:700;color:var(--denim-dark)}
+.kpi-value.green{color:var(--success)}
+.kpi-value.red{color:var(--danger)}
+.kpi-sub{font-size:.75rem;color:var(--gray-400)}
 
-        .table-card{background:var(--white);border-radius:14px;border:1px solid rgba(27,79,138,.08);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:1.5rem}
-        .table-card-header{background:linear-gradient(135deg,var(--denim-dark) 0%,var(--denim) 100%);padding:.9rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
-        .table-card-header h3{font-family:'Space Grotesk',sans-serif;font-size:.92rem;font-weight:600;color:var(--white);display:flex;align-items:center;gap:8px}
-        .badge{background:rgba(255,255,255,.2);color:var(--white);border-radius:20px;padding:2px 9px;font-size:.72rem;font-weight:600}
-        .table-scroll{overflow-x:auto}
-        .review-table{width:100%;border-collapse:collapse;font-size:.8rem}
-        .review-table thead th{background:var(--denim);color:var(--white);padding:8px 10px;text-align:left;white-space:nowrap;font-size:.74rem;font-weight:600;border-right:1px solid rgba(255,255,255,.15)}
-        .review-table thead th.tc{text-align:center}
-        .review-table tbody td{padding:7px 10px;border-bottom:1px solid var(--gray-100);border-right:1px solid var(--gray-100);vertical-align:middle;white-space:nowrap}
-        .review-table tbody tr:nth-child(even) td{background:var(--gray-50)}
-        .review-table tbody tr:hover td{background:var(--denim-xlight)}
-        .review-table tbody tr.row-selected td{background:#eff6ff !important}
-        .tc{text-align:center}
-        .tn{text-align:right;font-variant-numeric:tabular-nums}
-        .status-badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.7rem;font-weight:700}
-        .s-pending{background:#fef3c7;color:#92400e}
-        .s-saved{background:#dcfce7;color:#166534}
-        .s-error{background:#fee2e2;color:#991b1b}
+.save-bar{background:linear-gradient(135deg,#ecfdf5 0%,#d1fae5 100%);border:1.5px solid rgba(16,185,129,.3);border-radius:12px;padding:.9rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.action-bar{background:var(--white);border-radius:14px;border:1px solid rgba(27,79,138,.08);box-shadow:var(--shadow-sm);padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem}
 
-        .pagination-bar{padding:.85rem 1.5rem;border-top:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
-        .pagination-info{font-size:.8rem;color:var(--gray-600)}
-        .pagination-controls{display:flex;gap:4px}
-        .pg-btn{min-width:30px;height:30px;padding:0 7px;border:1.5px solid var(--gray-200);border-radius:7px;background:var(--white);color:var(--gray-800);font-family:'DM Sans',sans-serif;font-size:.8rem;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center}
-        .pg-btn:hover:not(:disabled){border-color:var(--denim);color:var(--denim)}
-        .pg-btn.active{background:var(--denim);color:var(--white);border-color:var(--denim);font-weight:700}
-        .pg-btn:disabled{opacity:.4;cursor:not-allowed}
-        .empty-state{padding:3rem;text-align:center;color:var(--gray-400)}
-        .empty-state .ei{font-size:2.8rem;margin-bottom:.75rem}
+.table-card{background:var(--white);border-radius:14px;border:1px solid rgba(27,79,138,.08);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:1.5rem}
+.table-card-h{background:linear-gradient(135deg,var(--denim-dark) 0%,var(--denim) 100%);padding:.9rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.table-card-h h3{font-family:'Space Grotesk',sans-serif;font-size:.92rem;font-weight:600;color:var(--white);display:flex;align-items:center;gap:8px}
+.badge{background:rgba(255,255,255,.2);color:var(--white);border-radius:20px;padding:2px 9px;font-size:.72rem;font-weight:600}
+.table-scroll{overflow-x:auto;max-height:60vh}
+.rt{width:100%;border-collapse:collapse;font-size:.8rem}
+.rt thead th{background:var(--denim);color:var(--white);padding:8px 10px;text-align:left;white-space:nowrap;font-size:.74rem;font-weight:600;border-right:1px solid rgba(255,255,255,.15);position:sticky;top:0;z-index:1}
+.rt thead th.tc{text-align:center}
+.rt tbody td{padding:7px 10px;border-bottom:1px solid var(--gray-100);border-right:1px solid var(--gray-100);vertical-align:middle;white-space:nowrap}
+.rt tbody tr:nth-child(even) td{background:var(--gray-50)}
+.rt tbody tr:hover td{background:var(--denim-xlight)}
+.rt tbody tr.row-selected td{background:#eff6ff!important}
+.rt tbody tr.row-error td{background:#fef2f2!important}
+/* Inline editable dropdowns */
+.cell-sel{width:100%;min-width:90px;max-width:220px;padding:3px 22px 3px 7px;border:1px solid var(--gray-200);border-radius:5px;font-family:'DM Sans',sans-serif;font-size:.74rem;color:var(--gray-800);background:var(--white);outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 5px center;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
+.cell-sel:hover{border-color:var(--denim)}
+.cell-sel:focus{border-color:var(--denim);box-shadow:0 0 0 2px rgba(27,79,138,.12)}
+.cell-sel.invalid{border-color:var(--danger);background:#fef2f2 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23ef4444' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 5px center}
+.cell-sel option{color:var(--gray-800);background:var(--white)}
+.excel-col-hint{display:block;font-size:.62rem;color:#7c3aed;margin-top:3px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-style:italic;background:#faf5ff;padding:1px 6px;border-radius:3px;border-left:2px solid #c4b5fd}
+.excel-col-hint.text-only{color:var(--gray-500);background:var(--gray-50);border-left-color:var(--gray-300)}
+.cell-defect{min-width:160px;max-width:280px}
+.tc{text-align:center}
+.tn{text-align:right;font-variant-numeric:tabular-nums}
+.s-badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.7rem;font-weight:700}
+.s-ok{background:#dcfce7;color:#166534}
+.s-warn{background:#fef3c7;color:#92400e}
+.s-err{background:#fee2e2;color:#991b1b}
+input[type=checkbox]{width:16px;height:16px;accent-color:var(--denim);cursor:pointer}
 
-        .loading-overlay{position:fixed;inset:0;background:rgba(15,47,82,.4);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;pointer-events:none;transition:opacity .2s}
-        .loading-overlay.show{opacity:1;pointer-events:all}
-        .loading-box{background:var(--white);border-radius:14px;padding:2rem 2.5rem;text-align:center;box-shadow:var(--shadow-md)}
-        .spinner{width:38px;height:38px;margin:0 auto .9rem;border:3px solid var(--denim-light);border-top-color:var(--denim);border-radius:50%;animation:spin .8s linear infinite}
-        @@keyframes spin{to{transform:rotate(360deg)}}
-        .loading-msg{color:var(--denim-dark);font-weight:600;font-size:.88rem}
-        .toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9000;background:var(--white);border-radius:10px;box-shadow:var(--shadow-md);padding:.8rem 1.2rem;display:flex;align-items:center;gap:9px;min-width:270px;opacity:0;transform:translateY(10px);transition:opacity .25s,transform .25s;pointer-events:none}
-        .toast.show{opacity:1;transform:translateY(0);pointer-events:all}
-        .toast.success{border-left:4px solid var(--success)}
-        .toast.error{border-left:4px solid var(--danger)}
-        .toast.info{border-left:4px solid var(--denim)}
-        #toastMsg{font-size:.85rem;color:var(--gray-800)}
-        #reviewSection{display:none}
-    </style>
+.chip{display:inline-flex;align-items:center;gap:5px;background:var(--denim-xlight);color:var(--denim);border-radius:20px;padding:2px 9px;font-size:.74rem;font-weight:600}
+.chip-warn{background:#fef3c7;color:#92400e}
+.chip-purple{background:#f3e8ff;color:#6b21a8}
+
+.chip-danger{background:#fee2e2;color:#991b1b}
+
+.pagination{padding:.85rem 1.5rem;border-top:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.pg-info{font-size:.8rem;color:var(--gray-600)}
+.pg-ctrls{display:flex;gap:4px}
+.pg-btn{min-width:30px;height:30px;padding:0 7px;border:1.5px solid var(--gray-200);border-radius:7px;background:var(--white);color:var(--gray-800);font-size:.8rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.pg-btn:hover:not(:disabled){border-color:var(--denim);color:var(--denim)}
+.pg-btn.active{background:var(--denim);color:var(--white);border-color:var(--denim);font-weight:700}
+.pg-btn:disabled{opacity:.4;cursor:not-allowed}
+
+.empty{padding:3rem;text-align:center;color:var(--gray-400)}
+.empty .ei{font-size:2.8rem;margin-bottom:.75rem}
+
+.loading{position:fixed;inset:0;background:rgba(15,47,82,.4);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;pointer-events:none;transition:opacity .2s}
+.loading.show{opacity:1;pointer-events:all}
+.loading-box{background:var(--white);border-radius:14px;padding:2rem 2.5rem;text-align:center;box-shadow:var(--shadow-md)}
+.spinner{width:38px;height:38px;margin:0 auto .9rem;border:3px solid var(--denim-light);border-top-color:var(--denim);border-radius:50%;animation:spin .8s linear infinite}
+@@keyframes spin{to{transform:rotate(360deg)}}
+.loading-msg{color:var(--denim-dark);font-weight:600;font-size:.88rem}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9000;background:var(--white);border-radius:10px;box-shadow:var(--shadow-md);padding:.8rem 1.2rem;display:flex;align-items:center;gap:9px;min-width:270px;opacity:0;transform:translateY(10px);transition:opacity .25s,transform .25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0);pointer-events:all}
+.toast.success{border-left:4px solid var(--success)}
+.toast.error{border-left:4px solid var(--danger)}
+.toast.info{border-left:4px solid var(--denim)}
+#toastMsg{font-size:.85rem;color:var(--gray-800)}
+#reviewSection{display:none}
+.hint{font-size:.78rem;color:var(--gray-600);margin-bottom:.65rem;line-height:1.55}
+.hint code{background:var(--gray-100);padding:1px 5px;border-radius:3px;font-size:.78rem}
+</style>
 </head>
 <body>
-<div class="loading-overlay" id="loadingOverlay">
-    <div class="loading-box"><div class="spinner"></div>
-    <p class="loading-msg" id="loadingMsg">Đang xử lý...</p></div>
+
+<div class="loading" id="loading">
+    <div class="loading-box"><div class="spinner"></div><p class="loading-msg" id="loadingMsg">Đang xử lý...</p></div>
 </div>
 <div class="toast" id="toast"><span id="toastIcon">ℹ️</span><span id="toastMsg"></span></div>
 
 <div class="page-wrapper">
 <div class="page-header">
     <h1>📤 Defect Upload</h1>
-    <p>Upload file Excel (Raw Data tab) — tự động nhận diện cột lỗi, unpivot và lưu vào hệ thống.</p>
+    <p>Upload Yield Report Excel · tự nhận diện cột · resolve Process / Code / Color / Defect · lưu vào Production.</p>
     <div class="header-line"></div>
 </div>
 
-<!-- STEP 1 -->
-<div class="step-card" id="cardStep1">
-    <div class="step-header" id="hdrStep1">
+<!-- STEP 1: UPLOAD -->
+<div class="card" id="cardStep1">
+    <div class="card-h" id="hdrStep1">
         <div class="step-num" id="numStep1">1</div>
         <span class="step-title">Upload File Excel</span>
         <span class="step-status" id="statusStep1">Chưa chọn file</span>
     </div>
-    <div class="step-body">
+    <div class="card-b">
         <div class="upload-zone" id="uploadZone">
-            <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" />
+            <input type="file" id="fileInput" accept=".xlsx,.xls,.csv"/>
             <div class="upload-icon">📂</div>
             <div class="upload-title">Kéo thả file vào đây hoặc nhấn để chọn</div>
             <div class="upload-sub">Hỗ trợ: .xlsx, .xls · Chọn tab Raw Data</div>
             <div class="upload-filename" id="uploadFilename" style="display:none"></div>
         </div>
 
-        <!-- Sheet selector -->
-        <div id="sheetSelectorWrap" style="display:none;margin-top:1rem">
+        <div id="sheetWrap" style="display:none;margin-top:1rem">
             <div class="section-title">Chọn Sheet</div>
             <div class="sheet-tabs" id="sheetTabs"></div>
         </div>
 
-        <!-- Column mapping -->
-        <div id="colMapWrap" style="display:none;margin-top:1.1rem">
-            <div class="section-title">Ánh xạ cột cố định</div>
-            <div class="col-map-panel">
-                <div class="col-map-grid">
-                    <div class="col-map-item">
-                        <label>Date <span class="req">*</span></label>
-                        <select id="mapDate"><option value="">-- chọn cột --</option></select>
-                        <input type="date" class="col-def" id="defDate" />
+        <!-- AUTO-DETECT COLS -->
+        <div id="detectWrap" style="display:none;margin-top:1.1rem">
+            <div class="section-title">🔍 Cột cố định (auto-detect từ headers)</div>
+            <p class="hint">
+                Tự động tìm các cột: <code>Date</code> · <code>Part Code</code> · <code>Process</code> · <code>Coating/Color</code>.
+                Cột tô <span style="color:var(--success);font-weight:600">xanh</span> = đã nhận diện được; <span style="color:var(--danger);font-weight:600">đỏ</span> = chưa tìm được.
+            </p>
+            <div class="detect-panel">
+                <div class="detect-grid">
+                    <div class="detect-item" id="dItemDate">
+                        <span class="detect-label">📅 Date</span>
+                        <span class="detect-value" id="dValDate"></span>
                     </div>
-                    <div class="col-map-item">
-                        <label>Part Code → Product ID <span class="req">*</span></label>
-                        <select id="mapPartCode"><option value="">-- chọn cột --</option></select>
-                        <select class="col-def" id="defPartCode"><option value="">-- Chọn Process trước --</option></select>
+                    <div class="detect-item" id="dItemPart">
+                        <span class="detect-label">🏷️ Part Code (→ Italisa_no)</span>
+                        <span class="detect-value" id="dValPart"></span>
                     </div>
-                    <div class="col-map-item">
-                        <label>Process</label>
-                        <select id="mapProcess"><option value="">-- chọn cột --</option></select>
-                        <select class="col-def" id="defProcess" onchange="onDefaultProcessChange()"><option value="">-- Mặc định --</option></select>
+                    <div class="detect-item" id="dItemProcess">
+                        <span class="detect-label">⚙️ Process</span>
+                        <span class="detect-value" id="dValProcess"></span>
                     </div>
-                    <div class="col-map-item">
-                        <label>Coating / Color</label>
-                        <select id="mapColor"><option value="">-- chọn cột --</option></select>
-                        <select class="col-def" id="defColor"><option value="">-- Mặc định --</option></select>
+                    <div class="detect-item" id="dItemColor">
+                        <span class="detect-label">🎨 Coating / Color</span>
+                        <span class="detect-value" id="dValColor"></span>
                     </div>
-                    <div class="col-map-item">
-                        <label>Vendor <small style="color:var(--gray-400);text-transform:none">★ default</small></label>
-                        <select id="mapVendor"><option value="">-- chọn cột --</option></select>
-                        <select class="col-def" id="defVendor"><option value="">-- Mặc định --</option></select>
-                    </div>
-                    <!-- Type -->
-                    <div class="col-map-item">
-                        <label>Type <span style="color:var(--gray-400);font-size:.6rem;text-transform:none">★ Defect</span></label>
-                        <select id="mapType"><option value="">-- chọn cột --</option></select>
-                        <select class="col-def" id="defType">
-                            <option value="Defect" selected>Defect</option>
-                            <option value="Production Qty">Production Qty</option>
-                            <option value="Man Q'ty">Man Q'ty</option>
-                        </select>
-                    </div>
-                    <!-- Quantity -->
-                    <div class="col-map-item">
-                        <label>Quantity</label>
-                        <select id="mapQuantity"><option value="">-- chọn cột --</option></select>
-                        <input type="number" class="col-def" id="defQuantity" placeholder="mặc định..." min="0" />
-                    </div>
-                    <!-- Description -->
-                    <div class="col-map-item">
-                        <label>Description</label>
-                        <select id="mapDesc"><option value="">-- chọn cột --</option></select>
-                        <input type="text" class="col-def" id="defDesc" placeholder="nhập mặc định…" />
-                    </div>
+                </div>
+
+                <div class="vendor-row">
+                    <label>👤 Vendor mặc định</label>
+                    <select id="defVendor"><option value="ITA">ITA</option></select>
+                    <span style="font-size:.74rem;color:#92400e">Áp dụng cho mọi bản ghi</span>
+                </div>
+                <div class="vendor-row" style="background:#eff6ff;border-color:#93c5fd;margin-top:.6rem">
+                    <label style="color:var(--denim-dark)">📅 Date &amp; Time</label>
+                    <span style="font-size:.82rem;color:var(--denim-dark);font-weight:500">
+                        Tự động dùng <strong>ngày từ cột Date</strong> của Excel · giờ <strong>random 8:00 — 20:00</strong>
+                    </span>
+                    <label style="display:flex;align-items:center;gap:6px;color:var(--denim-dark);font-size:.74rem;cursor:pointer;margin-left:auto">
+                        <input type="checkbox" id="useCustomTime"/>
+                        Override giờ cố định
+                    </label>
+                    <input type="time" id="customTime" value="14:00" style="padding:.4rem .55rem;border:1.5px solid #93c5fd;border-radius:7px;background:var(--white);font-family:'DM Sans',sans-serif;font-size:.85rem;display:none"/>
                 </div>
             </div>
 
-            <!-- Defect columns -->
-            <div class="defect-cols-panel" id="defectColsPanel" style="display:none">
-                <div class="section-title" style="color:#6b21a8">🐛 Cột Defect được nhận diện
-                    <button class="btn btn-sm" style="background:#f5f3ff;color:#6b21a8;border:1px solid #c4b5fd;margin-left:auto" onclick="toggleAllDefectCols(true)">☑ Chọn tất</button>
-                    <button class="btn btn-sm" style="background:#f5f3ff;color:#6b21a8;border:1px solid #c4b5fd" onclick="toggleAllDefectCols(false)">☐ Bỏ chọn</button>
+            <!-- DEFECT CHIPS -->
+            <div class="defect-panel" id="defectPanel">
+                <div class="section-title" style="color:#6b21a8">
+                    🐛 Cột Defect — nhận diện từ headers
+                    <button class="btn btn-sm" style="background:#f5f3ff;color:#6b21a8;border:1px solid #c4b5fd;margin-left:auto" onclick="toggleAllDefects(true)">☑ Tất</button>
+                    <button class="btn btn-sm" style="background:#f5f3ff;color:#6b21a8;border:1px solid #c4b5fd" onclick="toggleAllDefects(false)">☐ Bỏ</button>
                 </div>
-                <p style="font-size:.76rem;color:#7c3aed;margin-bottom:.5rem">
-                    Mỗi cột được chọn sẽ tạo <strong>1 bản ghi riêng</strong> trong bảng Production với <code>type_value="Defect"</code>, <code>defect_name=tên cột</code>, <code>product_qty=giá trị</code> — chỉ với dòng có giá trị &gt; 0.
+                <p class="hint">
+                    Mỗi cột được tick + giá trị &gt; 0 → tạo <strong>1 bản ghi Production</strong> riêng với <code>type_value="Defect"</code>,
+                    <code>defect_name</code> = tên chuẩn từ hệ thống (nameEn).
+                    Chip màu <span style="color:#92400e;font-weight:600">vàng</span> = không match được với system defects.
                 </p>
                 <div class="defect-chips" id="defectChips"></div>
-                <div style="margin-top:.75rem;font-size:.76rem;color:#9333ea" id="defectColCount"></div>
+                <p id="defectInfo" style="font-size:.74rem;color:#9333ea;margin-top:.6rem"></p>
             </div>
 
-            <!-- Preview -->
-            <div id="previewWrap" style="display:none;margin-top:1.1rem">
-                <div class="section-title">Preview (5 dòng đầu)</div>
-                <div class="preview-wrap">
-                    <div class="preview-scroll">
-                        <table class="preview-tbl">
-                            <thead id="previewThead"></thead>
-                            <tbody id="previewTbody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <div style="margin-top:1rem;display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
+            <div style="margin-top:1.1rem;display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
                 <button class="btn btn-review" id="btnReview" disabled onclick="doReview()">
-                    🔍 Review & Unpivot dữ liệu
+                    🔍 Review & Unpivot
                 </button>
                 <span id="parseInfo" style="font-size:.8rem;color:var(--gray-600);font-weight:500"></span>
             </div>
@@ -282,90 +265,70 @@
     </div>
 </div>
 
-<!-- STEP 2: Review -->
+<!-- STEP 2: REVIEW -->
 <div id="reviewSection">
     <div class="kpi-grid">
-        <div class="kpi-card">
-            <div class="kpi-label">Tổng bản ghi</div>
-            <div class="kpi-value" id="kpiTotal">0</div>
-            <div class="kpi-sub">sau unpivot</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Đã chọn lưu</div>
-            <div class="kpi-value green" id="kpiSelected">0</div>
-            <div class="kpi-sub">bản ghi</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Loại lỗi</div>
-            <div class="kpi-value" id="kpiDefectTypes">0</div>
-            <div class="kpi-sub">unique defect names</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Tổng SL lỗi</div>
-            <div class="kpi-value" style="color:var(--danger)" id="kpiTotalQty">0</div>
-            <div class="kpi-sub">product_qty tổng cộng</div>
-        </div>
+        <div class="kpi-card"><div class="kpi-label">Tổng bản ghi</div><div class="kpi-value" id="kpiTotal">0</div><div class="kpi-sub">sau unpivot</div></div>
+        <div class="kpi-card"><div class="kpi-label">Mapping OK</div><div class="kpi-value green" id="kpiOk">0</div><div class="kpi-sub">đủ Process + Code + Defect</div></div>
+        <div class="kpi-card"><div class="kpi-label">Cần kiểm tra</div><div class="kpi-value red" id="kpiBad">0</div><div class="kpi-sub">thiếu mapping</div></div>
+        <div class="kpi-card"><div class="kpi-label">Tổng SL lỗi</div><div class="kpi-value red" id="kpiQty">0</div><div class="kpi-sub">product_qty</div></div>
     </div>
 
     <div class="save-bar" id="saveBar" style="display:none">
         <div style="display:flex;align-items:center;gap:10px">
             <span style="font-size:1.4rem">💾</span>
             <div>
-                <div style="font-size:.88rem;color:#065f46;font-weight:600" id="saveBarText">Sẵn sàng lưu</div>
-                <div style="font-size:.76rem;color:#059669" id="saveBarSub">Chọn bản ghi muốn lưu rồi nhấn Save</div>
+                <div style="font-size:.88rem;color:#065f46;font-weight:600" id="saveBarTxt">Sẵn sàng lưu</div>
+                <div style="font-size:.76rem;color:#059669" id="saveBarSub">Chọn bản ghi muốn lưu</div>
             </div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn btn-outline btn-sm" onclick="selectAll()">☑ Chọn tất cả</button>
+            <button class="btn btn-outline btn-sm" onclick="selectAll()">☑ Tất cả</button>
+            <button class="btn btn-outline btn-sm" onclick="selectOkOnly()">✓ Chỉ chọn OK</button>
             <button class="btn btn-outline btn-sm" onclick="deselectAll()">☐ Bỏ chọn</button>
-            <button class="btn btn-success" id="btnSave" onclick="doSave()" disabled>💾 Lưu bản ghi đã chọn</button>
+            <button class="btn btn-success" id="btnSave" onclick="doSave()" disabled>💾 Lưu vào hệ thống</button>
         </div>
     </div>
 
     <div class="action-bar">
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-            <span style="font-family:'Space Grotesk',sans-serif;font-weight:600;color:var(--denim-dark);font-size:.88rem">📊 Review dữ liệu Defect (unpivoted)</span>
+            <span style="font-family:'Space Grotesk',sans-serif;font-weight:600;color:var(--denim-dark);font-size:.88rem">📊 Review</span>
             <span class="badge" style="background:var(--denim);color:var(--white)" id="actionBadge">0</span>
         </div>
         <div style="display:flex;gap:8px">
             <button class="btn btn-outline btn-sm" onclick="backToUpload()">↩ Upload lại</button>
-            <button class="btn btn-outline btn-sm" onclick="exportReview()">📥 Xuất Excel</button>
+            <button class="btn btn-outline btn-sm" onclick="exportReview()">📥 Excel</button>
         </div>
     </div>
 
     <div class="table-card">
-        <div class="table-card-header">
-            <h3>🐛 Danh sách Defect Records <span class="badge" id="tblBadge">0</span></h3>
-            <span style="font-size:.75rem;color:rgba(255,255,255,.7)">1 dòng Excel → N bản ghi (N = số loại lỗi có giá trị > 0)</span>
+        <div class="table-card-h">
+            <h3>🐛 Defect Records <span class="badge" id="tblBadge">0</span></h3>
+            <span style="font-size:.75rem;color:rgba(255,255,255,.7)">1 row × N cột defect (qty > 0) = N bản ghi</span>
         </div>
         <div class="table-scroll">
-            <table class="review-table">
-                <thead>
-                    <tr>
-                        <th class="tc" style="width:36px"><input type="checkbox" id="chkAll" onchange="toggleAll(this)" /></th>
-                        <th>#</th>
-                        <th>Ngày</th>
-                        <th>Part Code</th>
-                        <th>Product ID</th>
-                        <th>Process</th>
-                        <th>Coating</th>
-                        <th>Vendor</th>
-                        <th>Defect Name <span style="font-size:.65rem;opacity:.7">(tên cột)</span></th>
-                        <th class="tc">Qty</th>
-                        <th>Type</th>
-                        <th class="tc">Trạng thái</th>
-                    </tr>
-                </thead>
-                <tbody id="reviewTbody">
-                    <tr><td colspan="12">
-                        <div class="empty-state"><div class="ei">📋</div><p>Upload file và nhấn Review để xem dữ liệu</p></div>
-                    </td></tr>
+            <table class="rt">
+                <thead><tr>
+                    <th class="tc" style="width:36px"><input type="checkbox" id="chkAll" onchange="toggleAll(this)"/></th>
+                    <th>#</th>
+                    <th>Ngày</th>
+                    <th>Vendor</th>
+                    <th>Process</th>
+                    <th>Code <span style="font-size:.65rem;opacity:.7">(product_id)</span></th>
+                    <th>Color</th>
+                    <th>Defect Name</th>
+                    <th class="tc">Qty</th>
+                    <th>Type</th>
+                    <th class="tc">Status</th>
+                </tr></thead>
+                <tbody id="rtBody">
+                    <tr><td colspan="11"><div class="empty"><div class="ei">📋</div><p>Upload và Review để xem</p></div></td></tr>
                 </tbody>
             </table>
         </div>
-        <div class="pagination-bar">
-            <span class="pagination-info" id="pgInfo">—</span>
-            <div class="pagination-controls" id="pgControls"></div>
+        <div class="pagination">
+            <span class="pg-info" id="pgInfo">—</span>
+            <div class="pg-ctrls" id="pgCtrls"></div>
         </div>
     </div>
 </div>
@@ -375,103 +338,64 @@
 <script>
 const pathBase = '@Context.Request.PathBase';
 
-/* ── State ─────────────────────────────────────────── */
-let workbook      = null;
-let rawRows       = [];    // raw objects from sheet
-let rawHeaders    = [];    // all column headers
-let reviewRows    = [];    // unpivoted rows
-let partCodeMap   = [];    // [{partCode, productId, italisaNo, itemCode}]
-let selectedDefectCols = new Set();
-let currentPage   = 1;
-const PAGE_SIZE   = 50;
+/* ─── State ─────────────────────────────────────────── */
+let workbook    = null;
+let rawHeaders  = [];   // all column headers as strings
+let rawRows     = [];   // array of objects keyed by header
+let lookup      = null; // {processes, colors, vendors, defects, codes}
 
-// Fixed columns that are NOT defect columns
-const FIXED_COL_KEYWORDS = [
-    'date','ngày','ngay','日期',
-    'part code','mã linh','ma linh','零件','partcode',
-    'product','sản phẩm','san pham','产品','item name',
-    'coating','lớp phủ','lop phu','涂层','color','màu','mau',
-    'process','quy trình','quy trinh','工序','công đoạn',
-    'input qty','sl đầu vào','投入量',
-    'ok qty','sl đạt','良品',
-    'ng qty','sl lỗi','不良数',
-    'output qty','sl đầu ra','产出量',
-    'defect rate','tỷ lệ lỗi','不良率',
-    'yield rate','tỷ lệ đạt','良品率',
-    'svn code','svn name','italisa pn'
-];
+let detected = {
+    date:    { header: null, idx: -1 },
+    part:    { header: null, idx: -1 },
+    process: { header: null, idx: -1 },
+    color:   { header: null, idx: -1 },
+};
 
-/* ── Init ──────────────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('defDate').value = new Date().toISOString().slice(0,10);
-    setupUploadZone();
-    loadPartCodeMap();
-    loadDropdowns();
+let defectCols     = [];          // [{header, italisaMatch:nameEn or null, qtyCount}]
+let selectedDefect = new Set();    // headers of selected defect cols
+
+let reviewRows  = [];
+let currentPage = 1;
+const codesCache = {}
+const PAGE_SIZE = 50;
+
+/* ─── Init ──────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', async () => {
+    setupUpload();
+    await loadLookup();
 });
 
-async function loadPartCodeMap() {
-    try {
-        const r = await fetch(`${pathBase}/Defect/GetPartCodeMap`);
-        if (r.ok) partCodeMap = await r.json();
-    } catch(e) { console.warn('Part code map unavailable:', e.message); }
-}
+document.addEventListener('change', e => {
+    if (e.target.id === 'useCustomTime') {
+        document.getElementById('customTime').style.display = e.target.checked ? 'inline-block' : 'none';
+    }
+});
 
-/* ── Upload Zone ───────────────────────────────────── */
-async function loadDropdowns() {
+async function loadLookup() {
     try {
-        const [vr, pr, cr] = await Promise.all([
-            fetch(`${pathBase}/Production/GetVendors`),
-            fetch(`${pathBase}/Production/GetProcesses`),
-            fetch(`${pathBase}/Production/GetColors`),
-        ]);
-        const vendors   = await vr.json();
-        const processes = await pr.json();
-        const colors    = await cr.json();
-
-        // Vendor default dropdown
+        const r = await fetch(`${pathBase}/Defect/GetUploadLookup`);
+        if (!r.ok) throw new Error('HTTP '+r.status);
+        lookup = await r.json();
+        // Populate vendor dropdown
         const dv = document.getElementById('defVendor');
-        if (dv && dv.tagName === 'SELECT') {
-            vendors.forEach(v => { if(v) dv.insertAdjacentHTML('beforeend',
-                `<option value="${esc(v)}">${esc(v)}</option>`); });
-            const ita = Array.from(dv.options).find(o => o.value.toUpperCase().includes('ITA'));
-            if (ita) dv.value = ita.value;
-        }
-
-        // Process default dropdown
-        const dp = document.getElementById('defProcess');
-        if (dp && dp.tagName === 'SELECT')
-            processes.forEach(p => { if(p) dp.insertAdjacentHTML('beforeend',
-                `<option value="${esc(p)}">${esc(p)}</option>`); });
-
-        // Color default dropdown
-        const dc = document.getElementById('defColor');
-        if (dc && dc.tagName === 'SELECT')
-            colors.forEach(c => { if(c) dc.insertAdjacentHTML('beforeend',
-                `<option value="${esc(c)}">${esc(c)}</option>`); });
-
-    } catch(e) { console.warn('loadDropdowns:', e.message); }
+        dv.innerHTML = '';
+        (lookup.vendors||[]).forEach(v => {
+            if (v) dv.insertAdjacentHTML('beforeend', `<option value="${esc(v)}">${esc(v)}</option>`);
+        });
+        const ita = Array.from(dv.options).find(o => o.value.toUpperCase().includes('ITA'));
+        if (ita) dv.value = ita.value;
+    } catch(e) {
+        showToast('Không load được lookup: '+e.message, 'error');
+        lookup = { processes:[], colors:[], vendors:['ITA'], defects:[], codes:{} };
+    }
 }
 
-async function onDefaultProcessChange() {
-    const proc = document.getElementById('defProcess').value;
-    const dp   = document.getElementById('defPartCode');
-    if (!dp || dp.tagName !== 'SELECT') return;
-    dp.innerHTML = '<option value="">-- Mặc định --</option>';
-    if (!proc) return;
-    try {
-        const r = await fetch(`${pathBase}/Production/GetCodesByProcess?process=${encodeURIComponent(proc)}`);
-        if (!r.ok) return;
-        const codes = await r.json();
-        codes.forEach(c => dp.insertAdjacentHTML('beforeend',
-            `<option value="${c.value}">${esc(c.text)}</option>`));
-    } catch(e) {}
-}
-
-function setupUploadZone() {
-    const zone  = document.getElementById('uploadZone');
-    const input = document.getElementById('fileInput');
-    input.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
-    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+/* ─── Upload Zone ───────────────────────────────────── */
+function setupUpload() {
+    const zone = document.getElementById('uploadZone');
+    const inp  = document.getElementById('fileInput');
+    inp.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+    zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('drag-over'); });
     zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
     zone.addEventListener('drop', e => {
         e.preventDefault(); zone.classList.remove('drag-over');
@@ -481,8 +405,7 @@ function setupUploadZone() {
 
 function handleFile(file) {
     showLoading(true, 'Đang đọc file...');
-    const zone = document.getElementById('uploadZone');
-    zone.classList.add('has-file');
+    document.getElementById('uploadZone').classList.add('has-file');
     document.getElementById('uploadFilename').textContent = '✅ ' + file.name;
     document.getElementById('uploadFilename').style.display = 'block';
     document.getElementById('statusStep1').textContent = file.name;
@@ -493,15 +416,15 @@ function handleFile(file) {
     const reader = new FileReader();
     reader.onload = e => {
         try {
-            workbook = XLSX.read(e.target.result, { type:'array' });
+            workbook = XLSX.read(e.target.result, { type:'array', cellDates:true });
             buildSheetTabs();
-        } catch(err) { showToast('Lỗi đọc file: ' + err.message, 'error'); }
+        } catch(err) { showToast('Lỗi đọc file: '+err.message, 'error'); }
         finally { showLoading(false); }
     };
     reader.readAsArrayBuffer(file);
 }
 
-/* ── Sheet Tabs ────────────────────────────────────── */
+/* ─── Sheet Tabs ────────────────────────────────────── */
 function buildSheetTabs() {
     const tabs = document.getElementById('sheetTabs');
     tabs.innerHTML = '';
@@ -516,379 +439,691 @@ function buildSheetTabs() {
         };
         tabs.appendChild(btn);
     });
-    document.getElementById('sheetSelectorWrap').style.display = 'block';
+    document.getElementById('sheetWrap').style.display = 'block';
 
-    // Auto-select "Raw Data" or similar
+    // Auto-select Raw Data tab
     const rawTab = workbook.SheetNames.find(n => n.toLowerCase().includes('raw'));
     if (rawTab) {
-        const btn = [...document.querySelectorAll('.sheet-tab')]
-            .find(b => b.textContent === rawTab);
+        const btn = [...document.querySelectorAll('.sheet-tab')].find(b => b.textContent === rawTab);
         if (btn) { btn.click(); return; }
     }
     loadSheet(workbook.SheetNames[0]);
 }
 
 function loadSheet(name) {
-    const ws   = workbook.Sheets[name];
+    const ws = workbook.Sheets[name];
+    if (!ws) return;
     const json = XLSX.utils.sheet_to_json(ws, { header:1, defval:'', raw:false });
     if (!json.length) { showToast('Sheet không có dữ liệu.', 'error'); return; }
 
-    // Find header row
+    // Find header row — look for "Date" / "Part Code" / "ngày"
     let hdrIdx = 0;
-    for (let i = 0; i < Math.min(5, json.length); i++) {
-        const row = json[i].map(c => String(c).toLowerCase());
-        if (row.some(c => c.includes('date') || c.includes('ngày') || c.includes('part'))) {
+    for (let i = 0; i < Math.min(8, json.length); i++) {
+        const row = json[i].map(c => normHdr(String(c)));
+        if (row.some(c => /\b(date|ngay|partcode|malinhkien)\b/.test(c))) {
             hdrIdx = i; break;
         }
     }
+
     rawHeaders = json[hdrIdx].map((h, i) => String(h || `Col_${i+1}`).trim());
-    rawRows    = [];
+
+    rawRows = [];
     for (let r = hdrIdx + 1; r < json.length; r++) {
         const row = {};
         rawHeaders.forEach((h, i) => { row[h] = json[r][i] ?? ''; });
-        // Skip empty rows
         if (rawHeaders.every(h => row[h] === '' || row[h] == null)) continue;
         rawRows.push(row);
     }
 
-    buildColDropdowns(rawHeaders);
-    autoMap(rawHeaders);
-    detectDefectCols(rawHeaders);
-    buildPreview(rawHeaders, json, hdrIdx);
-
-    document.getElementById('parseInfo').textContent = `${rawRows.length} dòng dữ liệu`;
-    document.getElementById('colMapWrap').style.display = 'block';
+    detectFixedCols();
+    detectDefectCols();
+    document.getElementById('parseInfo').textContent = `${rawRows.length} dòng dữ liệu · ${rawHeaders.length} cột`;
+    document.getElementById('detectWrap').style.display = 'block';
     updateReviewBtn();
 }
 
-/* ── Column dropdowns ──────────────────────────────── */
-const MAP_FIELDS = ['mapDate','mapPartCode','mapProcess','mapColor','mapVendor','mapType','mapQuantity','mapDesc'];
-
-function buildColDropdowns(headers) {
-    MAP_FIELDS.forEach(id => {
-        const sel = document.getElementById(id);
-        if (!sel) return;
-        sel.innerHTML = '<option value="">-- chọn cột --</option>';
-        headers.forEach(h => {
-            const opt = document.createElement('option');
-            opt.value = h; opt.textContent = h;
-            sel.appendChild(opt);
-        });
-        sel.onchange = () => { sel.classList.toggle('mapped', sel.value !== ''); updateReviewBtn(); };
-        sel.className = sel.className.replace(/mapped/g,'').trim();
-    });
+/* ─── Header normalization ─────────────────────────── */
+function normHdr(s) {
+    return String(s||'').toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')   // strip diacritics
+        .replace(/[\n\r\t]/g, ' ')
+        .replace(/\s+/g, '')
+        .replace(/[\/\-_().,#]/g, '');
 }
 
-function autoMap(headers) {
-    const hints = {
-        mapDate:     ['date','ngày','ngay','日期'],
-        mapPartCode: ['part code','mã linh','ma linh','零件代码','part_code','italisa pn'],
-        mapProcess:  ['process','quy trình','quy trinh','工序'],
-        mapColor:    ['coating','lớp phủ','lop phu','涂层','color','màu'],
-        mapVendor:   ['vendor','nhà cung cấp'],
-        mapType:     ['type','loại','type_value'],
-        mapQuantity: ['quantity','qty','số lượng','input qty','sl đầu'],
-        mapDesc:     ['description','ghi chú','note','mô tả'],
+/* ─── Auto-detect fixed columns ─────────────────────── */
+function detectFixedCols() {
+    const KW = {
+        date:    ['date','ngay','日期','ngày'],
+        part:    ['partcode','malinhkien','零件代码','零件代碼','italisapn'],
+        process: ['process','quytrinh','工序','quytrình'],
+        color:   ['coating','lopphu','涂层','color','màu','mau','sắcphủ'],
     };
-    const low = h => String(h).toLowerCase().trim();
-    Object.entries(hints).forEach(([id, kws]) => {
-        const sel = document.getElementById(id);
-        if (!sel) return;
-        const match = Array.from(sel.options).find(o =>
-            kws.some(k => low(o.value).includes(k))
-        );
-        if (match) { sel.value = match.value; sel.classList.add('mapped'); }
+    Object.keys(detected).forEach(k => { detected[k] = { header:null, idx:-1 }; });
+
+    rawHeaders.forEach((h, idx) => {
+        const n = normHdr(h);
+        Object.entries(KW).forEach(([key, kws]) => {
+            if (detected[key].idx !== -1) return;
+            if (kws.some(kw => n.includes(kw))) {
+                detected[key] = { header: h, idx };
+            }
+        });
     });
+
+    paintDetect('Date',    'dItemDate',    'dValDate',    detected.date);
+    paintDetect('Part',    'dItemPart',    'dValPart',    detected.part);
+    paintDetect('Process', 'dItemProcess', 'dValProcess', detected.process);
+    paintDetect('Color',   'dItemColor',   'dValColor',   detected.color);
 }
 
-/* ── Defect column detection ───────────────────────── */
-function isFixedCol(header) {
-    const l = header.toLowerCase().trim();
-    return FIXED_COL_KEYWORDS.some(kw => l.includes(kw));
+function paintDetect(label, itemId, valId, d) {
+    const item = document.getElementById(itemId);
+    const val  = document.getElementById(valId);
+    if (d.idx === -1) {
+        item.classList.remove('ok'); item.classList.add('bad');
+        val.innerHTML = '<span class="detect-empty">❌ Không tìm thấy</span>';
+    } else {
+        item.classList.add('ok'); item.classList.remove('bad');
+        val.textContent = '✓ ' + (d.header.length > 30 ? d.header.slice(0,30) + '…' : d.header);
+        val.title = d.header;
+    }
 }
 
-function detectDefectCols(headers) {
-    const candidates = headers.filter(h => !isFixedCol(h) && h.trim() !== '');
-    const panel  = document.getElementById('defectColsPanel');
-    const chips  = document.getElementById('defectChips');
-    const count  = document.getElementById('defectColCount');
+/* ─── Detect defect columns ─────────────────────────── */
+function detectDefectCols() {
+    // Defect cols = everything EXCEPT fixed cols + product/qty/rate cols
+    const SKIP_KW = [
+        'lenhsanxuat','productionorder','工单',
+        'date','ngay','日期',
+        'partcode','malinhkien','零件代码','零件代碼','italisapn',
+        'product','sanpham','itemname','产品名','产品名称',
+        'coating','lopphu','涂层','color','mau',
+        'process','quytrinh','工序',
+        'inputqty','sldauvao','投入量',
+        'okqty','sldat','良品',
+        'ngqty','slloi','不良数','不良數',
+        'outputqty','sldaura','产出量',
+        'defectrate','tyleloi','不良率',
+        'yieldrate','tyledat','良品率',
+        'svncode','svnname','wc'
+    ];
 
-    chips.innerHTML = '';
-    selectedDefectCols.clear();
+    defectCols = [];
+    selectedDefect.clear();
 
-    if (!candidates.length) { panel.style.display = 'none'; return; }
-    panel.style.display = 'block';
+    const fixedIdx = new Set([detected.date.idx, detected.part.idx, detected.process.idx, detected.color.idx]);
 
-    candidates.forEach(col => {
-        // Count non-zero values in rawRows
-        const nonZero = rawRows.filter(r => {
-            const v = parseFloat(String(r[col]).replace(/,/g,''));
+    rawHeaders.forEach((h, idx) => {
+        if (fixedIdx.has(idx)) return;
+        if (!h || h.trim() === '') return;
+        const n = normHdr(h);
+        if (SKIP_KW.some(kw => n.includes(kw))) return;
+
+        // Count non-zero values
+        const nz = rawRows.filter(r => {
+            const v = parseFloat(String(r[h] ?? '').replace(/,/g,''));
             return !isNaN(v) && v > 0;
         }).length;
 
-        const chip = document.createElement('label');
-        chip.className = 'defect-chip selected';
-        chip.dataset.col = col;
-        chip.innerHTML = `<input type="checkbox" checked />${esc(col)} <span class="chip-count">(${nonZero})</span>`;
-        chip.querySelector('input').addEventListener('change', e => {
-            if (e.target.checked) { selectedDefectCols.add(col); chip.classList.add('selected'); }
-            else                  { selectedDefectCols.delete(col); chip.classList.remove('selected'); }
-            updateDefectCount();
-            updateReviewBtn();
-        });
-        chips.appendChild(chip);
-        selectedDefectCols.add(col);
+        if (nz === 0) return;  // skip cols with no data at all
+
+        // Try to match against system defects
+        const matched = matchDefect(h);
+
+        defectCols.push({ header: h, matchedEn: matched, nonZero: nz });
+        selectedDefect.add(h);
     });
 
-    updateDefectCount();
-    updateReviewBtn();
+    renderDefectChips();
+    updateDefectInfo();
 }
 
-function updateDefectCount() {
-    const sel = selectedDefectCols.size;
-    const total = document.getElementById('defectChips').children.length;
-    const totalQty = rawRows.reduce((sum, row) => {
-        [...selectedDefectCols].forEach(col => {
-            const v = parseFloat(String(row[col]).replace(/,/g,''));
-            if (!isNaN(v) && v > 0) sum += v;
+function matchDefect(header) {
+    if (!lookup || !lookup.defects) return null;
+    const stripD = s => String(s||'').toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+        .replace(/[\s\n\r\t.,()]+/g,'').trim();
+    const hNorm = stripD(header);
+    for (const d of lookup.defects) {
+        const en = stripD(d.nameEn);
+        const vn = stripD(d.nameVn);
+        const cn = String(d.nameCn||'').toLowerCase().replace(/[\s\n\r\t]+/g,'').trim();
+        if (en && hNorm.includes(en)) return d.nameEn;
+        if (vn && hNorm.includes(vn)) return d.nameEn;
+        if (cn && hNorm.includes(cn)) return d.nameEn;
+    }
+    return null;
+}
+
+function renderDefectChips() {
+    const chips = document.getElementById('defectChips');
+    chips.innerHTML = '';
+    defectCols.forEach(dc => {
+        const chip = document.createElement('label');
+        chip.className = 'defect-chip selected' + (dc.matchedEn ? '' : ' unmatched');
+        chip.dataset.col = dc.header;
+        const label = dc.matchedEn
+            ? `<strong>${esc(dc.matchedEn)}</strong>`
+            : `${esc(dc.header.slice(0,30))} <span style="font-size:.6rem">⚠ no match</span>`;
+        chip.innerHTML = `<input type="checkbox" checked/>${label} <span class="chip-count">(${dc.nonZero})</span>`;
+        chip.title = `Cột Excel: "${dc.header}"\nMatch system: ${dc.matchedEn || '(không match)'}\nDòng có giá trị > 0: ${dc.nonZero}`;
+        chip.querySelector('input').addEventListener('change', e => {
+            if (e.target.checked) { selectedDefect.add(dc.header); chip.classList.add('selected'); }
+            else                  { selectedDefect.delete(dc.header); chip.classList.remove('selected'); }
+            updateDefectInfo(); updateReviewBtn();
         });
-        return sum;
-    }, 0);
-    document.getElementById('defectColCount').textContent =
-        `${sel}/${total} cột được chọn · ước tính ~${rawRows.filter(r => [...selectedDefectCols].some(c => parseFloat(String(r[c]).replace(/,/g,'')) > 0)).length} dòng sau unpivot`;
+        chips.appendChild(chip);
+    });
 }
 
-function toggleAllDefectCols(select) {
+function toggleAllDefects(sel) {
     document.querySelectorAll('#defectChips .defect-chip').forEach(chip => {
         const cb = chip.querySelector('input');
         const col = chip.dataset.col;
-        cb.checked = select;
-        if (select) { selectedDefectCols.add(col); chip.classList.add('selected'); }
-        else         { selectedDefectCols.delete(col); chip.classList.remove('selected'); }
+        cb.checked = sel;
+        if (sel) { selectedDefect.add(col); chip.classList.add('selected'); }
+        else     { selectedDefect.delete(col); chip.classList.remove('selected'); }
     });
-    updateDefectCount();
-    updateReviewBtn();
+    updateDefectInfo(); updateReviewBtn();
 }
 
-/* ── Preview ───────────────────────────────────────── */
-function buildPreview(headers, json, hdrIdx) {
-    const thead = document.getElementById('previewThead');
-    const tbody = document.getElementById('previewTbody');
-    const maxC  = Math.min(headers.length, 15);
-
-    thead.innerHTML = '<tr>' + headers.slice(0,maxC).map(h =>
-        `<th title="${esc(h)}">${esc(h)}</th>`).join('') + '</tr>';
-
-    tbody.innerHTML = '';
-    json.slice(hdrIdx+1, hdrIdx+6).forEach(row => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = headers.slice(0,maxC).map((_, ci) =>
-            `<td>${esc(String(row[ci] ?? ''))}</td>`).join('');
-        tbody.appendChild(tr);
-    });
-    document.getElementById('previewWrap').style.display = 'block';
+function updateDefectInfo() {
+    const sel = selectedDefect.size;
+    const total = defectCols.length;
+    const matched = defectCols.filter(c => c.matchedEn && selectedDefect.has(c.header)).length;
+    const unmatched = sel - matched;
+    document.getElementById('defectInfo').innerHTML =
+        `${sel}/${total} cột được chọn · <strong style="color:var(--success)">${matched}</strong> match system · ` +
+        `<strong style="color:#92400e">${unmatched}</strong> chưa match (sẽ dùng tên cột làm defect_name)`;
 }
 
 function updateReviewBtn() {
-    const dateOk = document.getElementById('mapDate').value !== ''  || document.getElementById('defDate').value !== '';
-    const pcOk   = document.getElementById('mapPartCode').value !== '' || document.getElementById('defPartCode').value !== '';
-    const defOk  = selectedDefectCols.size > 0;
-    document.getElementById('btnReview').disabled = !(dateOk && defOk);
+    const ok = detected.date.idx !== -1
+            && detected.part.idx !== -1
+            && detected.process.idx !== -1
+            && selectedDefect.size > 0;
+    document.getElementById('btnReview').disabled = !ok;
 }
 
-/* ── REVIEW / UNPIVOT ──────────────────────────────── */
+/* ─── REVIEW (resolve & unpivot) ────────────────────── */
 function doReview() {
-    if (!rawRows.length || !selectedDefectCols.size) {
-        showToast('Cần có dữ liệu và ít nhất 1 cột defect được chọn.', 'error'); return;
+    if (!rawRows.length || !selectedDefect.size) {
+        showToast('Cần có dữ liệu và ít nhất 1 cột defect.', 'error'); return;
+    }
+    if (detected.date.idx === -1 || detected.part.idx === -1 || detected.process.idx === -1) {
+        showToast('Cần nhận diện được Date + Part Code + Process.', 'error'); return;
     }
 
-    showLoading(true, 'Đang unpivot dữ liệu...');
-
+    showLoading(true, 'Đang resolve & unpivot...');
     setTimeout(() => {
         try {
-            const getCol  = id => document.getElementById(id)?.value || '';
-            const getDef  = id => document.getElementById(id)?.value?.trim() || '';
-            const defaultDate = getDef('defDate') || new Date().toISOString().slice(0,10);
+            const vendor = document.getElementById('defVendor').value || 'ITA';
+            const useCustomTime = document.getElementById('useCustomTime').checked;
+            const customTime    = document.getElementById('customTime').value || '14:00';
+            const today = new Date().toISOString().slice(0,10);
+
+            // Build matched defect map: header → nameEn
+            const matchMap = {};
+            defectCols.forEach(dc => { matchMap[dc.header] = dc.matchedEn; });
 
             reviewRows = [];
 
             rawRows.forEach((row, ri) => {
-                // ── Fixed fields ──
-                const dateRaw = getCol('mapDate') ? row[getCol('mapDate')] : '';
-                const dateStr = parseExcelDate(dateRaw) || defaultDate;
+                const dateRaw = row[detected.date.header];
+                const dateStr = parseExcelDate(dateRaw) || today;
 
-                const partCode = (getCol('mapPartCode') ? row[getCol('mapPartCode')] : '') || getDef('defPartCode');
-                const productId = resolveProductId(String(partCode).trim());
+                const partRaw = String(row[detected.part.header] ?? '').trim();
+                const italisaNo = extractItalisaNo(partRaw);
 
-                const process  = (getCol('mapProcess')  ? String(row[getCol('mapProcess')]  ?? '') : '') || getDef('defProcess') || '';
-                const color    = (getCol('mapColor')    ? String(row[getCol('mapColor')]    ?? '') : '') || getDef('defColor')   || '';
-                const vendor   = (getCol('mapVendor')   ? String(row[getCol('mapVendor')]   ?? '') : '') || getDef('defVendor')  || 'ITA';
-                const typeVal  = (getCol('mapType')     ? String(row[getCol('mapType')]     ?? '') : '') || getDef('defType')    || 'Defect';
-                const desc     = (getCol('mapDesc')     ? String(row[getCol('mapDesc')]     ?? '') : '') || getDef('defDesc')    || '';
-                const qtyDef   = (getCol('mapQuantity') ? String(row[getCol('mapQuantity')] ?? '') : '') || getDef('defQuantity') || '';
+                const procRaw = String(row[detected.process.header] ?? '').trim();
+                const process = resolveProcess(procRaw);
 
-                // ── UNPIVOT: one record per defect column with value > 0 ──
-                selectedDefectCols.forEach(col => {
+                const colorRaw = detected.color.idx !== -1
+                    ? String(row[detected.color.header] ?? '').trim()
+                    : '';
+                const color = resolveColor(colorRaw);
+
+                // Resolve product_id from process + italisaNo
+                const codeInfo = resolveCode(process, italisaNo, vendor);
+
+                // For each selected defect col with value > 0
+                selectedDefect.forEach(col => {
                     const rawVal = String(row[col] ?? '').replace(/,/g,'').trim();
                     const qty    = parseFloat(rawVal);
-                    if (isNaN(qty) || qty <= 0) return; // skip zero/empty
+                    if (isNaN(qty) || qty <= 0) return;
+
+                    const defectName = matchMap[col] || col;
+                    const issues     = [];
+                    if (!process)        issues.push('Process');
+                    if (!italisaNo)      issues.push('Part Code');
+                    if (!codeInfo)       issues.push('Code lookup');
+                    if (!matchMap[col])  issues.push('Defect not in DB');
+                    if (!color)          issues.push('Color');
+
+                    // Date = từ Excel; Giờ = random 8:00-20:00 (hoặc fixed nếu tick)
+                    const useDate = dateStr || today;
+                    const timeStr = useCustomTime ? (customTime + ':' + pad2(Math.floor(Math.random()*60)))
+                                                   : randomWorkTime();
+                    const recDtStr = useDate + 'T' + timeStr;
 
                     reviewRows.push({
-                        _idx:         reviewRows.length,
-                        _selected:    true,
-                        _status:      'pending',
-                        _partCode:    partCode,
-                        date_finished: dateStr,
-                        product_id:   productId,
-                        process,
-                        color,
-                        vendor,
-                        type_value:   'Defect',
-                        defect_name:  col,       // column header = defect name
-                        product_qty:  qty,
-                        description:  desc,
-                        image_path:   null,
+                        _idx:     reviewRows.length,
+                        _selected: issues.length === 0,
+                        _status:  issues.length === 0 ? 'ok' : 'warn',
+                        _issues:  issues,
+                        _excelPart: partRaw,
+                        _excelProc: procRaw,
+                        _excelColor: colorRaw,
+                        _excelCol: col,
+                        _excelDate: dateStr,
+
+                        date_finished: recDtStr,
+                        process:       process || procRaw,
+                        product_id:    codeInfo ? codeInfo.productId : null,
+                        code_text:     codeInfo ? codeInfo.text : null,
+                        color:         color || colorRaw,
+                        vendor:        vendor,
+                        type_value:    'Defect',
+                        defect_name:   defectName,
+                        product_qty:   qty,
+                        description:   null,
+                        image_path:    null,
                     });
                 });
             });
 
             if (!reviewRows.length) {
-                showToast('Không có giá trị > 0 trong các cột defect được chọn.', 'error');
+                showToast('Không có cell nào có giá trị > 0 trong các cột đã chọn.', 'error');
                 showLoading(false); return;
             }
 
             currentPage = 1;
-            renderReviewTable();
-            updateKPI();
+            renderReview();
+            updateKpi();
             document.getElementById('reviewSection').style.display = 'block';
             document.getElementById('saveBar').style.display = 'flex';
             document.getElementById('reviewSection').scrollIntoView({ behavior:'smooth', block:'start' });
-            showToast(`Unpivot xong: ${reviewRows.length} bản ghi từ ${rawRows.length} dòng × ${selectedDefectCols.size} cột.`, 'success');
+
+            // ── Debug stats per defect column (open DevTools to see) ──
+            const colStats = {};
+            selectedDefect.forEach(col => { colStats[col] = { records:0, totalQty:0 }; });
+            reviewRows.forEach(r => {
+                const c = r._excelCol;
+                if (colStats[c]) {
+                    colStats[c].records++;
+                    colStats[c].totalQty += (r.product_qty || 0);
+                }
+            });
+            console.log('=== DEFECT UNPIVOT STATS ===');
+            console.log(`Total Excel rows: ${rawRows.length}`);
+            console.log(`Total records generated: ${reviewRows.length}`);
+            console.log(`Selected defect cols: ${selectedDefect.size}`);
+            console.table(colStats);
+
+            const ok = reviewRows.filter(r => r._status === 'ok').length;
+            showToast(`✅ ${reviewRows.length} bản ghi từ ${rawRows.length} dòng Excel × ${selectedDefect.size} cột · ${ok} OK · ${reviewRows.length - ok} cần kiểm tra (F12 để xem stats)`, 'success');
         } catch(e) {
-            showToast('Lỗi: ' + e.message, 'error');
-            console.error(e);
+            showToast('Lỗi: '+e.message, 'error'); console.error(e);
         } finally { showLoading(false); }
     }, 30);
 }
 
-/* ── Helpers ───────────────────────────────────────── */
+/* ─── Resolvers ─────────────────────────────────────── */
+function extractItalisaNo(partCode) {
+    const m = String(partCode).match(/(\d+)/);
+    return m ? parseInt(m[1]) : 0;
+}
+
+function resolveProcess(raw) {
+    if (!raw || !lookup) return null;
+    const n = raw.toLowerCase().trim();
+    // Exact match first
+    const exact = (lookup.processes||[]).find(p => p.toLowerCase().trim() === n);
+    if (exact) return exact;
+    // Loose: ignore non-alpha
+    const nClean = n.replace(/[^a-z0-9]/g,'');
+    return (lookup.processes||[]).find(p => p.toLowerCase().replace(/[^a-z0-9]/g,'') === nClean) || null;
+}
+
+function resolveColor(raw) {
+    if (!lookup) return null;
+    const v = String(raw || '').trim();
+    // "-" or empty → Non-color
+    if (!v || v === '-' || v === '—' || v.toLowerCase() === 'na' || v.toLowerCase() === 'n/a') {
+        const nc = (lookup.colors||[]).find(c => c.toLowerCase().includes('non') || c.toLowerCase() === 'non-color');
+        return nc || 'Non-color';
+    }
+    const n = v.toLowerCase();
+    // Exact match
+    const exact = (lookup.colors||[]).find(c => c.toLowerCase() === n);
+    if (exact) return exact;
+    // Contains
+    return (lookup.colors||[]).find(c => c.toLowerCase().includes(n) || n.includes(c.toLowerCase())) || null;
+}
+
+function resolveCode(process, italisaNo, vendor) {
+    if (!process || !italisaNo || !lookup) return null;
+    const list = (lookup.codes || {})[process];
+    if (!list || !list.length) return null;
+    // Prefer match with same vendor
+    let match = list.find(c => c.italisaNo === italisaNo && c.vendor && c.vendor.toUpperCase() === String(vendor).toUpperCase());
+    if (match) return match;
+    // Fallback: any vendor with same italisaNo
+    match = list.find(c => c.italisaNo === italisaNo);
+    return match || null;
+}
+
+function formatLocalDt(d) {
+    const pad = n => String(n).padStart(2,'0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function pad2(n) { return String(n).padStart(2,'0'); }
+
+// Random thời điểm trong giờ làm việc: 8:00 đến 19:59:59
+function randomWorkTime() {
+    const h = 8 + Math.floor(Math.random() * 12);  // 8 ~ 19
+    const m = Math.floor(Math.random() * 60);
+    const s = Math.floor(Math.random() * 60);
+    return `${pad2(h)}:${pad2(m)}:${pad2(s)}`;
+}
+
 function parseExcelDate(v) {
     if (!v && v !== 0) return '';
+    if (v instanceof Date) {
+        // Use UTC to avoid timezone
+        const y = v.getUTCFullYear(), m = v.getUTCMonth()+1, d = v.getUTCDate();
+        return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    }
     const s = String(v).trim();
-    // "13-May-2026"
+    // 13-May-2026
     const m1 = s.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/);
     if (m1) {
-        const mo = {jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',
-                    jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'}[m1[2].toLowerCase()];
+        const mo = {jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'}[m1[2].toLowerCase()];
         return mo ? `${m1[3]}-${mo}-${m1[1].padStart(2,'0')}` : '';
     }
-    // "13/05/2026"
+    // 13/05/2026
     const m2 = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
     if (m2) return `${m2[3]}-${m2[2].padStart(2,'0')}-${m2[1].padStart(2,'0')}`;
-    // "2026-05-13"
+    // 2026-05-13
     if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-    // Try JS Date
     const d = new Date(s);
-    if (!isNaN(d)) return d.toISOString().slice(0,10);
-    return '';
+    return isNaN(d) ? '' : d.toISOString().slice(0,10);
 }
 
-function resolveProductId(partCode) {
-    if (!partCode) return null;
-    const pc  = partCode.toUpperCase().trim();
-    const num = parseInt(pc.replace(/^Y0*/,''));
-    if (isNaN(num)) return null;
-    const match = partCodeMap.find(m => m.italisaNo === num || m.partCode === pc);
-    return match ? match.productId : null;
-}
-
-/* ── Render Review Table ───────────────────────────── */
-function renderReviewTable() {
-    const tbody = document.getElementById('reviewTbody');
+/* ─── Render Review ─────────────────────────────────── */
+function renderReview() {
+    const tbody = document.getElementById('rtBody');
     const total = reviewRows.length;
     const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
     currentPage = Math.min(currentPage, totalPages);
     const slice = reviewRows.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE);
 
     if (!slice.length) {
-        tbody.innerHTML = `<tr><td colspan="12"><div class="empty-state"><div class="ei">📋</div><p>Không có dữ liệu</p></div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11"><div class="empty"><div class="ei">📋</div><p>Không có dữ liệu</p></div></td></tr>`;
         return;
     }
 
+    // Pre-build option HTML strings for dropdowns (shared across rows)
+    const colorOptsBase = (lookup?.colors || []).map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    const procOptsBase  = (lookup?.processes || []).map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
+    const defectOptsBase= (lookup?.defects || []).map(d => {
+        const parts = [d.nameEn, d.nameVn, d.nameCn].filter(x => x && x !== d.nameEn);
+        const label = d.nameEn + (parts.length ? ' / ' + parts.join(' / ') : '');
+        return `<option value="${esc(d.nameEn)}">${esc(label)}</option>`;
+    }).join('');
+
     tbody.innerHTML = slice.map((r, si) => {
         const gi = (currentPage-1)*PAGE_SIZE + si + 1;
-        const statusHtml = r._status==='saved'
-            ? `<span class="status-badge s-saved">✅ Đã lưu</span>`
-            : r._status==='error'
-            ? `<span class="status-badge s-error">❌ Lỗi</span>`
-            : `<span class="status-badge s-pending">⏳ Chờ</span>`;
-        const cls = r._selected ? 'row-selected' : '';
+        const statusHtml = r._status === 'ok'
+            ? `<span class="s-badge s-ok">✓ OK</span>`
+            : `<span class="s-badge s-warn" title="Thiếu: ${esc(r._issues.join(', '))}">⚠ ${r._issues.length}</span>`;
+        const cls = r._status === 'ok' && r._selected ? 'row-selected'
+                  : r._status !== 'ok' ? 'row-error' : '';
+
+        // Process select — add empty option + current if not in list
+        const procVal = r.process || '';
+        const procInList = (lookup?.processes || []).some(p => p === procVal);
+        const procOpts = `<option value="">-- chọn --</option>${procOptsBase}` +
+            (procVal && !procInList ? `<option value="${esc(procVal)}" selected>⚠ ${esc(procVal)}</option>` : '');
+
+        // Code select — depends on process
+        const codes = (lookup?.codes || {})[procVal] || [];
+        let codeOpts = `<option value="">-- chọn code --</option>` +
+            codes.map(c => `<option value="${c.productId}" data-text="${esc(c.text)}">${esc(c.text)}</option>`).join('');
+        if (r.product_id && !codes.some(c => c.productId === r.product_id)) {
+            // Add current value if not in list (e.g. from previous process)
+            codeOpts += `<option value="${r.product_id}" data-text="${esc(r.code_text||'')}" selected>⚠ ${esc(r.code_text||r.product_id)}</option>`;
+        }
+
+        const colorVal = r.color || '';
+        const colorInList = (lookup?.colors || []).some(c => c === colorVal);
+        const colorOpts = `<option value="">-- chọn --</option>${colorOptsBase}` +
+            (colorVal && !colorInList ? `<option value="${esc(colorVal)}" selected>⚠ ${esc(colorVal)}</option>` : '');
+
+        const defectVal = r.defect_name || '';
+        const defectInList = (lookup?.defects || []).some(d => d.nameEn === defectVal);
+        const defectOpts = `<option value="">-- chọn --</option>${defectOptsBase}` +
+            (defectVal && !defectInList ? `<option value="${esc(defectVal)}" selected>⚠ ${esc(defectVal)}</option>` : '');
+
         return `<tr class="${cls}" id="row_${r._idx}">
-            <td class="tc"><input type="checkbox" ${r._selected?'checked':''} onchange="toggleRow(${r._idx},this)" /></td>
+            <td class="tc"><input type="checkbox" ${r._selected?'checked':''} onchange="toggleRow(${r._idx},this)"/></td>
             <td style="color:var(--gray-400);font-size:.75rem">${gi}</td>
-            <td style="color:var(--gray-600);font-size:.77rem">${esc(r.date_finished)}</td>
-            <td style="font-weight:700;color:var(--denim)">${esc(r._partCode||'—')}</td>
-            <td style="color:var(--gray-600)">${r.product_id ?? '<em style="color:var(--gray-300)">—</em>'}</td>
-            <td style="font-weight:600;color:var(--denim-dark)">${esc(r.process||'—')}</td>
-            <td>${esc(r.color||'—')}</td>
-            <td><span class="info-chip vendor">${esc(r.vendor)}</span></td>
-            <td style="font-weight:700;color:#6d28d9;max-width:200px;overflow:hidden;text-overflow:ellipsis" title="${esc(r.defect_name)}">${esc(r.defect_name)}</td>
+            <td style="color:var(--gray-600);font-size:.74rem;white-space:nowrap" title="Excel: ${esc(r._excelDate||'-')}">${esc(r.date_finished.replace('T',' '))}</td>
+            <td><span class="chip chip-warn">${esc(r.vendor)}</span></td>
+            <td><select class="cell-sel ${r.process ? '' : 'invalid'}" data-idx="${r._idx}" data-field="process" onchange="onCellChange(${r._idx},'process',this)" title="Excel: ${esc(r._excelProc||'-')}">${procOpts.replace(`value="${esc(procVal)}"`, `value="${esc(procVal)}" selected`)}</select></td>
+            <td>
+                <select class="cell-sel ${r.product_id ? '' : 'invalid'}" data-idx="${r._idx}" data-field="product_id" onchange="onCellChange(${r._idx},'product_id',this)" title="Excel Part: ${esc(r._excelPart||'-')}">${codeOpts.replace(`value="${r.product_id}"`, `value="${r.product_id}" selected`)}</select>
+                <span class="excel-col-hint text-only" title="${esc(r._excelPart||'-')}">🏷️ ${esc(r._excelPart||'-')}</span>
+            </td>
+            <td><select class="cell-sel ${r.color ? '' : 'invalid'}" data-idx="${r._idx}" data-field="color" onchange="onCellChange(${r._idx},'color',this)" title="Excel: ${esc(r._excelColor||'-')}">${colorOpts.replace(`value="${esc(colorVal)}"`, `value="${esc(colorVal)}" selected`)}</select></td>
+            <td>
+                <select class="cell-sel cell-defect ${r.defect_name && defectInList ? '' : 'invalid'}" data-idx="${r._idx}" data-field="defect_name" onchange="onCellChange(${r._idx},'defect_name',this)" title="Excel cột: ${esc(r._excelCol||'-')}">${defectOpts.replace(`value="${esc(defectVal)}"`, `value="${esc(defectVal)}" selected`)}</select>
+                <span class="excel-col-hint" title="${esc(r._excelCol||'-')}">📋 ${esc((r._excelCol||'').replace(/\s+/g,' ').slice(0,40))}</span>
+            </td>
             <td class="tn" style="font-weight:700;color:var(--danger)">${Number(r.product_qty).toLocaleString('en-US')}</td>
-            <td><span class="info-chip type">Defect</span></td>
+            <td><span class="chip chip-purple">Defect</span></td>
             <td class="tc">${statusHtml}</td>
         </tr>`;
     }).join('');
 
-    document.getElementById('tblBadge').textContent   = total;
+    document.getElementById('tblBadge').textContent    = total;
     document.getElementById('actionBadge').textContent = total + ' dòng';
     renderPagination(total, totalPages);
     updateChkAll();
 }
 
-function updateKPI() {
-    const total   = reviewRows.length;
-    const sel     = reviewRows.filter(r => r._selected).length;
-    const types   = new Set(reviewRows.map(r => r.defect_name)).size;
-    const totalQ  = reviewRows.reduce((s, r) => s + (r.product_qty||0), 0);
+/* ─── Inline cell editing ──────────────────────────── */
+function onCellChange(idx, field, el) {
+    const r = reviewRows.find(x => x._idx === idx);
+    if (!r) return;
 
-    document.getElementById('kpiTotal').textContent      = total;
-    document.getElementById('kpiSelected').textContent   = sel;
-    document.getElementById('kpiDefectTypes').textContent = types;
-    document.getElementById('kpiTotalQty').textContent   = totalQ.toLocaleString('en-US');
+    if (field === 'process') {
+        r.process    = el.value;
+        r.product_id = null;
+        r.code_text  = null;
+        // Gọi API động như trang Create
+        loadCodesForRow(idx, el.value);
 
-    const txt = document.getElementById('saveBarText');
+    } else if (field === 'product_id') {
+        r.product_id = parseInt(el.value) || null;
+        const opt    = el.options[el.selectedIndex];
+        r.code_text  = opt ? (opt.getAttribute('data-text') || opt.text) : null;
+        recomputeStatus(r);
+        renderRowOnly(r);
+        updateKpi();
+
+    } else if (field === 'color') {
+        r.color = el.value;
+        recomputeStatus(r);
+        renderRowOnly(r);
+        updateKpi();
+
+    } else if (field === 'defect_name') {
+        r.defect_name = el.value;
+        recomputeStatus(r);
+        renderRowOnly(r);
+        updateKpi();
+    }
+}
+
+/* ─── Load codes từ API theo process (như trang Create) ── */
+async function loadCodesForRow(rowIdx, process) {
+    const r = reviewRows.find(x => x._idx === rowIdx);
+    if (!r) return;
+
+    const codeSelEl = document.querySelector(
+        `select[data-idx="${rowIdx}"][data-field="product_id"]`);
+    if (!codeSelEl) return;
+
+    if (!process) {
+        codeSelEl.innerHTML = `<option value="">-- chọn code --</option>`;
+        codeSelEl.classList.add('invalid');
+        recomputeStatus(r);
+        updateKpi();
+        return;
+    }
+
+    // Hiện loading
+    codeSelEl.innerHTML  = `<option value="">⏳ Đang tải...</option>`;
+    codeSelEl.disabled   = true;
+    codeSelEl.classList.remove('invalid');
+
+    try {
+        // Dùng cache nếu đã tải rồi
+        if (!codesCache[process]) {
+            const res  = await fetch(
+                `${pathBase}/Production/GetCodesByProcess?process=${encodeURIComponent(process)}`);
+            const data = await res.json();
+            // Chuẩn hoá về format giống lookup.codes
+            codesCache[process] = data.map(c => ({
+                productId: c.value,
+                text:      c.text,
+                italisaNo: 0,
+                vendor:    ''
+            }));
+            // Cập nhật vào lookup luôn để renderReview dùng được
+            if (lookup) lookup.codes[process] = codesCache[process];
+        }
+
+        const codes = codesCache[process];
+        let html = `<option value="">-- chọn code --</option>`;
+        codes.forEach(c => {
+            html += `<option value="${c.productId}" data-text="${esc(c.text)}">${esc(c.text)}</option>`;
+        });
+        codeSelEl.innerHTML = html;
+        codeSelEl.disabled  = false;
+        codeSelEl.classList.add('invalid');   // chưa chọn → vẫn đỏ
+
+    } catch(e) {
+        codeSelEl.innerHTML = `<option value="">❌ Lỗi tải code</option>`;
+        codeSelEl.disabled  = false;
+        console.error('loadCodesForRow error:', e);
+    }
+
+    recomputeStatus(r);
+    updateKpi();
+}
+
+
+function recomputeStatus(r) {
+    const issues = [];
+    if (!r.process)     issues.push('Process');
+    if (!r.product_id)  issues.push('Code');
+    if (!r.color)       issues.push('Color');
+    if (!r.defect_name) issues.push('Defect');
+    // Check defect is in system DB
+    if (r.defect_name && lookup && lookup.defects &&
+        !lookup.defects.some(d => d.nameEn === r.defect_name)) {
+        issues.push('Defect not in DB');
+    }
+    r._issues = issues;
+    r._status = issues.length === 0 ? 'ok' : 'warn';
+    // Auto-tick when row becomes OK
+    if (r._status === 'ok') r._selected = true;
+}
+
+function renderRowOnly(r) {
+    // Update only status badge + row class without full re-render
+    const tr = document.getElementById('row_'+r._idx);
+    if (!tr) return;
+    const statusCell = tr.lastElementChild;
+    statusCell.innerHTML = r._status === 'ok'
+        ? `<span class="s-badge s-ok">✓ OK</span>`
+        : `<span class="s-badge s-warn" title="Thiếu: ${esc(r._issues.join(', '))}">⚠ ${r._issues.length}</span>`;
+    tr.className = r._status === 'ok' && r._selected ? 'row-selected'
+                  : r._status !== 'ok' ? 'row-error' : '';
+    // Update checkbox
+    const cb = tr.querySelector('input[type=checkbox]');
+    if (cb) cb.checked = r._selected;
+    // Update invalid styling on selects
+    tr.querySelectorAll('select.cell-sel').forEach(sel => {
+        const field = sel.dataset.field;
+        const val = sel.value;
+        const isDefect = sel.classList.contains('cell-defect');
+        const inList = field === 'process' ? (lookup?.processes||[]).includes(val)
+                     : field === 'color'   ? (lookup?.colors||[]).includes(val)
+                     : field === 'defect_name' ? (lookup?.defects||[]).some(d => d.nameEn === val)
+                     : !!val;
+        sel.classList.toggle('invalid', !val || (isDefect && !inList));
+    });
+}
+
+function updateKpi() {
+    const total = reviewRows.length;
+    const ok    = reviewRows.filter(r => r._status === 'ok').length;
+    const bad   = total - ok;
+    const sel   = reviewRows.filter(r => r._selected).length;
+    const qty   = reviewRows.reduce((s,r) => s + (r.product_qty||0), 0);
+    document.getElementById('kpiTotal').textContent = total;
+    document.getElementById('kpiOk').textContent    = ok;
+    document.getElementById('kpiBad').textContent   = bad;
+    document.getElementById('kpiQty').textContent   = qty.toLocaleString('en-US');
+
+    const txt = document.getElementById('saveBarTxt');
     const sub = document.getElementById('saveBarSub');
-    if (sel === 0) { txt.textContent = 'Chưa chọn bản ghi'; sub.textContent = 'Tick checkbox để chọn'; }
-    else { txt.textContent = `${sel} bản ghi được chọn`; sub.textContent = 'Nhấn "Lưu" để ghi vào hệ thống'; }
+    if (sel === 0) { txt.textContent = 'Chưa chọn'; sub.textContent = 'Tick checkbox để chọn bản ghi muốn lưu'; }
+    else { txt.textContent = `${sel} bản ghi được chọn`; sub.textContent = 'Nhấn "Lưu vào hệ thống" để lưu'; }
     document.getElementById('btnSave').disabled = sel === 0;
 }
 
 function toggleRow(idx, chk) {
     const r = reviewRows.find(r => r._idx === idx); if (!r) return;
     r._selected = chk.checked;
-    document.getElementById('row_'+idx)?.classList.toggle('row-selected', chk.checked);
-    updateKPI(); updateChkAll();
+    r._userTouched = true;
+    const tr = document.getElementById('row_'+idx);
+    if (tr && r._status === 'ok') tr.classList.toggle('row-selected', chk.checked);
+    updateKpi(); updateChkAll();
 }
 function toggleAll(chk) {
     reviewRows.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE).forEach(r => r._selected = chk.checked);
-    renderReviewTable(); updateKPI();
+    renderReview(); updateKpi();
 }
-function selectAll()   { reviewRows.forEach(r => r._selected = true);  renderReviewTable(); updateKPI(); }
-function deselectAll() { reviewRows.forEach(r => r._selected = false); renderReviewTable(); updateKPI(); }
+function selectAll()    { reviewRows.forEach(r => r._selected = true);  renderReview(); updateKpi(); }
+function selectOkOnly() { reviewRows.forEach(r => r._selected = r._status === 'ok'); renderReview(); updateKpi(); }
+function deselectAll()  { reviewRows.forEach(r => r._selected = false); renderReview(); updateKpi(); }
 function updateChkAll() {
     const slice = reviewRows.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE);
     const chkAll = document.getElementById('chkAll');
     const sel = slice.filter(r => r._selected).length;
-    chkAll.checked = sel === slice.length && slice.length > 0;
+    chkAll.checked       = sel === slice.length && slice.length > 0;
     chkAll.indeterminate = sel > 0 && sel < slice.length;
 }
 
-/* ── Save ──────────────────────────────────────────── */
+/* ─── Save ──────────────────────────────────────────── */
+/* ─── Save ──────────────────────────────────────────── */
 async function doSave() {
-    const toSave = reviewRows.filter(r => r._selected && r._status !== 'saved');
-    if (!toSave.length) { showToast('Không có bản ghi nào được chọn.', 'error'); return; }
+    const toSave = reviewRows.filter(r => r._selected);
+    if (!toSave.length) { showToast('Chưa chọn bản ghi nào.', 'error'); return; }
 
-    if (!confirm(`Lưu ${toSave.length} bản ghi Defect vào hệ thống?`)) return;
+    // Chỉ check các field bắt buộc tối thiểu (process + product_id)
+    const critical = toSave.filter(r => !r.process || !r.product_id);
+    if (critical.length) {
+        if (!confirm(
+            `⚠️ ${critical.length} bản ghi thiếu Process hoặc Code — sẽ lưu null.\nVẫn tiếp tục?`
+        )) return;
+    }
 
     showLoading(true, `Đang lưu ${toSave.length} bản ghi...`);
 
@@ -898,27 +1133,25 @@ async function doSave() {
         product_id:    r.product_id    ? parseInt(r.product_id)    : null,
         color:         r.color         || null,
         vendor:        r.vendor        || 'ITA',
-        type_value:    r.type_value || 'Defect',
+        type_value:    'Defect',
         defect_name:   r.defect_name   || null,
         date_finished: r.date_finished || new Date().toISOString().slice(0,10),
-        description:   r.description   || null,
+        description:   null,
         image_path:    null,
     }));
 
     try {
         const res = await fetch(`${pathBase}/Defect/SaveBatch`, {
-            method: 'POST',
+            method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body:    JSON.stringify(payload)
         });
         if (res.ok) {
-            toSave.forEach(r => { r._status = 'saved'; r._selected = false; });
-            renderReviewTable(); updateKPI();
+            toSave.forEach(r => { r._selected = false; r._saved = true; });
+            renderReview(); updateKpi();
             showToast(`✅ Đã lưu ${toSave.length} bản ghi!`, 'success');
         } else {
             const err = await res.text();
-            toSave.forEach(r => r._status = 'error');
-            renderReviewTable();
             showToast('Lỗi lưu: ' + err, 'error');
         }
     } catch(e) {
@@ -926,39 +1159,36 @@ async function doSave() {
     } finally { showLoading(false); }
 }
 
-/* ── Pagination ────────────────────────────────────── */
+/* ─── Pagination ────────────────────────────────────── */
 function renderPagination(total, totalPages) {
     const s = (currentPage-1)*PAGE_SIZE+1, e = Math.min(currentPage*PAGE_SIZE, total);
     document.getElementById('pgInfo').textContent = `Hiển thị ${s}–${e} / ${total} dòng`;
-    const ctrl = document.getElementById('pgControls');
-    ctrl.innerHTML = '';
+    const ctrl = document.getElementById('pgCtrls'); ctrl.innerHTML = '';
     const add = (l, p, d, a) => {
         const b = document.createElement('button');
         b.className = 'pg-btn' + (a?' active':'');
         b.textContent = l; b.disabled = d;
-        b.onclick = () => { currentPage = p; renderReviewTable(); };
+        b.onclick = () => { currentPage = p; renderReview(); };
         ctrl.appendChild(b);
     };
-    add('«',1,currentPage===1,false);
-    add('‹',currentPage-1,currentPage===1,false);
+    add('«',1,currentPage===1,false); add('‹',currentPage-1,currentPage===1,false);
     for (let p=Math.max(1,currentPage-2);p<=Math.min(totalPages,currentPage+2);p++) add(p,p,false,p===currentPage);
-    add('›',currentPage+1,currentPage===totalPages,false);
-    add('»',totalPages,currentPage===totalPages,false);
+    add('›',currentPage+1,currentPage===totalPages,false); add('»',totalPages,currentPage===totalPages,false);
 }
 
-/* ── Export ────────────────────────────────────────── */
+/* ─── Export & helpers ──────────────────────────────── */
 function exportReview() {
     if (!reviewRows.length) { showToast('Không có dữ liệu.', 'error'); return; }
-    const wb  = XLSX.utils.book_new();
-    const aoa = [['Defect Upload — Unpivoted — ' + new Date().toLocaleString('vi-VN')],[]];
-    aoa.push(['#','Ngày','Part Code','Product ID','Process','Coating','Vendor','Defect Name','Qty','Type','Trạng thái']);
+    const wb = XLSX.utils.book_new();
+    const aoa = [['Defect Upload Review - ' + new Date().toLocaleString('vi-VN')],[],
+        ['#','Ngày','Vendor','Process','Code','Product ID','Color','Defect Name','Qty','Status','Issues']];
     reviewRows.forEach((r,i) => aoa.push([
-        i+1, r.date_finished, r._partCode, r.product_id, r.process,
-        r.color, r.vendor, r.defect_name, r.product_qty, 'Defect',
-        r._status==='saved'?'Đã lưu':(r._selected?'Đã chọn':'Chưa chọn')
+        i+1, r.date_finished.replace('T',' '), r.vendor, r.process, r.code_text||'', r.product_id||'',
+        r.color, r.defect_name, r.product_qty, r._status,
+        (r._issues||[]).join(', ')
     ]));
     const ws = XLSX.utils.aoa_to_sheet(aoa);
-    ws['!cols'] = [{wch:4},{wch:12},{wch:10},{wch:10},{wch:16},{wch:14},{wch:8},{wch:30},{wch:8},{wch:8},{wch:10}];
+    ws['!cols'] = [{wch:4},{wch:12},{wch:8},{wch:18},{wch:24},{wch:10},{wch:14},{wch:28},{wch:8},{wch:8},{wch:30}];
     XLSX.utils.book_append_sheet(wb, ws, 'Defect Upload');
     XLSX.writeFile(wb, `Defect_Upload_${new Date().toISOString().slice(0,10)}.xlsx`);
     showToast('Xuất Excel xong.', 'success');
@@ -972,7 +1202,7 @@ function backToUpload() {
 
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function showLoading(v, msg) {
-    document.getElementById('loadingOverlay').classList.toggle('show', v);
+    document.getElementById('loading').classList.toggle('show', v);
     if (msg) document.getElementById('loadingMsg').textContent = msg;
 }
 function showToast(msg, type='info') {
