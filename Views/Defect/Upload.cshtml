@@ -357,7 +357,9 @@ let selectedDefect = new Set();    // headers of selected defect cols
 let reviewRows  = [];
 let currentPage = 1;
 const codesCache = {}
+const RX_ITALISA_NO = /-(\d+)\s*\(/;
 const PAGE_SIZE = 50;
+
 
 /* ─── Init ──────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', async () => {
@@ -761,6 +763,8 @@ function doReview() {
             console.log(`Selected defect cols: ${selectedDefect.size}`);
             console.table(colStats);
 
+            autoFillMissingCodes();   // ← THÊM DÒNG NÀY
+
             const ok = reviewRows.filter(r => r._status === 'ok').length;
             showToast(`✅ ${reviewRows.length} bản ghi từ ${rawRows.length} dòng Excel × ${selectedDefect.size} cột · ${ok} OK · ${reviewRows.length - ok} cần kiểm tra (F12 để xem stats)`, 'success');
         } catch(e) {
@@ -980,30 +984,22 @@ async function loadCodesForRow(rowIdx, process) {
     if (!process) {
         codeSelEl.innerHTML = `<option value="">-- chọn code --</option>`;
         codeSelEl.classList.add('invalid');
-        recomputeStatus(r);
-        updateKpi();
-        return;
+        recomputeStatus(r); updateKpi(); return;
     }
 
-    // Hiện loading
-    codeSelEl.innerHTML  = `<option value="">⏳ Đang tải...</option>`;
-    codeSelEl.disabled   = true;
-    codeSelEl.classList.remove('invalid');
+    codeSelEl.innerHTML = `<option value="">⏳ Đang tải...</option>`;
+    codeSelEl.disabled  = true;
 
     try {
-        // Dùng cache nếu đã tải rồi
         if (!codesCache[process]) {
             const res  = await fetch(
                 `${pathBase}/Production/GetCodesByProcess?process=${encodeURIComponent(process)}`);
             const data = await res.json();
-            // Chuẩn hoá về format giống lookup.codes
-            codesCache[process] = data.map(c => ({
-                productId: c.value,
-                text:      c.text,
-                italisaNo: 0,
-                vendor:    ''
-            }));
-            // Cập nhật vào lookup luôn để renderReview dùng được
+
+            codesCache[process] = data.map(c => {
+                const m = RX_ITALISA_NO.exec(c.text);
+                return { productId: c.value, text: c.text, italisaNo: m ? parseInt(m[1]) : 0 };
+            });
             if (lookup) lookup.codes[process] = codesCache[process];
         }
 
@@ -1014,7 +1010,19 @@ async function loadCodesForRow(rowIdx, process) {
         });
         codeSelEl.innerHTML = html;
         codeSelEl.disabled  = false;
-        codeSelEl.classList.add('invalid');   // chưa chọn → vẫn đỏ
+
+        // Auto-select theo italisaNo từ _excelPart
+        const targetNo  = extractItalisaNo(r._excelPart || '');
+        const autoMatch = targetNo ? codes.find(c => c.italisaNo === targetNo) : null;
+       
+        if (autoMatch) {
+            codeSelEl.value = autoMatch.productId;
+            r.product_id    = autoMatch.productId;
+            r.code_text     = autoMatch.text;
+            codeSelEl.classList.remove('invalid');
+        } else {
+            codeSelEl.classList.add('invalid');
+        }
 
     } catch(e) {
         codeSelEl.innerHTML = `<option value="">❌ Lỗi tải code</option>`;
@@ -1023,7 +1031,58 @@ async function loadCodesForRow(rowIdx, process) {
     }
 
     recomputeStatus(r);
+    renderRowOnly(r);
     updateKpi();
+}
+
+async function autoFillMissingCodes() {
+    const needFill = reviewRows.filter(r => r.process && !r.product_id);
+    if (!needFill.length) { showLoading(false); return; }
+
+    showLoading(true, `Đang auto-resolve ${needFill.length} Code...`);
+
+    const byProcess = {};
+    needFill.forEach(r => {
+        (byProcess[r.process] = byProcess[r.process] || []).push(r._idx);
+    });
+
+    for (const [process, idxList] of Object.entries(byProcess)) {
+        if (!codesCache[process]) {
+            try {
+                const res  = await fetch(
+                    `${pathBase}/Production/GetCodesByProcess?process=${encodeURIComponent(process)}`);
+                const data = await res.json();
+
+                codesCache[process] = data.map(c => {
+                    const m = RX_ITALISA_NO.exec(c.text);
+                    return { productId: c.value, text: c.text, italisaNo: m ? parseInt(m[1]) : 0 };
+                });
+                if (lookup) lookup.codes[process] = codesCache[process];
+            } catch(e) {
+                console.error('autoFill fetch error:', process, e);
+                continue;
+            }
+        }
+
+        const codes = codesCache[process];
+        idxList.forEach(idx => {
+            const r = reviewRows.find(x => x._idx === idx);
+            if (!r || r.product_id) return;
+
+            const targetNo  = extractItalisaNo(r._excelPart || '');
+            const autoMatch = targetNo ? codes.find(c => c.italisaNo === targetNo) : null;
+
+            if (autoMatch) {
+                r.product_id = autoMatch.productId;
+                r.code_text  = autoMatch.text;
+                recomputeStatus(r);
+            }
+        });
+    }
+
+    renderReview();
+    updateKpi();
+    showLoading(false);
 }
 
 
