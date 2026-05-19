@@ -179,6 +179,9 @@
             .drawer-icon.icon-create  { background: #dbeafe; }
             .drawer-icon.icon-history { background: #dcfce7; }
             .drawer-icon.icon-report  { background: #fff3e0; }
+            .drawer-icon.icon-upload  { background: #ede9fe; }
+            .drawer-icon.icon-compare { background: #fce7f3; }
+
 
             /* Hide default nav on mobile */
             .navbar-collapse { display: none !important; }
@@ -223,6 +226,12 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Production" asp-action="DefectReport" data-i18n="nav.defect.report">Defect Report</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Defect" asp-action="Upload" data-i18n="nav.defect.upload">Defect Upload</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Defect" asp-action="Comparation" data-i18n="nav.defect.comparation">Comparation</a>
                         </li>
                     </ul>
                     <div class="lang-switcher">
@@ -277,6 +286,14 @@
                 <a asp-area="" asp-controller="Production" asp-action="DefectReport">
                     <span class="drawer-icon icon-report">🔍</span>
                     <span data-i18n="nav.defect.report">Defect Report</span>
+                </a>
+                <a asp-area="" asp-controller="Defect" asp-action="Upload">
+                    <span class="drawer-icon icon-upload">📤</span>
+                    <span data-i18n="nav.defect.upload">Defect Upload</span>
+                </a>
+                <a asp-area="" asp-controller="Defect" asp-action="Comparation">
+                    <span class="drawer-icon icon-compare">⚖️</span>
+                    <span data-i18n="nav.defect.comparation">Comparation</span>
                 </a>
             </nav>
         </div>

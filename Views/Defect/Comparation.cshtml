@@ -1,625 +1,336 @@
 @{
-    ViewData["Title"] = "Comparison";
+    ViewData["Title"] = "QC vs System Comparison";
 }
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"]</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="@Url.Content("~/js/i18n.js")"></script>
-    <style>
-        :root {
-            --denim:        #1B4F8A;
-            --denim-dark:   #0f2f52;
-            --denim-mid:    #2563a8;
-            --denim-light:  #dbeafe;
-            --denim-xlight: #eff6ff;
-            --white:        #ffffff;
-            --gray-50:      #f8fafc;
-            --gray-100:     #f1f5f9;
-            --gray-200:     #e2e8f0;
-            --gray-400:     #94a3b8;
-            --gray-600:     #475569;
-            --gray-800:     #1e293b;
-            --success:      #10b981;
-            --warning:      #f59e0b;
-            --danger:       #ef4444;
-            --shadow-sm:    0 1px 3px rgba(27,79,138,0.08);
-            --shadow-md:    0 4px 20px rgba(27,79,138,0.12);
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background: var(--gray-50); min-height: 100vh;
-            background-image:
-                radial-gradient(ellipse at 20% 50%, rgba(27,79,138,0.06) 0%, transparent 60%),
-                radial-gradient(ellipse at 80% 20%, rgba(37,99,168,0.05) 0%, transparent 50%);
-        }
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>@ViewData["Title"]</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="@Url.Content("~/js/i18n.js")"></script>
+<style>
+:root{--denim:#1B4F8A;--denim-dark:#0f2f52;--denim-mid:#2563a8;--denim-light:#dbeafe;--denim-xlight:#eff6ff;--white:#fff;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-600:#475569;--gray-700:#334155;--gray-800:#1e293b;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--shadow-sm:0 1px 3px rgba(27,79,138,.08);--shadow-md:0 4px 20px rgba(27,79,138,.12)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--gray-50);min-height:100vh;background-image:radial-gradient(ellipse at 20% 50%,rgba(27,79,138,.06) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(37,99,168,.05) 0%,transparent 50%)}
+.page-wrapper{max-width:1700px;margin:0 auto;padding:1.5rem 1rem}
+@@media(min-width:600px){.page-wrapper{padding:2rem 1.5rem}}
+.page-header{margin-bottom:1.5rem}
+.page-header h1{font-family:'Space Grotesk',sans-serif;font-size:1.6rem;font-weight:700;color:var(--denim-dark);display:flex;align-items:center;gap:10px}
+.page-header p{color:var(--gray-600);font-size:.88rem;margin-top:5px}
+.header-line{width:48px;height:4px;background:linear-gradient(90deg,var(--denim),var(--denim-mid));border-radius:2px;margin-top:10px}
 
-        /* ── PAGE WRAPPER ── */
-        .page-wrapper { max-width: 1700px; margin: 0 auto; padding: 1.5rem 1rem; }
-        @@media (min-width: 600px) { .page-wrapper { padding: 2rem 1.5rem; } }
+.phase-header{background:linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%);color:var(--white);padding:.85rem 1.3rem;border-radius:14px 14px 0 0;display:flex;align-items:center;gap:12px;margin-bottom:0}
+.phase-header.cyan{background:linear-gradient(135deg,#0891b2 0%,#0e7490 100%)}
+.phase-header.orange{background:linear-gradient(135deg,#ea580c 0%,#c2410c 100%)}
+.phase-num{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.95rem;flex-shrink:0}
+.phase-title{font-family:'Space Grotesk',sans-serif;font-size:1.02rem;font-weight:700}
+.phase-sub{font-size:.78rem;color:rgba(255,255,255,.85);margin-left:auto;font-style:italic}
 
-        /* ── PAGE HEADER ── */
-        .page-header { margin-bottom: 1.5rem; }
-        .page-header h1 {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 1.7rem; font-weight: 700; color: var(--denim-dark);
-            display: flex; align-items: center; gap: 10px;
-        }
-        .page-header p { color: var(--gray-600); font-size: 0.9rem; margin-top: 6px; }
-        .header-line {
-            width: 48px; height: 4px;
-            background: linear-gradient(90deg, var(--denim), var(--denim-mid));
-            border-radius: 2px; margin-top: 10px;
-        }
+.phase-body{background:var(--white);border:1px solid rgba(27,79,138,.08);border-top:none;border-radius:0 0 14px 14px;box-shadow:var(--shadow-sm);padding:1.1rem 1.25rem;margin-bottom:1.5rem}
+.phase-body.compact{padding:.85rem 1.25rem}
 
-        /* ── STEPS ── */
-        .steps-grid {
-            display: grid; grid-template-columns: 1fr;
-            gap: 1rem; margin-bottom: 1.5rem;
-        }
-        @@media (min-width: 900px) { .steps-grid { grid-template-columns: 1fr 1fr; } }
+.filter-row{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+@@media(min-width:700px){.filter-row{grid-template-columns:repeat(5,1fr) auto;align-items:end;gap:.75rem}}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:.7rem;font-weight:700;color:var(--denim-dark);text-transform:uppercase;letter-spacing:.3px}
+.fg select,.fg input[type=date]{width:100%;padding:.5rem .65rem;border:1.5px solid var(--gray-200);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.84rem;color:var(--gray-800);background:var(--white);outline:none;min-height:38px;cursor:pointer}
+.fg select:focus,.fg input[type=date]:focus{border-color:var(--denim);box-shadow:0 0 0 3px rgba(27,79,138,.1)}
 
-        .step-card {
-            background: var(--white); border-radius: 14px;
-            border: 1px solid rgba(27,79,138,0.1);
-            box-shadow: var(--shadow-sm);
-        }
-        .step-card.done { border-color: var(--success); }
-        .step-header {
-            background: var(--denim-xlight); padding: 0.85rem 1.25rem;
-            display: flex; align-items: center; gap: 10px;
-            border-bottom: 1px solid rgba(27,79,138,0.08);
-        }
-        .step-header.done { background: #ecfdf5; border-bottom-color: rgba(16,185,129,0.15); }
-        .step-num {
-            width: 28px; height: 28px; border-radius: 50%;
-            background: var(--denim); color: var(--white);
-            display: flex; align-items: center; justify-content: center;
-            font-family: 'Space Grotesk', sans-serif; font-size: 0.82rem; font-weight: 700;
-            flex-shrink: 0;
-        }
-        .step-num.done { background: var(--success); }
-        .step-title {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.92rem; font-weight: 600; color: var(--denim-dark);
-        }
-        .step-status { margin-left: auto; font-size: 0.75rem; font-weight: 600; color: var(--gray-400); }
-        .step-status.done { color: var(--success); }
-        .step-body { padding: 1.1rem 1.25rem; }
+.upload-zone{border:2px dashed var(--gray-200);border-radius:10px;padding:1.5rem 1.5rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--white);position:relative}
+.upload-zone:hover,.upload-zone.drag-over{border-color:#0891b2;background:#ecfeff}
+.upload-zone.has-file{border-color:var(--success);background:#f0fdf4}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{font-size:1.8rem;margin-bottom:.4rem}
+.upload-title{font-weight:600;color:var(--denim-dark);font-size:.88rem}
+.upload-sub{font-size:.76rem;color:var(--gray-400);margin-top:3px}
+.upload-filename{font-size:.85rem;font-weight:600;color:var(--success);margin-top:6px}
 
-        /* ── FILTER GRID ── */
-        .filter-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;
-            margin-bottom: 1rem;
-        }
-        @@media (min-width: 600px) { .filter-grid { grid-template-columns: repeat(4, 1fr) auto; align-items: end; gap: 0.85rem; } }
-        .filter-group { display: flex; flex-direction: column; gap: 4px; }
-        .filter-group label {
-            font-size: 0.72rem; font-weight: 600; color: var(--denim-dark);
-            letter-spacing: 0.3px; text-transform: uppercase;
-        }
-        .filter-group select,
-        .filter-group input[type="date"] {
-            width: 100%; padding: 0.55rem 0.7rem;
-            border: 1.5px solid var(--gray-200); border-radius: 8px;
-            font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
-            color: var(--gray-800); background: var(--white);
-            outline: none; transition: border-color 0.2s;
-            min-height: 38px; cursor: pointer;
-            appearance: none; -webkit-appearance: none;
-        }
-        .filter-group select:focus,
-        .filter-group input[type="date"]:focus {
-            border-color: var(--denim); box-shadow: 0 0 0 3px rgba(27,79,138,0.1);
-        }
+.btn{padding:.55rem 1.1rem;border-radius:8px;border:none;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--denim);color:var(--white)}
+.btn-primary:hover:not(:disabled){background:var(--denim-dark)}
+.btn-cyan{background:linear-gradient(135deg,#0891b2 0%,#0e7490 100%);color:var(--white)}
+.btn-cyan:hover:not(:disabled){filter:brightness(1.1)}
+.btn-orange{background:linear-gradient(135deg,#ea580c 0%,#c2410c 100%);color:var(--white);font-size:.95rem;padding:.7rem 1.6rem}
+.btn-orange:hover:not(:disabled){filter:brightness(1.1)}
+.btn-success{background:#059669;color:var(--white)}
+.btn-success:hover:not(:disabled){background:#047857}
+.btn-outline{background:var(--white);color:var(--denim);border:1.5px solid var(--denim-light)}
+.btn-outline:hover:not(:disabled){background:var(--denim-xlight)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-sm{padding:.4rem .85rem;font-size:.78rem}
 
-        /* ── BUTTONS ── */
-        .btn {
-            padding: 0.55rem 1.1rem; border-radius: 8px; border: none;
-            font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600;
-            cursor: pointer; transition: all 0.2s; white-space: nowrap;
-            display: inline-flex; align-items: center; gap: 6px;
-        }
-        .btn-primary { background: var(--denim); color: var(--white); }
-        .btn-primary:hover:not(:disabled) { background: var(--denim-dark); }
-        .btn-compare {
-            background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
-            color: var(--white); font-size: 0.95rem; padding: 0.7rem 1.6rem;
-        }
-        .btn-compare:hover:not(:disabled) { filter: brightness(1.1); }
-        .btn-success { background: #059669; color: var(--white); }
-        .btn-success:hover:not(:disabled) { background: #047857; }
-        .btn-outline { background: var(--white); color: var(--denim); border: 1.5px solid var(--denim-light); }
-        .btn-outline:hover:not(:disabled) { background: var(--denim-xlight); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-sm { padding: 0.38rem 0.85rem; font-size: 0.8rem; }
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;margin-bottom:1rem}
+@@media(min-width:700px){.kpi-grid{grid-template-columns:repeat(4,1fr);gap:.85rem}}
+.kpi-card{background:var(--white);border-radius:10px;border:1px solid rgba(27,79,138,.08);box-shadow:var(--shadow-sm);padding:.85rem 1rem;display:flex;flex-direction:column;gap:3px}
+.kpi-label{font-size:.66rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.3px}
+.kpi-value{font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;color:var(--denim-dark);line-height:1.1}
+.kpi-value.green{color:var(--success)}
+.kpi-value.red{color:var(--danger)}
+.kpi-value.orange{color:var(--warning)}
+.kpi-sub{font-size:.7rem;color:var(--gray-400)}
 
-        /* ── DATA PILLS ── */
-        .data-pill {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
-        }
-        .pill-sys  { background: var(--denim-xlight); color: var(--denim); }
-        .pill-qc   { background: #fef3c7; color: #92400e; }
-        .pill-both { background: #ecfdf5; color: #065f46; }
+.table-card{background:var(--white);border-radius:14px;border:1px solid rgba(27,79,138,.08);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:1.5rem}
+.table-card.purple-top{border-top:3px solid #7c3aed}
+.table-card.cyan-top{border-top:3px solid #0891b2}
+.table-card.orange-top{border-top:3px solid #ea580c}
+.table-card-h{background:linear-gradient(135deg,var(--denim-dark) 0%,var(--denim) 100%);padding:.85rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.table-card-h h3{font-family:'Space Grotesk',sans-serif;font-size:.92rem;font-weight:600;color:var(--white);display:flex;align-items:center;gap:8px}
+.badge{background:rgba(255,255,255,.18);color:var(--white);border-radius:20px;padding:2px 9px;font-size:.72rem;font-weight:600}
 
-        /* ── UPLOAD ZONE ── */
-        .upload-zone {
-            border: 2px dashed var(--gray-200); border-radius: 12px;
-            padding: 2rem; text-align: center; cursor: pointer;
-            transition: all 0.2s; background: var(--white);
-            position: relative;
-        }
-        .upload-zone:hover, .upload-zone.drag-over {
-            border-color: var(--denim); background: var(--denim-xlight);
-        }
-        .upload-zone.has-file { border-color: var(--success); background: #f0fdf4; }
-        .upload-zone input[type="file"] {
-            position: absolute; inset: 0; opacity: 0; cursor: pointer;
-        }
-        .upload-icon { font-size: 2.2rem; margin-bottom: 0.5rem; }
-        .upload-title { font-weight: 600; color: var(--denim-dark); font-size: 0.92rem; }
-        .upload-sub { font-size: 0.78rem; color: var(--gray-400); margin-top: 4px; }
-        .upload-filename {
-            font-size: 0.85rem; font-weight: 600; color: var(--success);
-            margin-top: 8px;
-        }
+.table-scroll{overflow-x:auto;max-height:65vh}
+.dt{width:100%;border-collapse:collapse;font-size:.79rem}
+.dt thead tr.th-main th{background:var(--denim);color:var(--white);padding:7px 9px;text-align:center;font-weight:600;border-right:1px solid rgba(255,255,255,.15);white-space:nowrap;font-size:.74rem;position:sticky;top:0;z-index:1}
+.dt thead tr.th-main th.th-left{text-align:left}
+.dt thead tr.th-main th.th-defect{background:#5b21b6}
+.dt thead tr.th-main th.th-defect-first{border-left:2px solid rgba(255,255,255,.4)}
+.dt thead tr.th-main th .th-en{display:block;font-size:.78rem;font-weight:700;line-height:1.4}
+.dt thead tr.th-main th .th-cn{display:block;font-size:.66rem;font-weight:400;opacity:.8;line-height:1.3}
+.dt thead tr.th-main th .th-vn{display:block;font-size:.66rem;font-weight:500;opacity:.85;line-height:1.3;color:#a8d0f8}
+.dt tbody td{padding:7px 9px;border-bottom:1px solid var(--gray-100);border-right:1px solid var(--gray-100);vertical-align:middle;white-space:nowrap}
+.dt tbody tr:nth-child(even) td{background:#f8fafc}
+.dt tbody tr:hover td{background:var(--denim-xlight)}
+.dt tbody tr.row-sys-only td{background:#eff6ff!important}
+.dt tbody tr.row-qc-only td{background:#fff7ed!important}
+.td-num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;color:var(--denim)}
+.td-zero{text-align:right;font-variant-numeric:tabular-nums;color:#d1d5db}
+.td-center{text-align:center}
+.td-defect{text-align:right;font-variant-numeric:tabular-nums}
+.td-defect.td-defect-first{border-left:2px solid #c4b5fd}
+.td-defect-nz{font-weight:700;color:var(--danger)}
+.rate-badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:.72rem;font-weight:700}
+.rate-ok{background:#ecfdf5;color:#065f46}
+.rate-mid{background:#fff7ed;color:#92400e}
+.rate-bad{background:#fef2f2;color:#991b1b}
+.color-tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.69rem;font-weight:600;white-space:nowrap}
+.color-matte{background:#1e293b;color:#fff}
+.color-chrome{background:#e2e8f0;color:#1e293b;border:1px solid #cbd5e1}
+.color-brass{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+.color-beige{background:#fef9c3;color:#713f12;border:1px solid #fde68a}
+.color-other{background:var(--denim-xlight);color:var(--denim)}
+.color-none{background:var(--gray-100);color:var(--gray-600);font-style:italic}
 
-        /* ── MAPPING PREVIEW ── */
-        .mapping-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;
-            margin-top: 0.85rem;
-        }
-        @@media (min-width: 600px) { .mapping-grid { grid-template-columns: repeat(5, 1fr); } }
-        .mapping-item {
-            background: var(--gray-50); border: 1px solid var(--gray-100);
-            border-radius: 8px; padding: 6px 8px; font-size: 0.72rem;
-        }
-        .mapping-item .mi-label { color: var(--gray-400); font-weight: 600; text-transform: uppercase; font-size: 0.65rem; }
-        .mapping-item .mi-col { color: var(--denim-dark); font-weight: 700; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .mapping-item.mapped { border-color: rgba(16,185,129,0.3); background: #f0fdf4; }
-        .mapping-item.unmapped { border-color: rgba(239,68,68,0.3); background: #fef2f2; }
+.dt thead tr.th-group th{background:var(--denim-dark);color:rgba(255,255,255,.7);padding:5px 8px;text-align:center;font-size:.66rem;font-weight:600;letter-spacing:.3px;text-transform:uppercase;border-right:1px solid rgba(255,255,255,.1)}
+.dt thead tr.th-main th.th-metric-sys{background:#1e4d8c}
+.dt thead tr.th-main th.th-metric-qc{background:#92400e}
+.dt thead tr.th-main th.th-metric-gap{background:#1e293b}
+.dt thead tr.th-group th.thg-identity{background:var(--denim-dark)}
+.dt thead tr.th-group th.thg-input{background:#1e4d8c}
+.dt thead tr.th-group th.thg-ok{background:#065f46}
+.dt thead tr.th-group th.thg-ng{background:#7f1d1d}
+.dt thead tr.th-group th.thg-rate{background:#1e293b}
+.gap-badge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:.7rem;font-weight:700;font-variant-numeric:tabular-nums}
+.gap-0{background:#dcfce7;color:#166534}
+.gap-low{background:#fef9c3;color:#713f12}
+.gap-high{background:#fee2e2;color:#991b1b}
+.gap-na{background:var(--gray-100);color:var(--gray-400);font-style:italic;font-weight:400}
+.src-badge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:.7rem;font-weight:700}
+.src-both{background:#dcfce7;color:#166534}
+.src-sys{background:var(--denim-xlight);color:var(--denim)}
+.src-qc{background:#fef3c7;color:#92400e}
 
-        /* ── COMPARE ACTION BAR ── */
-        .action-bar {
-            background: var(--white); border-radius: 14px;
-            border: 1px solid rgba(27,79,138,0.08);
-            box-shadow: var(--shadow-sm);
-            padding: 1rem 1.5rem;
-            display: flex; align-items: center; justify-content: space-between;
-            gap: 1rem; flex-wrap: wrap;
-            margin-bottom: 1.5rem;
-        }
-        .action-bar-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-        .action-bar-right { display: flex; align-items: center; gap: 8px; }
+.filter-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.ftab{padding:5px 12px;border-radius:20px;font-size:.78rem;font-weight:600;cursor:pointer;border:1.5px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:var(--white);transition:all .15s}
+.ftab:hover{background:rgba(255,255,255,.2)}
+.ftab.active{background:var(--white);color:var(--denim-dark);border-color:var(--white)}
 
-        /* ── KPI ── */
-        .kpi-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr);
-            gap: 0.75rem; margin-bottom: 1.5rem;
-        }
-        @@media (min-width: 600px) { .kpi-grid { grid-template-columns: repeat(4, 1fr); } }
-        .kpi-card {
-            background: var(--white); border-radius: 12px;
-            border: 1px solid rgba(27,79,138,0.08);
-            box-shadow: var(--shadow-sm); padding: 1rem 1.1rem;
-            display: flex; flex-direction: column; gap: 4px;
-        }
-        .kpi-label { font-size: 0.7rem; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.3px; }
-        .kpi-value { font-family: 'Space Grotesk', sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--denim-dark); }
-        .kpi-value.green  { color: var(--success); }
-        .kpi-value.orange { color: var(--warning); }
-        .kpi-value.red    { color: var(--danger); }
-        .kpi-sub { font-size: 0.75rem; color: var(--gray-400); }
+.threshold-wrap{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--gray-700)}
+.threshold-wrap input[type=number]{width:64px;padding:5px 7px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:.85rem;text-align:center;outline:none}
+.threshold-wrap input[type=number]:focus{border-color:var(--denim)}
 
-        /* ── TABLE ── */
-        .table-card {
-            background: var(--white); border-radius: 14px;
-            border: 1px solid rgba(27,79,138,0.08);
-            box-shadow: var(--shadow-sm); overflow: hidden; margin-bottom: 1.5rem;
-        }
-        .table-card-header {
-            background: linear-gradient(135deg, var(--denim-dark) 0%, var(--denim) 100%);
-            padding: 0.9rem 1.5rem;
-            display: flex; align-items: center; justify-content: space-between;
-            gap: 1rem; flex-wrap: wrap;
-        }
-        .table-card-header h3 {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.92rem; font-weight: 600; color: var(--white);
-            display: flex; align-items: center; gap: 8px;
-        }
-        .badge {
-            background: rgba(255,255,255,0.2); color: var(--white);
-            border-radius: 20px; padding: 2px 9px; font-size: 0.72rem; font-weight: 600;
-        }
-        .table-scroll { overflow-x: auto; }
-        .cmp-table { width: 100%; border-collapse: collapse; font-size: 0.79rem; }
+.pg-bar{padding:.75rem 1.25rem;border-top:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.pg-info{font-size:.78rem;color:var(--gray-600)}
+.pg-ctrls{display:flex;gap:4px}
+.pg-btn{min-width:28px;height:28px;padding:0 7px;border:1.5px solid var(--gray-200);border-radius:6px;background:var(--white);color:var(--gray-800);font-size:.78rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.pg-btn:hover:not(:disabled){border-color:var(--denim);color:var(--denim)}
+.pg-btn.active{background:var(--denim);color:var(--white);border-color:var(--denim);font-weight:700}
+.pg-btn:disabled{opacity:.4;cursor:not-allowed}
 
-        /* Table headers */
-        .cmp-table thead tr.th-group th {
-            background: var(--denim-dark); color: rgba(255,255,255,0.7);
-            padding: 5px 8px; text-align: center; font-size: 0.68rem;
-            font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase;
-            border-right: 1px solid rgba(255,255,255,0.1);
-        }
-        .cmp-table thead tr.th-main th {
-            background: var(--denim); color: var(--white);
-            padding: 7px 9px; text-align: center; font-weight: 600;
-            border-right: 1px solid rgba(255,255,255,0.15);
-            white-space: nowrap; font-size: 0.75rem;
-        }
-        .cmp-table thead tr.th-main th.th-left { text-align: left; }
-        .cmp-table thead tr.th-main th.th-metric-sys  { background: #1e4d8c; }
-        .cmp-table thead tr.th-main th.th-metric-qc   { background: #92400e; }
-        .cmp-table thead tr.th-main th.th-metric-gap  { background: #1e293b; }
-        .cmp-table thead tr.th-group th.thg-identity  { background: var(--denim-dark); }
-        .cmp-table thead tr.th-group th.thg-input      { background: #1e4d8c; }
-        .cmp-table thead tr.th-group th.thg-ok         { background: #065f46; }
-        .cmp-table thead tr.th-group th.thg-ng         { background: #7f1d1d; }
-        .cmp-table thead tr.th-group th.thg-rate       { background: #1e293b; }
+.empty{padding:3rem;text-align:center;color:var(--gray-400)}
+.empty .ei{font-size:2.8rem;margin-bottom:.75rem}
+.loading{position:fixed;inset:0;background:rgba(15,47,82,.4);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;pointer-events:none;transition:opacity .2s}
+.loading.show{opacity:1;pointer-events:all}
+.loading-box{background:var(--white);border-radius:14px;padding:2rem 2.5rem;text-align:center;box-shadow:var(--shadow-md)}
+.spinner{width:38px;height:38px;margin:0 auto .9rem;border:3px solid var(--denim-light);border-top-color:var(--denim);border-radius:50%;animation:spin .8s linear infinite}
+@@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9000;background:var(--white);border-radius:10px;box-shadow:var(--shadow-md);padding:.8rem 1.2rem;display:flex;align-items:center;gap:9px;min-width:270px;opacity:0;transform:translateY(10px);transition:opacity .25s,transform .25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0);pointer-events:all}
+.toast.success{border-left:4px solid var(--success)}
+.toast.error{border-left:4px solid var(--danger)}
+.toast.info{border-left:4px solid var(--denim)}
+#toastMsg{font-size:.85rem;color:var(--gray-800)}
 
-        /* Data rows */
-        .cmp-table tbody td {
-            padding: 7px 9px; border-bottom: 1px solid var(--gray-100);
-            border-right: 1px solid var(--gray-100); vertical-align: middle; white-space: nowrap;
-        }
-        .cmp-table tbody tr:nth-child(even) td { background: #f8fafc; }
-        .cmp-table tbody tr:hover td { background: var(--denim-xlight); }
-        .cmp-table tbody tr.row-sys-only td { background: #eff6ff !important; }
-        .cmp-table tbody tr.row-qc-only  td { background: #fff7ed !important; }
-        .cmp-table tbody tr:hover.row-sys-only td,
-        .cmp-table tbody tr:hover.row-qc-only  td { filter: brightness(0.96); }
-
-        .td-num { text-align: right; font-variant-numeric: tabular-nums; }
-        .td-center { text-align: center; }
-        .td-zero { color: var(--gray-300); text-align: right; }
-
-        /* Gap badges */
-        .gap-badge {
-            display: inline-block; padding: 1px 7px; border-radius: 10px;
-            font-size: 0.72rem; font-weight: 700; font-variant-numeric: tabular-nums;
-        }
-        .gap-0    { background: #dcfce7; color: #166534; }
-        .gap-low  { background: #fef9c3; color: #713f12; }
-        .gap-high { background: #fee2e2; color: #991b1b; }
-        .gap-na   { background: var(--gray-100); color: var(--gray-400); font-style: italic; font-weight: 400; }
-
-        /* Source badges */
-        .src-badge {
-            display: inline-block; padding: 1px 7px; border-radius: 10px;
-            font-size: 0.7rem; font-weight: 700;
-        }
-        .src-both { background: #dcfce7; color: #166534; }
-        .src-sys  { background: var(--denim-xlight); color: var(--denim); }
-        .src-qc   { background: #fef3c7; color: #92400e; }
-
-        /* Color tags */
-        .color-tag { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 0.69rem; font-weight: 600; white-space: nowrap; }
-        .color-matte  { background: #1e293b; color: #fff; }
-        .color-chrome { background: #e2e8f0; color: #1e293b; border: 1px solid #cbd5e1; }
-        .color-brass  { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-        .color-beige  { background: #fef9c3; color: #713f12; border: 1px solid #fde68a; }
-        .color-other  { background: var(--denim-xlight); color: var(--denim); }
-        .color-none   { background: var(--gray-100); color: var(--gray-600); font-style: italic; }
-
-        /* Total row */
-        tr.total-row td {
-            background: var(--denim-dark) !important; color: var(--white) !important;
-            font-weight: 700;
-        }
-
-        /* ── FILTER TABS ── */
-        .filter-tabs { display: flex; gap: 6px; margin-bottom: 1rem; flex-wrap: wrap; }
-        .ftab {
-            padding: 5px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
-            cursor: pointer; border: 1.5px solid var(--gray-200); background: var(--white);
-            color: var(--gray-600); transition: all 0.15s;
-        }
-        .ftab:hover { border-color: var(--denim); color: var(--denim); }
-        .ftab.active { background: var(--denim); color: var(--white); border-color: var(--denim); }
-        .ftab.tab-gap { border-color: #fde68a; color: #92400e; }
-        .ftab.tab-gap.active { background: #f59e0b; border-color: #f59e0b; color: var(--white); }
-        .ftab.tab-sys { border-color: var(--denim-light); color: var(--denim); }
-        .ftab.tab-qc  { border-color: #fde68a; color: #92400e; }
-
-        /* ── PAGINATION ── */
-        .pagination-bar {
-            padding: 0.85rem 1.5rem; border-top: 1px solid var(--gray-100);
-            display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
-        }
-        .pagination-info { font-size: 0.8rem; color: var(--gray-600); }
-        .pagination-controls { display: flex; gap: 4px; }
-        .pg-btn {
-            min-width: 30px; height: 30px; padding: 0 7px;
-            border: 1.5px solid var(--gray-200); border-radius: 7px;
-            background: var(--white); color: var(--gray-800);
-            font-family: 'DM Sans', sans-serif; font-size: 0.8rem;
-            cursor: pointer; transition: all 0.15s;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .pg-btn:hover:not(:disabled) { border-color: var(--denim); color: var(--denim); }
-        .pg-btn.active { background: var(--denim); color: var(--white); border-color: var(--denim); font-weight: 700; }
-        .pg-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-        /* ── EMPTY ── */
-        .empty-state { padding: 3.5rem; text-align: center; color: var(--gray-400); }
-        .empty-state .ei { font-size: 3rem; margin-bottom: 0.75rem; }
-        .empty-state p { font-size: 0.9rem; }
-
-        /* ── LOADING ── */
-        .loading-overlay {
-            position: fixed; inset: 0; background: rgba(15,47,82,0.4);
-            display: flex; align-items: center; justify-content: center;
-            z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.2s;
-        }
-        .loading-overlay.show { opacity: 1; pointer-events: all; }
-        .loading-box { background: var(--white); border-radius: 14px; padding: 2rem 2.5rem; text-align: center; box-shadow: var(--shadow-md); }
-        .spinner { width: 38px; height: 38px; margin: 0 auto 0.9rem; border: 3px solid var(--denim-light); border-top-color: var(--denim); border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @@keyframes spin { to { transform: rotate(360deg); } }
-        .loading-msg { color: var(--denim-dark); font-weight: 600; font-size: 0.88rem; }
-
-        /* ── TOAST ── */
-        .toast {
-            position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9000;
-            background: var(--white); border-radius: 10px; box-shadow: var(--shadow-md);
-            padding: 0.8rem 1.2rem; display: flex; align-items: center; gap: 9px;
-            min-width: 270px; opacity: 0; transform: translateY(10px);
-            transition: opacity 0.25s, transform 0.25s; pointer-events: none;
-        }
-        .toast.show { opacity: 1; transform: translateY(0); pointer-events: all; }
-        .toast.success { border-left: 4px solid var(--success); }
-        .toast.error   { border-left: 4px solid var(--danger);  }
-        .toast.info    { border-left: 4px solid var(--denim);   }
-        #toastMsg { font-size: 0.85rem; color: var(--gray-800); }
-
-        /* ── SHEET / COLUMN SELECTOR ── */
-        .selector-panel {
-            margin-top: 1rem; padding: 1rem; background: var(--gray-50);
-            border: 1px solid var(--gray-200); border-radius: 10px;
-            display: none;
-        }
-        .selector-panel.show { display: block; }
-        .selector-section-title {
-            font-size: 0.72rem; font-weight: 700; color: var(--denim-dark);
-            text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 0.6rem;
-        }
-        .sheet-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1rem; }
-        .sheet-tab {
-            padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
-            cursor: pointer; border: 1.5px solid var(--gray-200);
-            background: var(--white); color: var(--gray-600); transition: all 0.15s;
-        }
-        .sheet-tab:hover { border-color: var(--denim); color: var(--denim); }
-        .sheet-tab.active { background: var(--denim); color: var(--white); border-color: var(--denim); }
-        .col-map-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem;
-        }
-        @@media (min-width: 500px) { .col-map-grid { grid-template-columns: repeat(2, 1fr); } }
-        @@media (min-width: 700px) { .col-map-grid { grid-template-columns: repeat(3, 1fr); } }
-        @@media (min-width: 1000px) { .col-map-grid { grid-template-columns: repeat(4, 1fr); } }
-        .col-map-item { display: flex; flex-direction: column; gap: 3px; }
-        .col-map-item label {
-            font-size: 0.68rem; font-weight: 700; color: var(--denim-dark);
-            text-transform: uppercase; letter-spacing: 0.3px;
-        }
-        .col-map-item label .req { color: var(--danger); }
-        .col-map-item select {
-            padding: 0.4rem 0.6rem; border: 1.5px solid var(--gray-200); border-radius: 7px;
-            font-family: 'DM Sans', sans-serif; font-size: 0.8rem; color: var(--gray-800);
-            background: var(--white); outline: none; appearance: none; cursor: pointer;
-            transition: border-color 0.2s;
-        }
-        .col-map-item select:focus { border-color: var(--denim); }
-        .col-map-item select.mapped   { border-color: var(--success); background: #f0fdf4; }
-        .col-map-item select.unmapped { border-color: #fca5a5; background: #fef2f2; }
-        .preview-table-wrap { overflow-x: auto; margin-top: 0.85rem; max-height: 160px; overflow-y: auto; border-radius: 8px; border: 1px solid var(--gray-100); }
-        .preview-table { width: 100%; border-collapse: collapse; font-size: 0.72rem; }
-        .preview-table th { background: var(--denim); color: var(--white); padding: 5px 8px; white-space: nowrap; position: sticky; top: 0; }
-        .preview-table td { padding: 4px 8px; border-bottom: 1px solid var(--gray-100); white-space: nowrap; }
-        .preview-table tr:nth-child(even) td { background: var(--gray-50); }
-        .confirm-row { display: flex; align-items: center; justify-content: space-between; margin-top: 1rem; flex-wrap: wrap; gap: 8px; }
-        .parse-info  { font-size: 0.78rem; color: var(--gray-600); }
-
-        /* ── THRESHOLD INPUT ── */
-        .threshold-wrap {
-            display: flex; align-items: center; gap: 8px;
-            font-size: 0.8rem; color: var(--gray-600);
-        }
-        .threshold-wrap input[type="number"] {
-            width: 60px; padding: 4px 6px; border: 1.5px solid var(--gray-200);
-            border-radius: 6px; font-size: 0.8rem; text-align: center; outline: none;
-        }
-        .threshold-wrap input[type="number"]:focus { border-color: var(--denim); }
-    </style>
+.data-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:20px;font-size:.78rem;font-weight:600}
+.pill-sys{background:var(--denim-xlight);color:var(--denim)}
+.pill-qc{background:#fef3c7;color:#92400e}
+</style>
 </head>
 <body>
 
-<div class="loading-overlay" id="loadingOverlay">
-    <div class="loading-box">
-        <div class="spinner"></div>
-        <p class="loading-msg" id="loadingMsg">Đang xử lý...</p>
-    </div>
+<div class="loading" id="loading">
+    <div class="loading-box"><div class="spinner"></div><p style="color:var(--denim-dark);font-weight:600;font-size:.88rem" id="loadingMsg">...</p></div>
 </div>
-<div class="toast" id="toast">
-    <span id="toastIcon"></span><span id="toastMsg"></span>
-</div>
+<div class="toast" id="toast"><span id="toastIcon"></span><span id="toastMsg"></span></div>
 
 <div class="page-wrapper">
 
-    <!-- ── HEADER ── -->
-    <div class="page-header">
-        <h1>⚖️ QC vs System — So Sánh Dữ Liệu</h1>
-        <p>So sánh dữ liệu hệ thống (Yield Report) với file Excel từ bộ phận QC để xác định gap.</p>
-        <div class="header-line"></div>
-    </div>
+<div class="page-header">
+    <h1 data-i18n="cmp.page.title">⚖️ QC Data vs System Data — So Sánh Dữ Liệu</h1>
+    <p data-i18n="cmp.page.subtitle">Đối chiếu Yield Report (hệ thống) với file Excel QC để phát hiện gap.</p>
+    <div class="header-line"></div>
+</div>
 
-    <!-- ── STEPS ── -->
-    <div class="steps-grid">
-
-        <!-- Step 1: System Data -->
-        <div class="step-card" id="step1Card">
-            <div class="step-header" id="step1Header">
-                <div class="step-num" id="step1Num">1</div>
-                <span class="step-title">Tải dữ liệu hệ thống</span>
-                <span class="step-status" id="step1Status">Chưa tải</span>
-            </div>
-            <div class="step-body">
-                <div class="filter-grid">
-                    <div class="filter-group">
-                        <label>📅 Từ ngày</label>
-                        <input type="date" id="fDateFrom" />
-                    </div>
-                    <div class="filter-group">
-                        <label>📅 Đến ngày</label>
-                        <input type="date" id="fDateTo" />
-                    </div>
-                    <div class="filter-group">
-                        <label>⚙️ Công đoạn</label>
-                        <select id="fProcess"><option value="">-- Tất cả --</option></select>
-                    </div>
-                    <div class="filter-group">
-                        <label>🎨 Lớp phủ</label>
-                        <select id="fColor"><option value="">-- Tất cả --</option></select>
-                    </div>
-                    <div class="filter-group" style="justify-content:flex-end">
-                        <label>&nbsp;</label>
-                        <button class="btn btn-primary" id="btnLoadSys" onclick="loadSystemData()">
-                            📡 Tải dữ liệu
-                        </button>
-                    </div>
-                </div>
-                <div id="sysInfo" style="font-size:0.8rem;color:var(--gray-400)">
-                    Chọn khoảng ngày và nhấn Tải dữ liệu.
-                </div>
-            </div>
+<!-- ════════════════════════════ PHASE 1 ════════════════════════════ -->
+<div class="phase-header">
+    <div class="phase-num">1</div>
+    <div class="phase-title" data-i18n="cmp.phase1.title">📊 Dữ liệu Hệ thống (Yield Report)</div>
+    <div class="phase-sub" data-i18n="cmp.phase1.sub">Tải dữ liệu từ DB → xem trước khi compare</div>
+</div>
+<div class="phase-body compact">
+    <div class="filter-row">
+        <div class="fg">
+            <label data-i18n="cmp.label.from">📅 Từ ngày</label>
+            <input type="date" id="fDateFrom"/>
         </div>
-
-        <!-- Step 2: QC Excel -->
-        <div class="step-card" id="step2Card">
-            <div class="step-header" id="step2Header">
-                <div class="step-num" id="step2Num">2</div>
-                <span class="step-title">Upload file Excel QC</span>
-                <span class="step-status" id="step2Status">Chưa upload</span>
-            </div>
-            <div class="step-body">
-                <div class="upload-zone" id="uploadZone">
-                    <input type="file" id="qcFile" accept=".xlsx,.xls" onchange="handleFileUpload(this)" />
-                    <div class="upload-icon">📂</div>
-                    <div class="upload-title">Kéo thả hoặc click để chọn file Excel QC</div>
-                    <div class="upload-sub">Cùng format với Yield Report · Tự động nhận diện</div>
-                    <div class="upload-filename" id="uploadFilename"></div>
-                </div>
-                <div id="qcParseResult" style="display:none;margin-top:0.85rem;padding:0.75rem 1rem;background:var(--gray-50);border-radius:10px;border:1px solid var(--gray-100)">
-                    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-                        <span id="qcParseInfo" style="font-size:0.85rem;color:var(--gray-700)"></span>
-                        <button class="btn btn-outline btn-sm" onclick="document.getElementById('qcFile').click()">🔄 Đổi file</button>
-                    </div>
-                </div>
-            </div>
+        <div class="fg">
+            <label data-i18n="cmp.label.to">📅 Đến ngày</label>
+            <input type="date" id="fDateTo"/>
+        </div>
+        <div class="fg">
+            <label data-i18n="cmp.label.process">⚙️ Công đoạn</label>
+            <select id="fProcess"><option value="" data-i18n="cmp.all">-- Tất cả --</option></select>
+        </div>
+        <div class="fg">
+            <label data-i18n="cmp.label.coating">🎨 Lớp phủ</label>
+            <select id="fColor"><option value="" data-i18n="cmp.all">-- Tất cả --</option></select>
+        </div>
+        <div class="fg">
+            <label data-i18n="cmp.label.partcode">🔩 Part Code</label>
+            <select id="fPartCode"><option value="" data-i18n="cmp.all">-- Tất cả --</option></select>
+        </div>
+        <div class="fg">
+            <label>&nbsp;</label>
+            <button class="btn btn-primary" id="btnLoadSys" onclick="loadSystemData()" data-i18n="cmp.btn.load_sys">📡 Tải Hệ thống</button>
         </div>
     </div>
+    <div id="sysInfo" style="font-size:.8rem;color:var(--gray-400);margin-top:.6rem" data-i18n="cmp.info.init">
+        ⏳ Chọn khoảng ngày và nhấn "Tải Hệ thống" để xem dữ liệu Yield Report.
+    </div>
+</div>
 
-    <!-- ── QC DATA PREVIEW TABLE ── -->
-    <div class="table-card" id="qcTableSection" style="display:none;margin-bottom:1.5rem">
-        <div class="table-card-header">
-            <h3>📋 Dữ liệu QC Excel — <span id="qcTableTitle">Raw Data</span>
-                <span class="badge" id="qcTableBadge">0</span>
-            </h3>
+<div id="sysDataWrap" style="display:none">
+    <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label" data-i18n="cmp.kpi.input">📦 Tổng Input</div><div class="kpi-value" id="sysKpiInput">—</div><div class="kpi-sub" data-i18n="cmp.kpi.input.sub">SL đầu vào</div></div>
+        <div class="kpi-card"><div class="kpi-label" data-i18n="cmp.kpi.ng">❌ Tổng NG</div><div class="kpi-value red" id="sysKpiNG">—</div><div class="kpi-sub" data-i18n="cmp.kpi.ng.sub">SL lỗi</div></div>
+        <div class="kpi-card"><div class="kpi-label" data-i18n="cmp.kpi.defrate">📉 Defect Rate</div><div class="kpi-value red" id="sysKpiDef">—</div><div class="kpi-sub" data-i18n="cmp.kpi.defrate.sub">Tỷ lệ lỗi tổng</div></div>
+        <div class="kpi-card"><div class="kpi-label" data-i18n="cmp.kpi.yield">✅ Yield Rate</div><div class="kpi-value green" id="sysKpiYld">—</div><div class="kpi-sub" data-i18n="cmp.kpi.yield.sub">Tỷ lệ đạt tổng</div></div>
+    </div>
+
+    <div class="table-card purple-top">
+        <div class="table-card-h">
+            <h3><span data-i18n="cmp.table.sys.title">🖥️ System Yield Report</span> <span class="badge" id="sysBadge">0</span></h3>
+            <span style="font-size:.75rem;color:rgba(255,255,255,.7)" data-i18n="cmp.table.sys.sub">Dữ liệu từ Production/GetDefectReportData</span>
+        </div>
+        <div class="table-scroll" id="sysTableScroll"></div>
+        <div class="pg-bar" id="sysPgBar" style="display:none">
+            <span class="pg-info" id="sysPgInfo"></span>
+            <div class="pg-ctrls" id="sysPgCtrl"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════ PHASE 2 ════════════════════════════ -->
+<div class="phase-header cyan">
+    <div class="phase-num">2</div>
+    <div class="phase-title" data-i18n="cmp.phase2.title">📂 Dữ liệu QC (Excel Upload)</div>
+    <div class="phase-sub" data-i18n="cmp.phase2.sub">Upload file QC → hiển thị toàn bộ thông tin</div>
+</div>
+<div class="phase-body compact">
+    <div class="upload-zone" id="uploadZone">
+        <input type="file" id="qcFile" accept=".xlsx,.xls" onchange="handleFileUpload(this)"/>
+        <div class="upload-icon">📂</div>
+        <div class="upload-title" data-i18n="cmp.upload.title">Kéo thả hoặc click để chọn file Excel QC</div>
+        <div class="upload-sub" data-i18n="cmp.upload.sub">Cùng format với Yield Report · Tự động nhận diện cột</div>
+        <div class="upload-filename" id="uploadFilename"></div>
+    </div>
+    <div id="qcParseInfo" style="font-size:.8rem;color:var(--gray-400);margin-top:.6rem" data-i18n="cmp.upload.empty">
+        ⏳ Chưa upload file.
+    </div>
+</div>
+
+<div id="qcDataWrap" style="display:none">
+    <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label" data-i18n="cmp.qckpi.rows">📋 Tổng dòng</div><div class="kpi-value" id="qcKpiRows">—</div><div class="kpi-sub" data-i18n="cmp.qckpi.rows.sub">trong Excel</div></div>
+        <div class="kpi-card"><div class="kpi-label" data-i18n="cmp.kpi.input">📦 Tổng Input</div><div class="kpi-value" id="qcKpiInput">—</div><div class="kpi-sub" data-i18n="cmp.qckpi.input.sub">từ QC</div></div>
+        <div class="kpi-card"><div class="kpi-label" data-i18n="cmp.kpi.ng">❌ Tổng NG</div><div class="kpi-value red" id="qcKpiNG">—</div><div class="kpi-sub" data-i18n="cmp.qckpi.ng.sub">từ QC</div></div>
+        <div class="kpi-card"><div class="kpi-label" data-i18n="cmp.kpi.defrate">📉 Defect Rate</div><div class="kpi-value red" id="qcKpiDef">—</div><div class="kpi-sub" data-i18n="cmp.qckpi.defrate.sub">trung bình QC</div></div>
+    </div>
+
+    <div class="table-card cyan-top">
+        <div class="table-card-h" style="background:linear-gradient(135deg,#0e7490 0%,#0891b2 100%)">
+            <h3><span data-i18n="cmp.table.qc.title">📋 QC Excel Data</span> — <span id="qcTableTitle">Raw Data</span> <span class="badge" id="qcBadge">0</span></h3>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                <span style="font-size:0.75rem;color:rgba(255,255,255,0.7)">Lọc so sánh:</span>
-                <input type="date" id="qcFilterFrom" placeholder="Từ ngày"
-                    style="padding:3px 7px;border-radius:6px;border:none;font-size:0.78rem;cursor:pointer"
-                    onchange="applyQCDateFilter()" />
-                <span style="color:rgba(255,255,255,0.6);font-size:0.78rem">→</span>
-                <input type="date" id="qcFilterTo" placeholder="Đến ngày"
-                    style="padding:3px 7px;border-radius:6px;border:none;font-size:0.78rem;cursor:pointer"
-                    onchange="applyQCDateFilter()" />
-                <button class="btn btn-outline btn-sm" onclick="applyQCDateFilter()" style="background:rgba(255,255,255,0.15);color:white;border-color:rgba(255,255,255,0.3)">
-                    🔍 Lọc
-                </button>
-                <button class="btn btn-outline btn-sm" onclick="clearQCFilter()" style="background:transparent;color:rgba(255,255,255,0.6);border-color:rgba(255,255,255,0.2)">✕</button>
+                <span style="font-size:.75rem;color:rgba(255,255,255,.7)" data-i18n="cmp.table.qc.filter">Lọc ngày:</span>
+                <input type="date" id="qcFilterFrom" style="padding:3px 7px;border-radius:6px;border:none;font-size:.78rem;cursor:pointer" onchange="applyQCDateFilter()"/>
+                <span style="color:rgba(255,255,255,.6);font-size:.78rem">→</span>
+                <input type="date" id="qcFilterTo" style="padding:3px 7px;border-radius:6px;border:none;font-size:.78rem;cursor:pointer" onchange="applyQCDateFilter()"/>
+                <button class="btn btn-outline btn-sm" onclick="clearQCFilter()" style="background:transparent;color:rgba(255,255,255,.6);border-color:rgba(255,255,255,.2)">✕</button>
             </div>
         </div>
         <div class="table-scroll" id="qcTableScroll"></div>
-        <div class="pagination-bar" id="qcPgBar" style="display:none">
-            <div class="pagination-info" id="qcPgInfo"></div>
-            <div class="pagination-controls" id="qcPgCtrl"></div>
+        <div class="pg-bar" id="qcPgBar" style="display:none">
+            <span class="pg-info" id="qcPgInfo"></span>
+            <div class="pg-ctrls" id="qcPgCtrl"></div>
         </div>
     </div>
+</div>
 
-    <!-- ── ACTION BAR ── -->
-    <div class="action-bar">
-        <div class="action-bar-left">
-            <button class="btn btn-compare" id="btnCompare" onclick="runComparison()" disabled>
-                ⚖️ Chạy So Sánh
-            </button>
+<!-- ════════════════════════════ PHASE 3 ════════════════════════════ -->
+<div class="phase-header orange">
+    <div class="phase-num">3</div>
+    <div class="phase-title" data-i18n="cmp.phase3.title">⚖️ So sánh Hệ thống vs QC</div>
+    <div class="phase-sub" data-i18n="cmp.phase3.sub">Phát hiện gap / sai lệch giữa 2 nguồn</div>
+</div>
+<div class="phase-body compact">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+            <button class="btn btn-orange" id="btnCompare" onclick="runComparison()" disabled data-i18n="cmp.btn.compare">⚖️ Chạy So Sánh</button>
             <div class="threshold-wrap">
-                <span>Ngưỡng gap:</span>
-                <input type="number" id="gapThreshold" value="5" min="0" max="100" step="1" />
+                <span data-i18n="cmp.label.threshold">Ngưỡng gap:</span>
+                <input type="number" id="gapThreshold" value="5" min="0" max="100" step="1"/>
                 <span>%</span>
             </div>
         </div>
-        <div class="action-bar-right">
-            <button class="btn btn-success btn-sm" id="btnExport" onclick="exportComparison()" disabled>
-                📥 Xuất Excel So Sánh
-            </button>
-        </div>
+        <button class="btn btn-success btn-sm" id="btnExport" onclick="exportComparison()" disabled data-i18n="cmp.btn.export">📥 Xuất Excel So Sánh</button>
+    </div>
+</div>
+
+<div id="cmpDataWrap" style="display:none">
+    <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label" data-i18n="cmp.cmpkpi.total">Tổng cặp</div><div class="kpi-value" id="kpiTotal">—</div><div class="kpi-sub" data-i18n="cmp.cmpkpi.total.sub">matched + unmatched</div></div>
+        <div class="kpi-card"><div class="kpi-label" data-i18n="cmp.cmpkpi.match">✅ Khớp hoàn toàn</div><div class="kpi-value green" id="kpiMatch">—</div><div class="kpi-sub" data-i18n="cmp.cmpkpi.match.sub">Gap = 0 trên mọi metric</div></div>
+        <div class="kpi-card"><div class="kpi-label" data-i18n="cmp.cmpkpi.gap">⚠️ Có gap</div><div class="kpi-value orange" id="kpiGap">—</div><div class="kpi-sub" data-i18n="cmp.cmpkpi.gap.sub">Ít nhất 1 metric lệch</div></div>
+        <div class="kpi-card"><div class="kpi-label" data-i18n="cmp.cmpkpi.unmatched">❌ Chỉ 1 bên</div><div class="kpi-value red" id="kpiUnmatched">—</div><div class="kpi-sub" data-i18n="cmp.cmpkpi.unmatched.sub">Sys-only hoặc QC-only</div></div>
     </div>
 
-    <!-- ── KPI ── -->
-    <div class="kpi-grid" id="kpiSection" style="display:none">
-        <div class="kpi-card">
-            <div class="kpi-label">Tổng cặp so sánh</div>
-            <div class="kpi-value" id="kpiTotal">—</div>
-            <div class="kpi-sub">Total matched + unmatched</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">✅ Khớp hoàn toàn</div>
-            <div class="kpi-value green" id="kpiMatch">—</div>
-            <div class="kpi-sub">Gap = 0 trên tất cả metrics</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">⚠️ Có gap</div>
-            <div class="kpi-value orange" id="kpiGap">—</div>
-            <div class="kpi-sub">Ít nhất 1 metric có gap</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">❌ Không match</div>
-            <div class="kpi-value red" id="kpiUnmatched">—</div>
-            <div class="kpi-sub">Chỉ có ở 1 nguồn</div>
-        </div>
-    </div>
-
-    <!-- ── COMPARISON TABLE ── -->
-    <div class="table-card" id="tableSection" style="display:none">
-        <div class="table-card-header">
-            <h3>
-                ⚖️ Bảng So Sánh Chi Tiết
-                <span class="badge" id="rowBadge">0</span>
-            </h3>
-            <div style="display:flex;gap:8px;align-items:center">
-                <span style="font-size:0.75rem;color:rgba(255,255,255,0.7)">Lọc:</span>
-                <button class="ftab active" onclick="setFilter('all')"     id="ftAll">Tất cả</button>
-                <button class="ftab tab-gap" onclick="setFilter('gap')"   id="ftGap">Có gap</button>
-                <button class="ftab tab-sys" onclick="setFilter('sysonly')" id="ftSys">Chỉ hệ thống</button>
-                <button class="ftab tab-qc"  onclick="setFilter('qconly')"  id="ftQC">Chỉ QC</button>
+    <div class="table-card orange-top">
+        <div class="table-card-h" style="background:linear-gradient(135deg,#c2410c 0%,#ea580c 100%)">
+            <h3><span data-i18n="cmp.table.cmp.title">⚖️ Bảng So Sánh</span> <span class="badge" id="cmpBadge">0</span></h3>
+            <div class="filter-tabs">
+                <button class="ftab active" onclick="setFilter('all')" id="ftAll" data-i18n="cmp.ftab.all">Tất cả</button>
+                <button class="ftab" onclick="setFilter('gap')" id="ftGap" data-i18n="cmp.ftab.gap">⚠️ Có gap</button>
+                <button class="ftab" onclick="setFilter('sysonly')" id="ftSys" data-i18n="cmp.ftab.sysonly">🖥️ Chỉ Sys</button>
+                <button class="ftab" onclick="setFilter('qconly')" id="ftQC" data-i18n="cmp.ftab.qconly">📋 Chỉ QC</button>
             </div>
         </div>
-        <div class="table-scroll" id="tableScroll">
-            <div class="empty-state"><div class="ei">⚖️</div><p>Nhấn "Chạy So Sánh" để xem kết quả.</p></div>
-        </div>
-        <div class="pagination-bar" id="paginationBar" style="display:none">
-            <div class="pagination-info" id="pgInfo"></div>
-            <div class="pagination-controls" id="pgControls"></div>
+        <div class="table-scroll" id="cmpTableScroll"></div>
+        <div class="pg-bar" id="cmpPgBar" style="display:none">
+            <span class="pg-info" id="cmpPgInfo"></span>
+            <div class="pg-ctrls" id="cmpPgCtrl"></div>
         </div>
     </div>
+</div>
 
 </div>
 
@@ -627,18 +338,14 @@
 <script>
 const pathBase = '@Context.Request.PathBase';
 
-/* ── State ─────────────────────────────────────────────────── */
-let sysData      = [];   // from GetDefectReportData
-let qcData       = [];   // parsed from uploaded Excel
-let qcFiltered   = [];   // filtered by date
-let cmpRows      = [];   // merged comparison rows
-let filteredRows = [];   // after filter
-let colMap       = {};   // QC Excel column mapping
-let currentPage  = 1;
-const PAGE_SIZE  = 30;
-let activeFilter = 'all';
+let sysRowsRaw=[], sysData=[], sysDefectTypes=[];
+let qcData=[], qcFiltered=[], cmpRows=[], filteredRows=[];
+let _rawHeaders=[], _rawRows=[], _sheetName='', _rawFiltered=[];
+let colMap={}, activeFilter='all';
+const SYS_PAGE=30; let sysPage=1;
+const QC_PAGE=30; let qcPage=1;
+const CMP_PAGE=30; let cmpPage=1;
 
-/* ── Init ───────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
     const today = new Date(), from = new Date(today);
     from.setDate(today.getDate() - 1);
@@ -646,6 +353,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('fDateFrom').value = fmtDate(from);
     loadFilters();
     setupDropZone();
+});
+
+// Re-render tables when language changes so dynamic content (table headers, source badges) update
+document.addEventListener('langChanged', () => {
+    if (sysRowsRaw.length) renderSystemTable();
+    if (_rawRows.length)   renderQcTable();
+    if (cmpRows.length)    renderCmpTable();
 });
 
 function fmtDate(d) { return d.toISOString().split('T')[0]; }
@@ -676,64 +390,148 @@ function setupDropZone() {
     });
 }
 
-/* ── Step 1: Load System Data ───────────────────────────────── */
+/* ── PHASE 1: System Data ── */
 async function loadSystemData() {
     const df = document.getElementById('fDateFrom').value;
     const dt = document.getElementById('fDateTo').value;
     const pr = document.getElementById('fProcess').value;
     const cl = document.getElementById('fColor').value;
-
-    if (!df || !dt) { showToast('Vui lòng chọn khoảng ngày.', 'error'); return; }
-
-    showLoading(true, 'Đang tải dữ liệu hệ thống...');
+    const pc = document.getElementById('fPartCode').value;
+    if (!df || !dt) { showToast(t('cmp.toast.no_date'), 'error'); return; }
+    showLoading(true, t('cmp.loading.sys'));
     document.getElementById('btnLoadSys').disabled = true;
-
     try {
         const params = new URLSearchParams({ dateFrom: df, dateTo: dt });
         if (pr) params.append('process', pr);
         if (cl) params.append('color', cl);
-
-        const res  = await fetch(`${pathBase}/Production/GetDefectReportData?` + params);
+        if (pc) params.append('productId', pc);
+        const res = await fetch(`${pathBase}/Production/GetDefectReportData?` + params);
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
-        sysData = data.rows || [];
-
-        setStep1Done(sysData.length);
-        checkReadyToCompare();
-        showToast(`Tải xong ${sysData.length} dòng từ hệ thống.`, 'success');
+        sysRowsRaw = data.rows || [];
+        sysDefectTypes = data.defectTypes || [];
+        sysData = sysRowsRaw.map(r => ({
+            date:r.date, partCode:r.partCode, product:r.product, coating:r.coating, process:r.process,
+            inputQty:r.inputQty||0, okQty:r.okQty||0, ngQty:r.ngQty||0, outputQty:r.outputQty||0,
+            defectRate:r.defectRate||0, yieldRate:r.yieldRate||100,
+        }));
+        refreshPartCodeFilter();
+        document.getElementById('sysInfo').innerHTML =
+            `<span class="data-pill pill-sys">${t('cmp.info.loaded', {n: sysRowsRaw.length, from: df, to: dt})}</span>
+             ${pr?` · ${esc(pr)}`:''}${cl?` · ${esc(cl)}`:''}`;
+        sysPage = 1;
+        renderSystemKpi();
+        renderSystemTable();
+        document.getElementById('sysDataWrap').style.display = 'block';
+        checkCompareReady();
+        showToast(t('cmp.toast.load_ok', {n: sysRowsRaw.length}), 'success');
     } catch(e) {
-        showToast('Lỗi tải dữ liệu: ' + e.message, 'error');
+        showToast(t('cmp.toast.load_fail', {msg: e.message}), 'error');
+        console.error(e);
     } finally {
         showLoading(false);
         document.getElementById('btnLoadSys').disabled = false;
     }
 }
 
-function setStep1Done(count) {
-    document.getElementById('step1Num').classList.add('done');
-    document.getElementById('step1Header').classList.add('done');
-    document.getElementById('step1Card').classList.add('done');
-    document.getElementById('step1Status').className = 'step-status done';
-    document.getElementById('step1Status').textContent = `✓ ${count} dòng`;
-    document.getElementById('sysInfo').innerHTML = `
-        <span class="data-pill pill-sys">🖥️ ${count} dòng từ hệ thống</span>
-        &nbsp; từ ${document.getElementById('fDateFrom').value} đến ${document.getElementById('fDateTo').value}`;
+function refreshPartCodeFilter() {
+    const sel = document.getElementById('fPartCode');
+    const cur = sel.value;
+    while (sel.options.length > 1) sel.remove(1);
+    const seen = new Map();
+    sysRowsRaw.forEach(r => { if (r.productId != null && !seen.has(r.productId)) seen.set(r.productId, r.partCode || String(r.productId)); });
+    [...seen.entries()].sort((a,b) => String(a[1]).localeCompare(String(b[1]))).forEach(([v,lbl]) => {
+        sel.insertAdjacentHTML('beforeend', `<option value="${v}">${esc(lbl)}</option>`);
+    });
+    if (cur) sel.value = cur;
 }
 
-/* ── Step 2: Upload QC Excel ────────────────────────────────── */
-function handleFileUpload(input) {
-    if (input.files[0]) processFile(input.files[0]);
+function renderSystemKpi() {
+    if (!sysRowsRaw.length) { ['sysKpiInput','sysKpiNG','sysKpiDef','sysKpiYld'].forEach(id => document.getElementById(id).textContent = '—'); return; }
+    const tI = sysRowsRaw.reduce((s,r) => s+(r.inputQty||0), 0);
+    const tN = sysRowsRaw.reduce((s,r) => s+(r.ngQty   ||0), 0);
+    const tO = sysRowsRaw.reduce((s,r) => s+(r.okQty   ||0), 0);
+    document.getElementById('sysKpiInput').textContent = fmt(tI);
+    document.getElementById('sysKpiNG').textContent    = fmt(tN);
+    document.getElementById('sysKpiDef').textContent   = (tI>0?(tN/tI*100):0).toFixed(1)+'%';
+    document.getElementById('sysKpiYld').textContent   = (tI>0?(tO/tI*100):100).toFixed(1)+'%';
 }
+
+function renderSystemTable() {
+    const wrap  = document.getElementById('sysTableScroll');
+    const pgBar = document.getElementById('sysPgBar');
+    document.getElementById('sysBadge').textContent = sysRowsRaw.length;
+    if (!sysRowsRaw.length) { wrap.innerHTML = `<div class="empty"><div class="ei">📭</div><p>${t('cmp.empty.nodata')}</p></div>`; pgBar.style.display = 'none'; return; }
+    pgBar.style.display = 'flex';
+    const totalPages = Math.ceil(sysRowsRaw.length / SYS_PAGE);
+    const start = (sysPage - 1) * SYS_PAGE;
+    const rows  = sysRowsRaw.slice(start, start + SYS_PAGE);
+
+    // Headers stay trilingual (matches Yield Report design)
+    const fixedCols = [
+        { en:'Date',        cn:'日期',   vn:'Ngày',          w:108 },
+        { en:'Part Code',   cn:'零件代码',vn:'Mã linh kiện', w:92  },
+        { en:'Product',     cn:'产品名称',vn:'Sản phẩm',     w:150,left:true },
+        { en:'SVN Code',    cn:'SVN编码', vn:'Mã SVN',        w:108 },
+        { en:'SVN Name',    cn:'SVN名称', vn:'Tên SVN',       w:240,left:true },
+        { en:'Coating',     cn:'涂层',   vn:'Lớp phủ',       w:108 },
+        { en:'Process',     cn:'工序',   vn:'Quy trình',     w:120,left:true },
+        { en:'Input Qty',   cn:'投入量', vn:'SL đầu vào',    w:78 },
+        { en:'OK Qty',      cn:'良品数', vn:'SL đạt',        w:74 },
+        { en:'NG Qty',      cn:'不良数', vn:'SL lỗi',        w:74 },
+        { en:'Defect Rate', cn:'不良率', vn:'Tỷ lệ lỗi',     w:84 },
+        { en:'Yield Rate',  cn:'良品率', vn:'Tỷ lệ đạt',     w:84 },
+    ];
+    let html = `<table class="dt"><thead><tr class="th-main">`;
+    fixedCols.forEach(c => {
+        html += `<th class="${c.left?'th-left':''}" style="min-width:${c.w}px">
+            <span class="th-en">${c.en}</span><span class="th-cn">${c.cn}</span><span class="th-vn">${c.vn}</span></th>`;
+    });
+    sysDefectTypes.forEach((d, i) => {
+        html += `<th class="th-defect${i===0?' th-defect-first':''}" style="min-width:80px">
+            <span class="th-en">${esc(d.en||'')}</span><span class="th-cn">${esc(d.cn||'')}</span><span class="th-vn">${esc(d.vn||'')}</span></th>`;
+    });
+    html += `</tr></thead><tbody>`;
+    rows.forEach(r => {
+        const rCls = r.defectRate >= 10 ? 'rate-bad' : r.defectRate >= 5 ? 'rate-mid' : 'rate-ok';
+        const yCls = r.yieldRate  <= 90 ? 'rate-bad' : r.yieldRate  <= 95 ? 'rate-mid' : 'rate-ok';
+        html += `<tr>
+            <td style="color:var(--gray-600);font-size:.77rem">${esc(r.date||'')}</td>
+            <td class="td-center" style="font-weight:700;color:var(--denim)">${esc(r.partCode||'—')}</td>
+            <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;color:var(--gray-800)" title="${esc(r.product||'')}">${esc(r.product||'—')}</td>
+            <td class="td-center" style="color:var(--denim);font-weight:600;font-size:.77rem">${esc(r.svnCode||'—')}</td>
+            <td style="color:var(--gray-600);font-size:.77rem;max-width:240px;overflow:hidden;text-overflow:ellipsis" title="${esc(r.svnName||'')}">${esc(r.svnName||'—')}</td>
+            <td class="td-center">${colorBadge(r.coating)}</td>
+            <td style="color:var(--gray-700)">${esc(r.process||'—')}</td>
+            <td class="${r.inputQty>0?'td-num':'td-zero'}">${fmt(r.inputQty)}</td>
+            <td class="${r.okQty>0?'td-num':'td-zero'}" style="color:${r.okQty>0?'var(--success)':''}">${fmt(r.okQty)}</td>
+            <td class="${r.ngQty>0?'td-num':'td-zero'}" style="color:${r.ngQty>0?'var(--danger)':''}">${fmt(r.ngQty)}</td>
+            <td class="td-center"><span class="rate-badge ${rCls}">${(r.defectRate??0).toFixed(1)}%</span></td>
+            <td class="td-center"><span class="rate-badge ${yCls}">${(r.yieldRate??100).toFixed(1)}%</span></td>`;
+        sysDefectTypes.forEach((dt,i) => {
+            const v = r.defects ? (r.defects[dt.en] || 0) : 0;
+            html += `<td class="td-defect${i===0?' td-defect-first':''}${v>0?' td-defect-nz':''}">${v>0?fmt(v):'<span style="color:#e2e8f0">—</span>'}</td>`;
+        });
+        html += `</tr>`;
+    });
+    html += `</tbody></table>`;
+    wrap.innerHTML = html;
+    const s = start+1, e = Math.min(start+SYS_PAGE, sysRowsRaw.length);
+    document.getElementById('sysPgInfo').textContent = t('cmp.pg.showing', {from:s, to:e, total:sysRowsRaw.length});
+    renderPg('sysPgCtrl', sysPage, totalPages, p => { sysPage = p; renderSystemTable(); });
+}
+
+/* ── PHASE 2: QC Excel ── */
+function handleFileUpload(input) { if (input.files[0]) processFile(input.files[0]); }
 
 function readSheetCells(ws) {
     if (!ws['!ref']) return [];
     const range = XLSX.utils.decode_range(ws['!ref']);
-    const out   = [];
+    const out = [];
     for (let R = range.s.r; R <= range.e.r; R++) {
         const row = [];
         for (let C = range.s.c; C <= range.e.c; C++) {
-            const addr = XLSX.utils.encode_cell({r: R, c: C});
-            const cell = ws[addr];
+            const cell = ws[XLSX.utils.encode_cell({r:R,c:C})];
             if (!cell || cell.v == null) { row.push(''); continue; }
             if (cell.t === 'd' || (cell.t === 'n' && cell.z && /[dDmMyY]/.test(String(cell.z)))) {
                 row.push(cell.w || String(cell.v));
@@ -747,203 +545,60 @@ function readSheetCells(ws) {
 }
 
 function processFile(file) {
-    if (!file.name.match(/\.(xlsx|xls)$/i)) {
-        showToast('Chỉ hỗ trợ file .xlsx hoặc .xls', 'error'); return;
-    }
-    showLoading(true, 'Đang đọc file Excel QC...');
+    if (!file.name.match(/\.(xlsx|xls)$/i)) { showToast(t('cmp.toast.bad_ext'), 'error'); return; }
+    showLoading(true, t('cmp.loading.qc'));
     const reader = new FileReader();
     reader.onload = (e) => {
         try {
             const wb = XLSX.read(e.target.result, { type:'array', cellDates:true });
-
             let sheetName = wb.SheetNames[0];
-            for (const n of wb.SheetNames) {
-                if (n.toLowerCase().includes('raw')) { sheetName = n; break; }
-            }
-
-            const ws      = wb.Sheets[sheetName];
+            for (const n of wb.SheetNames) { if (n.toLowerCase().includes('raw')) { sheetName = n; break; } }
+            const ws = wb.Sheets[sheetName];
             const nonEmpty = readSheetCells(ws).filter(r => r.some(c => c !== '' && c != null));
-            if (!nonEmpty.length) {
-                showToast('Sheet không có dữ liệu.', 'error');
-                showLoading(false); return;
-            }
+            if (!nonEmpty.length) { showToast(t('cmp.toast.sheet_empty'), 'error'); showLoading(false); return; }
 
-            _rawHeaders  = nonEmpty[0].map(h => {
-                if (h instanceof Date) return formatDate(h);
-                return String(h ?? '').trim();
-            });
+            _rawHeaders = nonEmpty[0].map(h => h instanceof Date ? formatDate(h) : String(h ?? '').trim());
+            colMap = detectColumns(_rawHeaders);
             _rawRows = nonEmpty.slice(1)
                 .map(r => _rawHeaders.map((_, ci) => String(r[ci] ?? '')))
                 .filter(r => parseRowDate(r[colMap.date ?? 0]));
             _sheetName = sheetName;
 
-            const hdrIdx = 0;
-            colMap = detectColumns(_rawHeaders);
-            const rowsDates = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], {header:1, defval:'', cellDates:true});
+            const rowsDates = XLSX.utils.sheet_to_json(ws, {header:1, defval:'', cellDates:true});
             const nonEmptyD = rowsDates.filter(r => r.some(c => c !== '' && c != null));
-            qcData = parseQCRows(nonEmptyD, hdrIdx, colMap);
+            qcData = parseQCRows(nonEmptyD, 0, colMap);
             qcFiltered = [...qcData];
 
             document.getElementById('uploadZone').classList.add('has-file');
             document.getElementById('uploadFilename').textContent = `📄 ${file.name}`;
-            document.getElementById('qcParseResult').style.display = 'block';
             document.getElementById('qcParseInfo').innerHTML =
-                `<span class="data-pill pill-qc">📋 ${_rawRows.length} dòng · ${_rawHeaders.length} cột · sheet "${sheetName}"</span>`;
+                `<span class="data-pill pill-qc">${t('cmp.upload.parsed', {n: _rawRows.length, c: _rawHeaders.length, s: sheetName})}</span>`;
 
-            renderRawTable();
-            setStep2Done(_rawRows.length);
-            checkReadyToCompare();
-            showToast(`Đọc xong ${_rawRows.length} dòng, ${_rawHeaders.length} cột.`, 'success');
+            _rawFiltered = [..._rawRows];
+            qcPage = 1;
+            const df = document.getElementById('fDateFrom').value;
+            const dt = document.getElementById('fDateTo').value;
+            if (df) document.getElementById('qcFilterFrom').value = df;
+            if (dt) document.getElementById('qcFilterTo').value = dt;
+            if (df || dt) applyQCDateFilter();
+
+            renderQcKpi();
+            renderQcTable();
+            document.getElementById('qcDataWrap').style.display = 'block';
+            checkCompareReady();
+            document.getElementById('qcDataWrap').scrollIntoView({behavior:'smooth',block:'start'});
+            showToast(t('cmp.toast.parse_ok', {n: _rawRows.length, c: _rawHeaders.length}), 'success');
         } catch(err) {
-            showToast('Lỗi: ' + err.message, 'error');
+            showToast(t('cmp.toast.parse_fail', {msg: err.message}), 'error');
             console.error(err);
         } finally { showLoading(false); }
     };
     reader.readAsArrayBuffer(file);
 }
 
-let _rawHeaders = [];
-let _rawRows    = [];
-let _sheetName  = '';
-let _rawPage    = 1;
-const RAW_PAGE  = 30;
-let _rawFiltered = [];
-
 function formatDate(d) {
     const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     return `${String(d.getUTCDate()).padStart(2,'0')}-${M[d.getUTCMonth()]}-${d.getUTCFullYear()}`;
-}
-
-function renderRawTable() {
-    _rawFiltered = [..._rawRows];
-    _rawPage = 1;
-    document.getElementById('qcTableSection').style.display = 'block';
-    document.getElementById('qcTableTitle').textContent = _sheetName;
-    document.getElementById('qcTableBadge').textContent = _rawRows.length;
-    const df = document.getElementById('fDateFrom').value;
-    const dt = document.getElementById('fDateTo').value;
-    if (df) document.getElementById('qcFilterFrom').value = df;
-    if (dt) document.getElementById('qcFilterTo').value   = dt;
-    if (df || dt) applyQCDateFilter();
-    else renderRawPage();
-    document.getElementById('qcTableSection').scrollIntoView({behavior:'smooth',block:'start'});
-}
-
-function applyQCDateFilter() {
-    const df = document.getElementById('qcFilterFrom').value;
-    const dt = document.getElementById('qcFilterTo').value;
-    const dateColIdx = colMap.date ?? 0;
-
-    if (!df && !dt) {
-        _rawFiltered = [..._rawRows];
-    } else {
-        const from = df ? new Date(df + 'T00:00:00') : null;
-        const to   = dt ? new Date(dt + 'T23:59:59') : null;
-        _rawFiltered = _rawRows.filter(r => {
-            const cellVal = r[dateColIdx];
-            const d = parseRowDate(String(cellVal));
-            if (!d) return true;
-            if (from && d < from) return false;
-            if (to   && d > to)   return false;
-            return true;
-        });
-        qcFiltered = qcData.filter(r => {
-            const d = parseRowDate(r.date);
-            if (!d) return true;
-            if (from && d < from) return false;
-            if (to   && d > to)   return false;
-            return true;
-        });
-    }
-    _rawPage = 1;
-    document.getElementById('qcTableBadge').textContent = _rawFiltered.length;
-    renderRawPage();
-    showToast(`Lọc: ${_rawFiltered.length} / ${_rawRows.length} dòng.`, 'info');
-}
-
-function clearQCFilter() {
-    document.getElementById('qcFilterFrom').value = '';
-    document.getElementById('qcFilterTo').value   = '';
-    _rawFiltered = [..._rawRows];
-    qcFiltered   = [...qcData];
-    _rawPage = 1;
-    document.getElementById('qcTableBadge').textContent = _rawRows.length;
-    renderRawPage();
-}
-
-function renderRawPage() {
-    const wrap  = document.getElementById('qcTableScroll');
-    const pgBar = document.getElementById('qcPgBar');
-    const total = _rawFiltered.length;
-
-    if (!total) {
-        wrap.innerHTML = `<div class="empty-state"><div class="ei">📭</div>
-            <p>Không có dữ liệu. Thử nhấn ✕ xóa bộ lọc.</p></div>`;
-        pgBar.style.display = 'none'; return;
-    }
-    pgBar.style.display = 'flex';
-    const totalPages = Math.ceil(total / RAW_PAGE);
-    const start = (_rawPage - 1) * RAW_PAGE;
-    const slice = _rawFiltered.slice(start, start + RAW_PAGE);
-
-    let html = `<table class="cmp-table"><thead><tr class="th-main">
-        ${_rawHeaders.map((h,i) => {
-            const isPurple = i >= 11;
-            return `<th style="min-width:90px${isPurple?';background:#5b21b6':''}; white-space:normal; line-height:1.3">
-                ${esc(h)||('Col '+(i+1))}
-            </th>`;
-        }).join('')}
-    </tr></thead><tbody>`;
-
-    slice.forEach(r => {
-        html += '<tr>' + r.map((v, ci) => {
-            if (v === '' || v == null) return `<td class="td-zero">—</td>`;
-            const s = String(v);
-            const cleanS = s.replace(/,/g,'').trim();
-            const n = parseFloat(cleanS);
-            const isNum = !isNaN(n) && /^-?[\d,\.%]+$/.test(cleanS);
-            if (isNum) {
-                if (ci === 9) {
-                    const pct = n > 1 ? n : n*100;
-                    const cls = pct>=10?'rate-bad':pct>=5?'rate-mid':'rate-ok';
-                    return `<td class="td-center"><span class="rate-badge ${cls}">${pct.toFixed(1)}%</span></td>`;
-                }
-                if (ci === 10) {
-                    const pct = n > 1 ? n : n*100;
-                    const cls = pct<=90?'rate-bad':pct<=95?'rate-mid':'rate-ok';
-                    return `<td class="td-center"><span class="rate-badge ${cls}">${pct.toFixed(1)}%</span></td>`;
-                }
-                if (ci >= 11) {
-                    return n > 0
-                        ? `<td class="td-num" style="color:#6d28d9;font-weight:700">${fmt(n)}</td>`
-                        : `<td class="td-zero">—</td>`;
-                }
-                return `<td class="td-num">${fmt(n)}</td>`;
-            }
-            if (ci === 1) return `<td class="td-center" style="font-weight:700;color:var(--denim)">${esc(s)}</td>`;
-            if (ci === 0) return `<td style="color:var(--gray-600);font-size:0.78rem">${esc(s)}</td>`;
-            return `<td>${esc(s)}</td>`;
-        }).join('') + '</tr>';
-    });
-    html += '</tbody></table>';
-    wrap.innerHTML = html;
-
-    const s2 = start+1, e2 = Math.min(start+RAW_PAGE, total);
-    document.getElementById('qcPgInfo').textContent = `Hiển thị ${s2}–${e2} / ${total} dòng`;
-    const ctrl = document.getElementById('qcPgCtrl');
-    ctrl.innerHTML = '';
-    const addBtn = (lbl,pg,dis,act) => {
-        const b = document.createElement('button');
-        b.className = 'pg-btn'+(act?' active':'');
-        b.textContent = lbl; b.disabled = dis;
-        b.onclick = () => { _rawPage = pg; renderRawPage(); };
-        ctrl.appendChild(b);
-    };
-    addBtn('«',1,_rawPage===1,false);
-    addBtn('‹',_rawPage-1,_rawPage===1,false);
-    for (let p=Math.max(1,_rawPage-2);p<=Math.min(totalPages,_rawPage+2);p++) addBtn(p,p,false,p===_rawPage);
-    addBtn('›',_rawPage+1,_rawPage===totalPages,false);
-    addBtn('»',totalPages,_rawPage===totalPages,false);
 }
 
 function detectColumns(headers) {
@@ -952,17 +607,15 @@ function detectColumns(headers) {
         return idx >= 0 ? idx : null;
     };
     return {
-        date       : find(['date','ngày','日期']),
-        partCode   : find(['part code','part_code','mã linh','零件']),
-        product    : find(['product','sản phẩm','产品']),
-        coating    : find(['coating','lớp phủ','涂层']),
-        process    : find(['process','quy trình','công đoạn','工序']),
-        inputQty   : find(['input qty','input_qty','sl đầu vào','投入量']),
-        okQty      : find(['ok qty','ok_qty','sl đạt','良品数']),
-        ngQty      : find(['ng qty','ng_qty','sl lỗi','不良数']),
-        outputQty  : find(['output qty','output_qty','sl đầu ra','产出量']),
-        defectRate : find(['defect rate','tỷ lệ lỗi','不良率']),
-        yieldRate  : find(['yield rate','tỷ lệ đạt','良品率']),
+        date:find(['date','ngày','日期']), partCode:find(['part code','part_code','mã linh','零件']),
+        product:find(['product','sản phẩm','产品']), coating:find(['coating','lớp phủ','涂层']),
+        process:find(['process','quy trình','công đoạn','工序']),
+        inputQty:find(['input qty','input_qty','sl đầu vào','投入量']),
+        okQty:find(['ok qty','ok_qty','sl đạt','良品数']),
+        ngQty:find(['ng qty','ng_qty','sl lỗi','不良数']),
+        outputQty:find(['output qty','output_qty','sl đầu ra','产出量']),
+        defectRate:find(['defect rate','tỷ lệ lỗi','不良率']),
+        yieldRate:find(['yield rate','tỷ lệ đạt','良品率']),
     };
 }
 
@@ -983,18 +636,14 @@ function parseRowDate(str) {
 }
 
 function parseQCRows(rows, hdrIdx, cm) {
-    const result  = [];
-    const headers = rows[hdrIdx].map(h => String(h).trim());
-
+    const result = [];
     for (let i = hdrIdx + 1; i < rows.length; i++) {
         const r = rows[i];
         if (!r || r.every(c => c === '' || c == null)) continue;
-
         const dateRaw = cm.date != null ? r[cm.date] : '';
         const dateStr = normalizeDate(dateRaw);
         if (!dateStr) continue;
-
-        const get    = (idx) => idx != null ? String(r[idx] ?? '').trim() : '';
+        const get = (idx) => idx != null ? String(r[idx] ?? '').trim() : '';
         const getNum = (idx) => {
             if (idx == null) return 0;
             const v = r[idx];
@@ -1002,36 +651,14 @@ function parseQCRows(rows, hdrIdx, cm) {
             const n = parseFloat(String(v).replace(/,/g,'').replace('%',''));
             return isNaN(n) ? 0 : n;
         };
-
-        let defRate = getNum(cm.defectRate);
-        let yldRate = getNum(cm.yieldRate);
-        if (defRate <= 1 && defRate > 0) defRate = defRate * 100;
-        if (yldRate <= 1 && yldRate > 0) yldRate = yldRate * 100;
-
-        const fixedIdxs = new Set(Object.values(cm).filter(v => v != null));
-        const extra = {};
-        headers.forEach((h, ci) => {
-            if (!fixedIdxs.has(ci) && h && r[ci] !== '' && r[ci] != null) {
-                const v = r[ci];
-                const n = parseFloat(String(v).replace(/,/g,''));
-                extra[h] = isNaN(n) ? String(v) : n;
-            }
-        });
-
+        let defRate = getNum(cm.defectRate), yldRate = getNum(cm.yieldRate);
+        if (defRate <= 1 && defRate > 0) defRate *= 100;
+        if (yldRate <= 1 && yldRate > 0) yldRate *= 100;
         result.push({
-            date      : dateStr,
-            rawDate   : dateRaw,
-            partCode  : get(cm.partCode).toUpperCase(),
-            product   : get(cm.product),
-            coating   : get(cm.coating) || '-',
-            process   : get(cm.process),
-            inputQty  : getNum(cm.inputQty),
-            okQty     : getNum(cm.okQty),
-            ngQty     : getNum(cm.ngQty),
-            outputQty : getNum(cm.outputQty),
-            defectRate: +defRate.toFixed(1),
-            yieldRate : +yldRate.toFixed(1),
-            extra,
+            date:dateStr, partCode:get(cm.partCode).toUpperCase(), product:get(cm.product),
+            coating:get(cm.coating) || '-', process:get(cm.process),
+            inputQty:getNum(cm.inputQty), okQty:getNum(cm.okQty), ngQty:getNum(cm.ngQty),
+            outputQty:getNum(cm.outputQty), defectRate:+defRate.toFixed(1), yieldRate:+yldRate.toFixed(1),
         });
     }
     return result;
@@ -1058,169 +685,178 @@ function normalizeDate(raw) {
     return s;
 }
 
-function setStep2Done(count) {
-    document.getElementById('step2Num').classList.add('done');
-    document.getElementById('step2Header').classList.add('done');
-    document.getElementById('step2Card').classList.add('done');
-    document.getElementById('step2Status').className = 'step-status done';
-    document.getElementById('step2Status').textContent = `✓ ${count} dòng`;
+function renderQcKpi() {
+    if (!qcData.length) { ['qcKpiRows','qcKpiInput','qcKpiNG','qcKpiDef'].forEach(id => document.getElementById(id).textContent = '—'); return; }
+    const tI = qcData.reduce((s,r) => s+(r.inputQty||0), 0);
+    const tN = qcData.reduce((s,r) => s+(r.ngQty   ||0), 0);
+    document.getElementById('qcKpiRows').textContent = fmt(qcData.length);
+    document.getElementById('qcKpiInput').textContent = fmt(tI);
+    document.getElementById('qcKpiNG').textContent    = fmt(tN);
+    document.getElementById('qcKpiDef').textContent   = (tI>0?(tN/tI*100):0).toFixed(1)+'%';
 }
 
-function checkReadyToCompare() {
+function applyQCDateFilter() {
+    const df = document.getElementById('qcFilterFrom').value;
+    const dt = document.getElementById('qcFilterTo').value;
+    const dateColIdx = colMap.date ?? 0;
+    if (!df && !dt) { _rawFiltered = [..._rawRows]; qcFiltered = [...qcData]; }
+    else {
+        const from = df ? new Date(df + 'T00:00:00') : null;
+        const to   = dt ? new Date(dt + 'T23:59:59') : null;
+        _rawFiltered = _rawRows.filter(r => {
+            const d = parseRowDate(String(r[dateColIdx]));
+            if (!d) return true;
+            if (from && d < from) return false;
+            if (to   && d > to)   return false;
+            return true;
+        });
+        qcFiltered = qcData.filter(r => {
+            const d = parseRowDate(r.date);
+            if (!d) return true;
+            if (from && d < from) return false;
+            if (to   && d > to)   return false;
+            return true;
+        });
+    }
+    qcPage = 1;
+    document.getElementById('qcBadge').textContent = _rawFiltered.length;
+    renderQcTable();
+}
+
+function clearQCFilter() {
+    document.getElementById('qcFilterFrom').value = '';
+    document.getElementById('qcFilterTo').value   = '';
+    _rawFiltered = [..._rawRows];
+    qcFiltered   = [...qcData];
+    qcPage = 1;
+    document.getElementById('qcBadge').textContent = _rawRows.length;
+    renderQcTable();
+}
+
+function renderQcTable() {
+    const wrap  = document.getElementById('qcTableScroll');
+    const pgBar = document.getElementById('qcPgBar');
+    const total = _rawFiltered.length;
+    document.getElementById('qcTableTitle').textContent = _sheetName;
+    if (!total) { wrap.innerHTML = `<div class="empty"><div class="ei">📭</div><p>${t('cmp.empty.nodata')}</p></div>`; pgBar.style.display = 'none'; return; }
+    pgBar.style.display = 'flex';
+    const totalPages = Math.ceil(total / QC_PAGE);
+    const start = (qcPage - 1) * QC_PAGE;
+    const slice = _rawFiltered.slice(start, start + QC_PAGE);
+    let html = `<table class="dt"><thead><tr class="th-main">
+        ${_rawHeaders.map((h,i) => {
+            const isPurple = i >= 11;
+            return `<th style="min-width:90px${isPurple?';background:#5b21b6':''};white-space:normal;line-height:1.3">${esc(h)||('Col '+(i+1))}</th>`;
+        }).join('')}
+    </tr></thead><tbody>`;
+    slice.forEach(r => {
+        html += '<tr>' + r.map((v, ci) => {
+            if (v === '' || v == null) return `<td class="td-zero">—</td>`;
+            const s = String(v);
+            const cleanS = s.replace(/,/g,'').trim();
+            const n = parseFloat(cleanS);
+            const isNum = !isNaN(n) && /^-?[\d,\.%]+$/.test(cleanS);
+            if (isNum) {
+                if (ci === colMap.defectRate) { const pct = n > 1 ? n : n*100; const cls = pct>=10?'rate-bad':pct>=5?'rate-mid':'rate-ok'; return `<td class="td-center"><span class="rate-badge ${cls}">${pct.toFixed(1)}%</span></td>`; }
+                if (ci === colMap.yieldRate)  { const pct = n > 1 ? n : n*100; const cls = pct<=90?'rate-bad':pct<=95?'rate-mid':'rate-ok'; return `<td class="td-center"><span class="rate-badge ${cls}">${pct.toFixed(1)}%</span></td>`; }
+                const defectStartIdx = Math.max(...Object.values(colMap).filter(v => v != null)) + 1;
+                if (ci >= defectStartIdx) return n > 0 ? `<td class="td-num" style="color:#6d28d9;font-weight:700">${fmt(n)}</td>` : `<td class="td-zero">—</td>`;
+                return `<td class="td-num">${fmt(n)}</td>`;
+            }
+            if (ci === 1) return `<td class="td-center" style="font-weight:700;color:var(--denim)">${esc(s)}</td>`;
+            if (ci === 0) return `<td style="color:var(--gray-600);font-size:.77rem">${esc(s)}</td>`;
+            return `<td>${esc(s)}</td>`;
+        }).join('') + '</tr>';
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+    const s2 = start+1, e2 = Math.min(start+QC_PAGE, total);
+    document.getElementById('qcPgInfo').textContent = t('cmp.pg.showing', {from:s2, to:e2, total});
+    renderPg('qcPgCtrl', qcPage, totalPages, p => { qcPage = p; renderQcTable(); });
+}
+
+function checkCompareReady() {
     document.getElementById('btnCompare').disabled = !(sysData.length > 0 && qcData.length > 0);
 }
 
-/* ── Step 3: Run Comparison ─────────────────────────────────── */
-function runComparison() {
-    showLoading(true, 'Đang so sánh dữ liệu...');
-    setTimeout(() => {
-        try {
-            cmpRows = mergeData(sysData, _rawFiltered.length > 0 ? qcFiltered : qcData);
-            setActiveFilter('all');
-            renderKPI();
-            document.getElementById('kpiSection').style.display  = 'grid';
-            document.getElementById('tableSection').style.display = 'block';
-            document.getElementById('btnExport').disabled = false;
-            showToast(`So sánh xong ${cmpRows.length} dòng.`, 'success');
-        } catch(e) {
-            showToast('Lỗi so sánh: ' + e.message, 'error');
-        } finally {
-            showLoading(false);
-        }
-    }, 50);
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   FIX: Normalize helpers — strip CJK chars, lowercase, no spaces
-   Key = date + partCode + coating  (process removed from key)
-   Fallback match: date + partCode only (when coating missing/differs)
-   ═══════════════════════════════════════════════════════════════ */
-
-/**
- * Strip CJK/Chinese characters and parenthetical blocks so that
- * "Planter Base (花盆底座)" and "Planter Base" compare as equal.
- */
-function stripCJK(s) {
-    return String(s || '')
-        // Remove parentheses containing CJK characters
-        .replace(/[\(\（][^\)\）]*[\u3000-\u9fff\uff00-\uffef][^\)\）]*[\)\）]/g, '')
-        // Remove any remaining CJK unicode ranges
-        .replace(/[\u3000-\u9fff\uff00-\uffef\u2e80-\u2eff\u31c0-\u31ef]/g, '')
-        .trim();
-}
-
-/** Normalize coating: lowercase + strip spaces/hyphens/underscores */
-function normalizeCoating(c) {
-    return String(c || '').toLowerCase().replace(/[\s\-_]/g, '').trim();
-}
-
-/** Normalize part code: uppercase, trim */
-function normalizePartCode(p) {
-    return String(p || '').toUpperCase().trim();
-}
-
-/**
- * Primary match key: date + partCode + normalizedCoating
- * (Process intentionally excluded — QC and System often use different names)
- */
+/* ── PHASE 3: Comparison ── */
+function normalizeCoating(c) { return String(c||'').toLowerCase().replace(/[\s\-_]/g, '').trim(); }
+function normalizePartCode(p) { return String(p||'').toUpperCase().trim(); }
 function makeKey(row) {
-    const d  = normalizeDate(row.date || '');
-    const p  = normalizePartCode(row.partCode);
+    const d = normalizeDate(row.date || '');
+    const p = normalizePartCode(row.partCode);
     const ct = normalizeCoating(row.coating);
     return `${d}||${p}||${ct}`;
 }
-
-/** Fallback key: date + partCode only (when coating is blank or mismatched) */
 function makePartKey(row) {
     const d = normalizeDate(row.date || '');
     const p = normalizePartCode(row.partCode);
     return `${d}||${p}`;
 }
 
-/* ── Merge / Match ───────────────────────────────────────────── */
+function runComparison() {
+    showLoading(true, t('cmp.loading.cmp'));
+    setTimeout(() => {
+        try {
+            cmpRows = mergeData(sysData, qcFiltered.length > 0 ? qcFiltered : qcData);
+            setFilter('all');
+            renderCmpKpi();
+            document.getElementById('cmpDataWrap').style.display = 'block';
+            document.getElementById('btnExport').disabled = false;
+            document.getElementById('cmpDataWrap').scrollIntoView({behavior:'smooth',block:'start'});
+            showToast(t('cmp.toast.cmp_ok', {n: cmpRows.length}), 'success');
+        } catch(e) {
+            showToast(t('cmp.toast.cmp_fail', {msg: e.message}), 'error');
+            console.error(e);
+        } finally { showLoading(false); }
+    }, 50);
+}
+
 function mergeData(sys, qc) {
-    // ── Primary maps: date + partCode + coating ──
     const sysMap = new Map();
-    sys.forEach(r => {
-        const k = makeKey(r);
-        if (!sysMap.has(k)) sysMap.set(k, []);
-        sysMap.get(k).push(r);
-    });
-
+    sys.forEach(r => { const k = makeKey(r); if (!sysMap.has(k)) sysMap.set(k, []); sysMap.get(k).push(r); });
     const qcMap = new Map();
-    qc.forEach(r => {
-        const k = makeKey(r);
-        if (!qcMap.has(k)) qcMap.set(k, []);
-        qcMap.get(k).push(r);
-    });
-
-    // ── Fallback map: date + partCode (for coating-mismatch cases) ──
+    qc.forEach(r => { const k = makeKey(r); if (!qcMap.has(k)) qcMap.set(k, []); qcMap.get(k).push(r); });
     const sysByPart = new Map();
-    sys.forEach(r => {
-        const k = makePartKey(r);
-        if (!sysByPart.has(k)) sysByPart.set(k, []);
-        sysByPart.get(k).push(r);
-    });
-
-    const allKeys     = new Set([...sysMap.keys(), ...qcMap.keys()]);
-    const result      = [];
-    const usedSysRows = new Set();  // prevent double-counting in fallback
-
+    sys.forEach(r => { const k = makePartKey(r); if (!sysByPart.has(k)) sysByPart.set(k, []); sysByPart.get(k).push(r); });
+    const allKeys = new Set([...sysMap.keys(), ...qcMap.keys()]);
+    const result = []; const usedSys = new Set();
     allKeys.forEach(k => {
-        let sysRows    = sysMap.get(k) || [];
-        const qcRows   = qcMap.get(k) || [];
-
-        // Fallback: QC has rows but primary coating key found nothing in Sys
+        let sysRows = sysMap.get(k) || [];
+        const qcRows = qcMap.get(k) || [];
         if (qcRows.length > 0 && sysRows.length === 0) {
             const [datePart, partPart] = k.split('||');
-            const fallKey = `${datePart}||${partPart}`;
-            const candidates = (sysByPart.get(fallKey) || [])
-                .filter(r => !usedSysRows.has(r));
+            const candidates = (sysByPart.get(`${datePart}||${partPart}`) || []).filter(r => !usedSys.has(r));
             if (candidates.length > 0) sysRows = candidates;
         }
-
         const maxLen = Math.max(sysRows.length, qcRows.length);
         for (let i = 0; i < maxLen; i++) {
-            const s = sysRows[i] || null;
-            const q = qcRows[i]  || null;
-            if (s) usedSysRows.add(s);
-
+            const s = sysRows[i] || null; const q = qcRows[i] || null;
+            if (s) usedSys.add(s);
             const base = s || q;
             result.push({
-                key     : k + '_' + i,
-                date    : base.date,
-                partCode: base.partCode,
-                product : s?.product || q?.product || '',
-                coating : s?.coating || q?.coating || '-',
-                process : s?.process || q?.process || '',
-                source  : s && q ? 'both' : s ? 'sys' : 'qc',
-                sys     : s,
-                qc      : q,
-                gaps    : computeGaps(s, q),
+                key:k+'_'+i, date:base.date, partCode:base.partCode,
+                product:s?.product || q?.product || '', coating:s?.coating || q?.coating || '-',
+                process:s?.process || q?.process || '',
+                source:s && q ? 'both' : s ? 'sys' : 'qc',
+                sys:s, qc:q, gaps:computeGaps(s, q),
             });
         }
     });
-
-    return result.sort((a,b) => {
-        if (a.date < b.date) return 1; if (a.date > b.date) return -1;
-        return a.partCode.localeCompare(b.partCode);
-    });
+    return result.sort((a,b) => { if (a.date < b.date) return 1; if (a.date > b.date) return -1; return a.partCode.localeCompare(b.partCode); });
 }
 
 function computeGaps(s, q) {
     if (!s || !q) return null;
     const gap = (sv, qv) => {
         const diff = (sv||0) - (qv||0);
-        const pct  = sv > 0 ? Math.abs(diff) / sv * 100 : (diff !== 0 ? 100 : 0);
+        const pct = sv > 0 ? Math.abs(diff)/sv*100 : (diff !== 0 ? 100 : 0);
         return { diff, pct: +pct.toFixed(1), sv: sv||0, qv: qv||0 };
     };
     return {
-        inputQty  : gap(s.inputQty,   q.inputQty),
-        okQty     : gap(s.okQty,      q.okQty),
-        ngQty     : gap(s.ngQty,      q.ngQty),
-        outputQty : gap(s.outputQty,  q.outputQty),
-        defectRate: gap(s.defectRate, q.defectRate),
-        yieldRate : gap(s.yieldRate,  q.yieldRate),
+        inputQty:gap(s.inputQty, q.inputQty), okQty:gap(s.okQty, q.okQty),
+        ngQty:gap(s.ngQty, q.ngQty), outputQty:gap(s.outputQty, q.outputQty),
+        defectRate:gap(s.defectRate, q.defectRate), yieldRate:gap(s.yieldRate, q.yieldRate),
     };
 }
 
@@ -1230,222 +866,125 @@ function hasSignificantGap(row) {
     return Object.values(row.gaps).some(g => g.pct > thr || Math.abs(g.diff) > 0);
 }
 
-/* ── KPI ────────────────────────────────────────────────────── */
-function renderKPI() {
-    const total     = cmpRows.length;
+function renderCmpKpi() {
+    const total = cmpRows.length;
     const unmatched = cmpRows.filter(r => r.source !== 'both').length;
-    const matched   = cmpRows.filter(r => r.source === 'both');
-    const withGap   = matched.filter(r => hasSignificantGap(r)).length;
-    const perfect   = matched.length - withGap;
-
-    document.getElementById('kpiTotal').textContent     = total;
-    document.getElementById('kpiMatch').textContent     = perfect;
-    document.getElementById('kpiGap').textContent       = withGap;
+    const matched = cmpRows.filter(r => r.source === 'both');
+    const withGap = matched.filter(r => hasSignificantGap(r)).length;
+    const perfect = matched.length - withGap;
+    document.getElementById('kpiTotal').textContent = total;
+    document.getElementById('kpiMatch').textContent = perfect;
+    document.getElementById('kpiGap').textContent = withGap;
     document.getElementById('kpiUnmatched').textContent = unmatched;
 }
 
-/* ── Filter ─────────────────────────────────────────────────── */
 function setFilter(f) {
-    setActiveFilter(f);
-}
-
-function setActiveFilter(f) {
     activeFilter = f;
     if (f === 'all')          filteredRows = [...cmpRows];
     else if (f === 'gap')     filteredRows = cmpRows.filter(r => r.source === 'both' && hasSignificantGap(r));
     else if (f === 'sysonly') filteredRows = cmpRows.filter(r => r.source === 'sys');
     else if (f === 'qconly')  filteredRows = cmpRows.filter(r => r.source === 'qc');
-
-    document.getElementById('ftAll').classList.toggle('active', f === 'all');
-    document.getElementById('ftGap').classList.toggle('active', f === 'gap');
-    document.getElementById('ftSys').classList.toggle('active', f === 'sysonly');
-    document.getElementById('ftQC').classList.toggle('active',  f === 'qconly');
-
-    currentPage = 1;
-    renderTable();
+    ['ftAll','ftGap','ftSys','ftQC'].forEach(id => document.getElementById(id).classList.remove('active'));
+    document.getElementById(f === 'all' ? 'ftAll' : f === 'gap' ? 'ftGap' : f === 'sysonly' ? 'ftSys' : 'ftQC').classList.add('active');
+    cmpPage = 1;
+    renderCmpTable();
 }
 
-/* ── Table ───────────────────────────────────────────────────── */
-function renderTable() {
-    const wrap  = document.getElementById('tableScroll');
-    const pgBar = document.getElementById('paginationBar');
-    const badge = document.getElementById('rowBadge');
-
-    badge.textContent = filteredRows.length;
-
-    if (!filteredRows.length) {
-        wrap.innerHTML = `<div class="empty-state"><div class="ei">🔍</div><p>Không có dòng nào phù hợp bộ lọc.</p></div>`;
-        pgBar.style.display = 'none';
-        return;
-    }
+function renderCmpTable() {
+    const wrap = document.getElementById('cmpTableScroll');
+    const pgBar = document.getElementById('cmpPgBar');
+    document.getElementById('cmpBadge').textContent = filteredRows.length;
+    if (!filteredRows.length) { wrap.innerHTML = `<div class="empty"><div class="ei">🔍</div><p>${t('cmp.empty.filter')}</p></div>`; pgBar.style.display = 'none'; return; }
     pgBar.style.display = 'flex';
-
-    const totalPages = Math.ceil(filteredRows.length / PAGE_SIZE);
-    const start      = (currentPage - 1) * PAGE_SIZE;
-    const rows       = filteredRows.slice(start, start + PAGE_SIZE);
-    const thr        = parseFloat(document.getElementById('gapThreshold').value) || 5;
+    const totalPages = Math.ceil(filteredRows.length / CMP_PAGE);
+    const start = (cmpPage - 1) * CMP_PAGE;
+    const rows = filteredRows.slice(start, start + CMP_PAGE);
+    const thr = parseFloat(document.getElementById('gapThreshold').value) || 5;
 
     const gapBadge = (g, isRate) => {
-        if (!g) return `<span class="gap-badge gap-na">N/A</span>`;
-        const diff = g.diff;
-        const sign = diff > 0 ? '+' : diff < 0 ? '' : '';
-        const label = isRate
-            ? `${sign}${diff.toFixed(1)}%`
-            : `${sign}${fmt(diff)}`;
-        const cls = diff === 0 ? 'gap-0' : g.pct > thr ? 'gap-high' : 'gap-low';
-        return `<span class="gap-badge ${cls}">${label}</span>`;
+        if (!g) return `<span class="gap-badge gap-na">${t('cmp.gap.na')}</span>`;
+        const sign = g.diff > 0 ? '+' : g.diff < 0 ? '' : '';
+        const lbl = isRate ? `${sign}${g.diff.toFixed(1)}%` : `${sign}${fmt(g.diff)}`;
+        const cls = g.diff === 0 ? 'gap-0' : g.pct > thr ? 'gap-high' : 'gap-low';
+        return `<span class="gap-badge ${cls}">${lbl}</span>`;
     };
-
-    const valCell = (v, isRate, hasVal) => {
-        if (!hasVal) return `<td class="td-zero td-center">—</td>`;
+    const valCell = (v, isRate, has) => {
+        if (!has) return `<td class="td-zero td-center">—</td>`;
         if (isRate) return `<td class="td-num">${v?.toFixed(1) ?? '—'}%</td>`;
         return `<td class="${v > 0 ? 'td-num' : 'td-zero'}">${fmt(v)}</td>`;
     };
 
-    let html = `<table class="cmp-table">
+    let html = `<table class="dt">
     <thead>
         <tr class="th-group">
-            <th class="thg-identity" colspan="6">Thông tin sản phẩm</th>
-            <th class="thg-input"    colspan="3">Input Qty / SL đầu vào</th>
-            <th class="thg-ok"       colspan="3">OK Qty / SL đạt</th>
-            <th class="thg-ng"       colspan="3">NG Qty / SL lỗi</th>
-            <th class="thg-rate"     colspan="3">Defect Rate / Tỷ lệ lỗi</th>
-            <th class="thg-rate"     colspan="3">Yield Rate / Tỷ lệ đạt</th>
+            <th class="thg-identity" colspan="6">${t('cmp.thg.identity')}</th>
+            <th class="thg-input"    colspan="3">${t('cmp.thg.input')}</th>
+            <th class="thg-ok"       colspan="3">${t('cmp.thg.ok')}</th>
+            <th class="thg-ng"       colspan="3">${t('cmp.thg.ng')}</th>
+            <th class="thg-rate"     colspan="3">${t('cmp.thg.defrate')}</th>
+            <th class="thg-rate"     colspan="3">${t('cmp.thg.yldrate')}</th>
         </tr>
         <tr class="th-main">
-            <th class="th-left"  style="min-width:100px">Date<br><small style="opacity:0.7;font-weight:400">Ngày</small></th>
-            <th                  style="min-width:80px">Part Code</th>
-            <th class="th-left"  style="min-width:160px">Product</th>
-            <th                  style="min-width:110px">Coating</th>
-            <th class="th-left"  style="min-width:120px">Process</th>
-            <th                  style="min-width:70px">Source</th>
-            <!-- Input -->
-            <th class="th-metric-sys" style="min-width:74px">Sys</th>
-            <th class="th-metric-qc"  style="min-width:74px">QC</th>
-            <th class="th-metric-gap" style="min-width:70px">Gap</th>
-            <!-- OK -->
-            <th class="th-metric-sys" style="min-width:74px">Sys</th>
-            <th class="th-metric-qc"  style="min-width:74px">QC</th>
-            <th class="th-metric-gap" style="min-width:70px">Gap</th>
-            <!-- NG -->
-            <th class="th-metric-sys" style="min-width:74px">Sys</th>
-            <th class="th-metric-qc"  style="min-width:74px">QC</th>
-            <th class="th-metric-gap" style="min-width:70px">Gap</th>
-            <!-- Defect Rate -->
-            <th class="th-metric-sys" style="min-width:74px">Sys</th>
-            <th class="th-metric-qc"  style="min-width:74px">QC</th>
-            <th class="th-metric-gap" style="min-width:70px">Gap</th>
-            <!-- Yield Rate -->
-            <th class="th-metric-sys" style="min-width:74px">Sys</th>
-            <th class="th-metric-qc"  style="min-width:74px">QC</th>
-            <th class="th-metric-gap" style="min-width:70px">Gap</th>
+            <th class="th-left"  style="min-width:100px">${t('cmp.th.date')}</th>
+            <th                  style="min-width:80px">${t('cmp.th.partcode')}</th>
+            <th class="th-left"  style="min-width:160px">${t('cmp.th.product')}</th>
+            <th                  style="min-width:110px">${t('cmp.th.coating')}</th>
+            <th class="th-left"  style="min-width:120px">${t('cmp.th.process')}</th>
+            <th                  style="min-width:70px">${t('cmp.th.source')}</th>
+            <th class="th-metric-sys" style="min-width:74px">Sys</th><th class="th-metric-qc" style="min-width:74px">QC</th><th class="th-metric-gap" style="min-width:70px">Gap</th>
+            <th class="th-metric-sys" style="min-width:74px">Sys</th><th class="th-metric-qc" style="min-width:74px">QC</th><th class="th-metric-gap" style="min-width:70px">Gap</th>
+            <th class="th-metric-sys" style="min-width:74px">Sys</th><th class="th-metric-qc" style="min-width:74px">QC</th><th class="th-metric-gap" style="min-width:70px">Gap</th>
+            <th class="th-metric-sys" style="min-width:74px">Sys</th><th class="th-metric-qc" style="min-width:74px">QC</th><th class="th-metric-gap" style="min-width:70px">Gap</th>
+            <th class="th-metric-sys" style="min-width:74px">Sys</th><th class="th-metric-qc" style="min-width:74px">QC</th><th class="th-metric-gap" style="min-width:70px">Gap</th>
         </tr>
     </thead><tbody>`;
-
     rows.forEach(r => {
-        const s   = r.sys;
-        const q   = r.qc;
-        const g   = r.gaps;
+        const s = r.sys, q = r.qc, g = r.gaps;
         const cls = r.source === 'sys' ? 'row-sys-only' : r.source === 'qc' ? 'row-qc-only' : '';
-        const srcBadge = r.source === 'both'
-            ? `<span class="src-badge src-both">Both</span>`
-            : r.source === 'sys'
-            ? `<span class="src-badge src-sys">Sys only</span>`
-            : `<span class="src-badge src-qc">QC only</span>`;
-
+        const srcB = r.source === 'both'
+            ? `<span class="src-badge src-both">${t('cmp.src.both')}</span>`
+            : r.source === 'sys' ? `<span class="src-badge src-sys">${t('cmp.src.sys')}</span>` : `<span class="src-badge src-qc">${t('cmp.src.qc')}</span>`;
         html += `<tr class="${cls}">
-            <td style="color:var(--gray-600);font-size:0.76rem">${esc(r.date||'')}</td>
+            <td style="color:var(--gray-600);font-size:.76rem">${esc(r.date||'')}</td>
             <td class="td-center" style="font-weight:700;color:var(--denim)">${esc(r.partCode||'—')}</td>
             <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis" title="${esc(r.product||'')}">${esc(r.product||'—')}</td>
             <td class="td-center">${colorBadge(r.coating)}</td>
             <td style="color:var(--gray-700)">${esc(r.process||'—')}</td>
-            <td class="td-center">${srcBadge}</td>
-            ${valCell(s?.inputQty, false, !!s)}
-            ${valCell(q?.inputQty, false, !!q)}
-            <td class="td-center">${gapBadge(g?.inputQty, false)}</td>
-            ${valCell(s?.okQty, false, !!s)}
-            ${valCell(q?.okQty, false, !!q)}
-            <td class="td-center">${gapBadge(g?.okQty, false)}</td>
-            ${valCell(s?.ngQty, false, !!s)}
-            ${valCell(q?.ngQty, false, !!q)}
-            <td class="td-center">${gapBadge(g?.ngQty, false)}</td>
-            ${valCell(s?.defectRate, true, !!s)}
-            ${valCell(q?.defectRate, true, !!q)}
-            <td class="td-center">${gapBadge(g?.defectRate, true)}</td>
-            ${valCell(s?.yieldRate, true, !!s)}
-            ${valCell(q?.yieldRate, true, !!q)}
-            <td class="td-center">${gapBadge(g?.yieldRate, true)}</td>
+            <td class="td-center">${srcB}</td>
+            ${valCell(s?.inputQty,false,!!s)}${valCell(q?.inputQty,false,!!q)}<td class="td-center">${gapBadge(g?.inputQty,false)}</td>
+            ${valCell(s?.okQty,false,!!s)}${valCell(q?.okQty,false,!!q)}<td class="td-center">${gapBadge(g?.okQty,false)}</td>
+            ${valCell(s?.ngQty,false,!!s)}${valCell(q?.ngQty,false,!!q)}<td class="td-center">${gapBadge(g?.ngQty,false)}</td>
+            ${valCell(s?.defectRate,true,!!s)}${valCell(q?.defectRate,true,!!q)}<td class="td-center">${gapBadge(g?.defectRate,true)}</td>
+            ${valCell(s?.yieldRate,true,!!s)}${valCell(q?.yieldRate,true,!!q)}<td class="td-center">${gapBadge(g?.yieldRate,true)}</td>
         </tr>`;
     });
-
     html += `</tbody></table>`;
     wrap.innerHTML = html;
-    renderPagination(filteredRows.length, totalPages);
+    const s2 = start+1, e2 = Math.min(start+CMP_PAGE, filteredRows.length);
+    document.getElementById('cmpPgInfo').textContent = t('cmp.pg.showing', {from:s2, to:e2, total:filteredRows.length});
+    renderPg('cmpPgCtrl', cmpPage, totalPages, p => { cmpPage = p; renderCmpTable(); });
 }
 
-function renderPagination(total, totalPages) {
-    const s = (currentPage-1)*PAGE_SIZE+1, e = Math.min(currentPage*PAGE_SIZE, total);
-    document.getElementById('pgInfo').textContent = `Hiển thị ${s}–${e} / ${total} dòng`;
-    const ctrl = document.getElementById('pgControls');
-    ctrl.innerHTML = '';
-    const add = (lbl,pg,dis,act) => {
-        const b = document.createElement('button');
-        b.className='pg-btn'+(act?' active':'');
-        b.textContent=lbl; b.disabled=dis;
-        b.onclick=()=>{ currentPage=pg; renderTable(); };
-        ctrl.appendChild(b);
-    };
-    add('«',1,currentPage===1,false);
-    add('‹',currentPage-1,currentPage===1,false);
-    for (let p=Math.max(1,currentPage-2); p<=Math.min(totalPages,currentPage+2); p++) add(p,p,false,p===currentPage);
-    add('›',currentPage+1,currentPage===totalPages,false);
-    add('»',totalPages,currentPage===totalPages,false);
-}
-
-/* ── Export Comparison Excel ─────────────────────────────────── */
 function exportComparison() {
-    if (!cmpRows.length) { showToast('Không có dữ liệu để xuất.', 'error'); return; }
-
-    const wb  = XLSX.utils.book_new();
-    const df  = document.getElementById('fDateFrom').value || 'all';
-    const dt  = document.getElementById('fDateTo').value   || fmtDate(new Date());
-
-    const hdrs = [
-        'Date','Part Code','Product','Coating','Process','Source',
-        'Input Qty (Sys)','Input Qty (QC)','Input Qty Gap',
-        'OK Qty (Sys)','OK Qty (QC)','OK Qty Gap',
-        'NG Qty (Sys)','NG Qty (QC)','NG Qty Gap',
-        'Defect Rate (Sys)','Defect Rate (QC)','Defect Rate Gap',
-        'Yield Rate (Sys)','Yield Rate (QC)','Yield Rate Gap',
-    ];
-
-    const aoa = [];
-    aoa.push([`QC vs SYSTEM COMPARISON — Kỳ: ${df} → ${dt}`]);
-    aoa.push([`Xuất lúc: ${new Date().toLocaleString('vi-VN')}`]);
-    aoa.push([]);
-    aoa.push(hdrs);
-
+    if (!cmpRows.length) { showToast(t('cmp.toast.export_nodata'), 'error'); return; }
+    const wb = XLSX.utils.book_new();
+    const df = document.getElementById('fDateFrom').value || 'all';
+    const dt = document.getElementById('fDateTo').value   || fmtDate(new Date());
+    const hdrs = ['Date','Part Code','Product','Coating','Process','Source','Input Qty (Sys)','Input Qty (QC)','Input Qty Gap','OK Qty (Sys)','OK Qty (QC)','OK Qty Gap','NG Qty (Sys)','NG Qty (QC)','NG Qty Gap','Defect Rate (Sys)','Defect Rate (QC)','Defect Rate Gap','Yield Rate (Sys)','Yield Rate (QC)','Yield Rate Gap'];
+    const aoa = [[`QC vs SYSTEM COMPARISON — ${df} → ${dt}`], [`Generated: ${new Date().toLocaleString('vi-VN')}`], [], hdrs];
     filteredRows.forEach(r => {
         const s = r.sys, q = r.qc, g = r.gaps;
         aoa.push([
             r.date, r.partCode, r.product, r.coating, r.process, r.source.toUpperCase(),
-            s?.inputQty  ?? '', q?.inputQty  ?? '', g?.inputQty?.diff  ?? '',
-            s?.okQty     ?? '', q?.okQty     ?? '', g?.okQty?.diff     ?? '',
-            s?.ngQty     ?? '', q?.ngQty     ?? '', g?.ngQty?.diff     ?? '',
-            s?.defectRate!= null ? s.defectRate/100 : '', q?.defectRate != null ? q.defectRate/100 : '', g?.defectRate?.diff != null ? g.defectRate.diff/100 : '',
-            s?.yieldRate != null ? s.yieldRate/100  : '', q?.yieldRate  != null ? q.yieldRate/100  : '', g?.yieldRate?.diff  != null ? g.yieldRate.diff/100  : '',
+            s?.inputQty ?? '', q?.inputQty ?? '', g?.inputQty?.diff ?? '',
+            s?.okQty ?? '', q?.okQty ?? '', g?.okQty?.diff ?? '',
+            s?.ngQty ?? '', q?.ngQty ?? '', g?.ngQty?.diff ?? '',
+            s?.defectRate != null ? s.defectRate/100 : '', q?.defectRate != null ? q.defectRate/100 : '', g?.defectRate?.diff != null ? g.defectRate.diff/100 : '',
+            s?.yieldRate != null ? s.yieldRate/100 : '',   q?.yieldRate != null ? q.yieldRate/100 : '', g?.yieldRate?.diff != null ? g.yieldRate.diff/100 : '',
         ]);
     });
-
     const ws = XLSX.utils.aoa_to_sheet(aoa);
-    ws['!cols'] = [
-        {wch:14},{wch:10},{wch:24},{wch:14},{wch:18},{wch:10},
-        {wch:14},{wch:14},{wch:12},
-        {wch:12},{wch:12},{wch:12},
-        {wch:12},{wch:12},{wch:12},
-        {wch:16},{wch:16},{wch:14},
-        {wch:16},{wch:16},{wch:14},
-    ];
+    ws['!cols'] = [{wch:14},{wch:10},{wch:24},{wch:14},{wch:18},{wch:10},{wch:14},{wch:14},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:16},{wch:16},{wch:14},{wch:16},{wch:16},{wch:14}];
     for (let ri = 4; ri < 4 + filteredRows.length; ri++) {
         [15,16,17,18,19,20].forEach(ci => {
             const ref = XLSX.utils.encode_cell({r:ri,c:ci});
@@ -1454,65 +993,48 @@ function exportComparison() {
     }
     ws['!autofilter'] = { ref: `A4:U4` };
     XLSX.utils.book_append_sheet(wb, ws, 'Comparison');
-
-    const thr = parseFloat(document.getElementById('gapThreshold').value) || 5;
-    const bothRows    = cmpRows.filter(r => r.source === 'both');
-    const withGapRows = bothRows.filter(r => hasSignificantGap(r));
-    const metrics = ['inputQty','okQty','ngQty','defectRate','yieldRate'];
-    const sumAoa = [
-        ['COMPARISON SUMMARY',''],
-        [`Kỳ: ${df} → ${dt}`,''],
-        [`Ngưỡng gap: ${thr}%`,''],
-        [],
-        ['Tổng cặp',         cmpRows.length],
-        ['Matched (both)',   bothRows.length],
-        ['Chỉ Sys',         cmpRows.filter(r=>r.source==='sys').length],
-        ['Chỉ QC',          cmpRows.filter(r=>r.source==='qc').length],
-        ['Khớp hoàn toàn',  bothRows.length - withGapRows.length],
-        ['Có gap',          withGapRows.length],
-        [],
-        ['Metric','Max Gap (Sys-QC)','Avg Gap'],
-    ];
-    metrics.forEach(m => {
-        const diffs = bothRows.map(r => r.gaps?.[m]?.diff ?? 0).filter(v => v !== 0);
-        sumAoa.push([
-            m,
-            diffs.length ? Math.max(...diffs.map(Math.abs)).toFixed(1) : 0,
-            diffs.length ? (diffs.reduce((a,b)=>a+Math.abs(b),0)/diffs.length).toFixed(1) : 0
-        ]);
-    });
-    const ws2 = XLSX.utils.aoa_to_sheet(sumAoa);
-    ws2['!cols'] = [{wch:24},{wch:18},{wch:14}];
-    XLSX.utils.book_append_sheet(wb, ws2, 'Summary');
-
     const stamp = new Date().toISOString().slice(0,10);
     XLSX.writeFile(wb, `QC_Comparison_${df}_${dt}_${stamp}.xlsx`);
-    showToast(`Xuất xong ${filteredRows.length} dòng.`, 'success');
+    showToast(t('cmp.toast.export_ok', {n: filteredRows.length}), 'success');
 }
 
-/* ── Helpers ─────────────────────────────────────────────────── */
+function renderPg(elId, page, totalPages, onClick) {
+    const ctrl = document.getElementById(elId); ctrl.innerHTML = '';
+    const add = (l,p,d,a) => {
+        const b = document.createElement('button');
+        b.className = 'pg-btn' + (a?' active':'');
+        b.textContent = l; b.disabled = d;
+        b.onclick = () => onClick(p);
+        ctrl.appendChild(b);
+    };
+    add('«',1,page===1,false); add('‹',page-1,page===1,false);
+    for (let p=Math.max(1,page-2);p<=Math.min(totalPages,page+2);p++) add(p,p,false,p===page);
+    add('›',page+1,page===totalPages,false); add('»',totalPages,page===totalPages,false);
+}
+
 function colorBadge(c) {
     if (!c||c==='-') return `<span class="color-tag color-none">—</span>`;
-    const l=c.toLowerCase();
+    const l = c.toLowerCase();
     if (l.includes('matt')||l.includes('black')) return `<span class="color-tag color-matte">${esc(c)}</span>`;
     if (l.includes('chrome'))                    return `<span class="color-tag color-chrome">${esc(c)}</span>`;
     if (l.includes('brass'))                     return `<span class="color-tag color-brass">${esc(c)}</span>`;
     if (l.includes('beige'))                     return `<span class="color-tag color-beige">${esc(c)}</span>`;
     return `<span class="color-tag color-other">${esc(c)}</span>`;
 }
-function fmt(n)    { return n==null||n===0?'0':Number(n).toLocaleString('en-US'); }
-function esc(s)    { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function fmt(n) { return n==null||n===0?'0':Number(n).toLocaleString('en-US'); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function showLoading(v, msg) {
-    document.getElementById('loadingOverlay').classList.toggle('show',v);
+    document.getElementById('loading').classList.toggle('show', v);
     if (msg) document.getElementById('loadingMsg').textContent = msg;
 }
 function showToast(msg, type='info') {
-    const el=document.getElementById('toast');
-    el.className='toast '+type;
-    document.getElementById('toastIcon').textContent=type==='success'?'✅':type==='error'?'❌':'ℹ️';
-    document.getElementById('toastMsg').textContent=msg;
+    const el = document.getElementById('toast');
+    el.className = 'toast ' + type;
+    document.getElementById('toastIcon').textContent = type==='success'?'✅':type==='error'?'❌':'ℹ️';
+    document.getElementById('toastMsg').textContent  = msg;
     el.classList.add('show');
-    setTimeout(()=>el.classList.remove('show'), 3500);
+    setTimeout(() => el.classList.remove('show'), 3500);
 }
 </script>
 }

@@ -6,6 +6,8 @@ const I18N = {
         'nav.report'  : 'Báo cáo sản lượng',
         'nav.reportsvn' : 'Báo cáo tổng quan',
         'nav.defect.report' : 'Báo cáo tỷ lệ đạt',
+        'nav.defect.upload' : 'Tải lên dữ liệu lỗi',
+        'nav.defect.comparation' : 'So sánh dữ liệu',
         
         /* ── Create page ── */
         'create.title'        : 'Nhập Dữ Liệu Sản lượng Sản Xuất',
@@ -287,15 +289,240 @@ const I18N = {
         'dr.export.ok'         : 'Đã xuất {n} dòng ra Excel.',
         'dr.export.nodata'     : 'Không có dữ liệu để xuất.',
         'dr.pg.showing'        : 'Hiển thị {from}–{to} / {total} dòng',
+        
+        'nav.compare'           : 'So sánh QC',
+        
+        /* ── Page header ── */
+        'cmp.page.title'        : '⚖️ Dữ Liệu QC vs Dữ Liệu Hệ thống',
+        'cmp.page.subtitle'     : 'Đối chiếu Yield Report (hệ thống) với file Excel QC để phát hiện gap.',
+        
+        /* ── Phase 1: System ── */
+        'cmp.phase1.title'      : '📊 Dữ liệu Hệ thống (Yield Report)',
+        'cmp.phase1.sub'        : 'Tải dữ liệu từ DB → xem trước khi compare',
+        'cmp.label.from'        : '📅 Từ ngày',
+        'cmp.label.to'          : '📅 Đến ngày',
+        'cmp.label.process'     : '⚙️ Công đoạn',
+        'cmp.label.coating'     : '🎨 Lớp phủ',
+        'cmp.label.partcode'    : '🔩 Part Code',
+        'cmp.all'               : '-- Tất cả --',
+        'cmp.btn.load_sys'      : '📡 Tải Hệ thống',
+        'cmp.info.init'         : '⏳ Chọn khoảng ngày và nhấn "Tải Hệ thống" để xem dữ liệu Yield Report.',
+        'cmp.info.loaded'       : '🖥️ {n} dòng · {from} → {to}',
+        
+        /* ── Phase 1 KPIs ── */
+        'cmp.kpi.input'         : '📦 Tổng Input',
+        'cmp.kpi.input.sub'     : 'SL đầu vào',
+        'cmp.kpi.ng'            : '❌ Tổng NG',
+        'cmp.kpi.ng.sub'        : 'SL lỗi',
+        'cmp.kpi.defrate'       : '📉 Defect Rate',
+        'cmp.kpi.defrate.sub'   : 'Tỷ lệ lỗi tổng',
+        'cmp.kpi.yield'         : '✅ Yield Rate',
+        'cmp.kpi.yield.sub'     : 'Tỷ lệ đạt tổng',
+        
+        /* ── Phase 1 Table ── */
+        'cmp.table.sys.title'   : '🖥️ System Yield Report',
+        'cmp.table.sys.sub'     : 'Dữ liệu từ Production/GetDefectReportData',
+        
+        /* ── Phase 2: QC ── */
+        'cmp.phase2.title'      : '📂 Dữ liệu QC (Excel Upload)',
+        'cmp.phase2.sub'        : 'Upload file QC → hiển thị toàn bộ thông tin',
+        'cmp.upload.title'      : 'Kéo thả hoặc click để chọn file Excel QC',
+        'cmp.upload.sub'        : 'Cùng format với Yield Report · Tự động nhận diện cột',
+        'cmp.upload.empty'      : '⏳ Chưa upload file.',
+        'cmp.upload.parsed'     : '📋 {n} dòng · {c} cột · sheet "{s}"',
+        
+        /* ── Phase 2 KPIs ── */
+        'cmp.qckpi.rows'        : '📋 Tổng dòng',
+        'cmp.qckpi.rows.sub'    : 'trong Excel',
+        'cmp.qckpi.input.sub'   : 'từ QC',
+        'cmp.qckpi.ng.sub'      : 'từ QC',
+        'cmp.qckpi.defrate.sub' : 'trung bình QC',
+        
+        /* ── Phase 2 Table ── */
+        'cmp.table.qc.title'    : '📋 QC Excel Data',
+        'cmp.table.qc.filter'   : 'Lọc ngày:',
+        
+        /* ── Phase 3: Compare ── */
+        'cmp.phase3.title'      : '⚖️ So sánh Hệ thống vs QC',
+        'cmp.phase3.sub'        : 'Phát hiện gap / sai lệch giữa 2 nguồn',
+        'cmp.btn.compare'       : '⚖️ Chạy So Sánh',
+        'cmp.label.threshold'   : 'Ngưỡng gap:',
+        'cmp.btn.export'        : '📥 Xuất Excel So Sánh',
+        
+        /* ── Phase 3 KPIs ── */
+        'cmp.cmpkpi.total'      : 'Tổng cặp',
+        'cmp.cmpkpi.total.sub'  : 'matched + unmatched',
+        'cmp.cmpkpi.match'      : '✅ Khớp hoàn toàn',
+        'cmp.cmpkpi.match.sub'  : 'Gap = 0 trên mọi metric',
+        'cmp.cmpkpi.gap'        : '⚠️ Có gap',
+        'cmp.cmpkpi.gap.sub'    : 'Ít nhất 1 metric lệch',
+        'cmp.cmpkpi.unmatched'  : '❌ Chỉ 1 bên',
+        'cmp.cmpkpi.unmatched.sub': 'Sys-only hoặc QC-only',
+        
+        /* ── Phase 3 Table ── */
+        'cmp.table.cmp.title'   : '⚖️ Bảng So Sánh',
+        'cmp.ftab.all'          : 'Tất cả',
+        'cmp.ftab.gap'          : '⚠️ Có gap',
+        'cmp.ftab.sysonly'      : '🖥️ Chỉ Sys',
+        'cmp.ftab.qconly'       : '📋 Chỉ QC',
+        
+        /* ── Comparison table column groups & headers ── */
+        'cmp.thg.identity'      : 'Thông tin sản phẩm',
+        'cmp.thg.input'         : 'Input Qty / SL đầu vào',
+        'cmp.thg.ok'            : 'OK Qty / SL đạt',
+        'cmp.thg.ng'            : 'NG Qty / SL lỗi',
+        'cmp.thg.defrate'       : 'Defect Rate / Tỷ lệ lỗi',
+        'cmp.thg.yldrate'       : 'Yield Rate / Tỷ lệ đạt',
+        'cmp.th.date'           : 'Date',
+        'cmp.th.partcode'       : 'Part Code',
+        'cmp.th.product'        : 'Product',
+        'cmp.th.coating'        : 'Coating',
+        'cmp.th.process'        : 'Process',
+        'cmp.th.source'         : 'Source',
+        
+        /* ── Source badges ── */
+        'cmp.src.both'          : 'Both',
+        'cmp.src.sys'           : 'Sys only',
+        'cmp.src.qc'            : 'QC only',
+        'cmp.gap.na'            : 'N/A',
+        
+        /* ── Loading / Toast ── */
+        'cmp.loading.sys'       : 'Đang tải dữ liệu hệ thống...',
+        'cmp.loading.qc'        : 'Đang đọc file Excel QC...',
+        'cmp.loading.cmp'       : 'Đang so sánh...',
+        'cmp.toast.no_date'     : 'Vui lòng chọn khoảng ngày.',
+        'cmp.toast.load_ok'     : '✅ Tải xong {n} dòng từ hệ thống.',
+        'cmp.toast.load_fail'   : '❌ Lỗi tải: {msg}',
+        'cmp.toast.parse_ok'    : '✅ Đọc xong {n} dòng, {c} cột.',
+        'cmp.toast.parse_fail'  : '❌ Lỗi đọc file: {msg}',
+        'cmp.toast.sheet_empty' : 'Sheet không có dữ liệu.',
+        'cmp.toast.bad_ext'     : 'Chỉ hỗ trợ file .xlsx hoặc .xls',
+        'cmp.toast.cmp_ok'      : '✅ So sánh xong {n} dòng.',
+        'cmp.toast.cmp_fail'    : '❌ Lỗi so sánh: {msg}',
+        'cmp.toast.export_ok'   : '✅ Xuất xong {n} dòng.',
+        'cmp.toast.export_nodata': 'Không có dữ liệu để xuất.',
+        
+        /* ── Empty states ── */
+        'cmp.empty.nodata'      : 'Không có dữ liệu',
+        'cmp.empty.filter'      : 'Không có dòng nào phù hợp bộ lọc.',
+        'cmp.pg.showing'        : 'Hiển thị {from}–{to} / {total} dòng',
+        
     },
     
     en: {
+        
+        'nav.compare'           : 'QC Compare',
+        
+        'cmp.page.title'        : '⚖️ QC Data vs System Data',
+        'cmp.page.subtitle'     : 'Reconcile system Yield Report against QC Excel file to detect gaps.',
+        
+        'cmp.phase1.title'      : '📊 System Data (Yield Report)',
+        'cmp.phase1.sub'        : 'Load from DB → review before compare',
+        'cmp.label.from'        : '📅 From',
+        'cmp.label.to'          : '📅 To',
+        'cmp.label.process'     : '⚙️ Process',
+        'cmp.label.coating'     : '🎨 Coating',
+        'cmp.label.partcode'    : '🔩 Part Code',
+        'cmp.all'               : '-- All --',
+        'cmp.btn.load_sys'      : '📡 Load System',
+        'cmp.info.init'         : '⏳ Pick a date range and click "Load System" to view Yield Report data.',
+        'cmp.info.loaded'       : '🖥️ {n} rows · {from} → {to}',
+        
+        'cmp.kpi.input'         : '📦 Total Input',
+        'cmp.kpi.input.sub'     : 'Input Qty',
+        'cmp.kpi.ng'            : '❌ Total NG',
+        'cmp.kpi.ng.sub'        : 'Defect Qty',
+        'cmp.kpi.defrate'       : '📉 Defect Rate',
+        'cmp.kpi.defrate.sub'   : 'Overall',
+        'cmp.kpi.yield'         : '✅ Yield Rate',
+        'cmp.kpi.yield.sub'     : 'Overall',
+        
+        'cmp.table.sys.title'   : '🖥️ System Yield Report',
+        'cmp.table.sys.sub'     : 'Data from Production/GetDefectReportData',
+        
+        'cmp.phase2.title'      : '📂 QC Data (Excel Upload)',
+        'cmp.phase2.sub'        : 'Upload QC file → show all info',
+        'cmp.upload.title'      : 'Drag-drop or click to select QC Excel file',
+        'cmp.upload.sub'        : 'Same format as Yield Report · Auto column detection',
+        'cmp.upload.empty'      : '⏳ No file uploaded yet.',
+        'cmp.upload.parsed'     : '📋 {n} rows · {c} cols · sheet "{s}"',
+        
+        'cmp.qckpi.rows'        : '📋 Total Rows',
+        'cmp.qckpi.rows.sub'    : 'in Excel',
+        'cmp.qckpi.input.sub'   : 'from QC',
+        'cmp.qckpi.ng.sub'      : 'from QC',
+        'cmp.qckpi.defrate.sub' : 'QC average',
+        
+        'cmp.table.qc.title'    : '📋 QC Excel Data',
+        'cmp.table.qc.filter'   : 'Date filter:',
+        
+        'cmp.phase3.title'      : '⚖️ Compare System vs QC',
+        'cmp.phase3.sub'        : 'Detect gaps / discrepancies between 2 sources',
+        'cmp.btn.compare'       : '⚖️ Run Comparison',
+        'cmp.label.threshold'   : 'Gap threshold:',
+        'cmp.btn.export'        : '📥 Export Comparison',
+        
+        'cmp.cmpkpi.total'      : 'Total Pairs',
+        'cmp.cmpkpi.total.sub'  : 'matched + unmatched',
+        'cmp.cmpkpi.match'      : '✅ Perfect Match',
+        'cmp.cmpkpi.match.sub'  : 'Gap = 0 on every metric',
+        'cmp.cmpkpi.gap'        : '⚠️ Has Gap',
+        'cmp.cmpkpi.gap.sub'    : 'At least 1 metric differs',
+        'cmp.cmpkpi.unmatched'  : '❌ One side only',
+        'cmp.cmpkpi.unmatched.sub': 'Sys-only or QC-only',
+        
+        'cmp.table.cmp.title'   : '⚖️ Comparison Table',
+        'cmp.ftab.all'          : 'All',
+        'cmp.ftab.gap'          : '⚠️ Has gap',
+        'cmp.ftab.sysonly'      : '🖥️ Sys only',
+        'cmp.ftab.qconly'       : '📋 QC only',
+        
+        'cmp.thg.identity'      : 'Product Identity',
+        'cmp.thg.input'         : 'Input Qty',
+        'cmp.thg.ok'            : 'OK Qty',
+        'cmp.thg.ng'            : 'NG Qty',
+        'cmp.thg.defrate'       : 'Defect Rate',
+        'cmp.thg.yldrate'       : 'Yield Rate',
+        'cmp.th.date'           : 'Date',
+        'cmp.th.partcode'       : 'Part Code',
+        'cmp.th.product'        : 'Product',
+        'cmp.th.coating'        : 'Coating',
+        'cmp.th.process'        : 'Process',
+        'cmp.th.source'         : 'Source',
+        
+        'cmp.src.both'          : 'Both',
+        'cmp.src.sys'           : 'Sys only',
+        'cmp.src.qc'            : 'QC only',
+        'cmp.gap.na'            : 'N/A',
+        
+        'cmp.loading.sys'       : 'Loading system data...',
+        'cmp.loading.qc'        : 'Reading QC Excel file...',
+        'cmp.loading.cmp'       : 'Comparing...',
+        'cmp.toast.no_date'     : 'Please select a date range.',
+        'cmp.toast.load_ok'     : '✅ Loaded {n} rows from system.',
+        'cmp.toast.load_fail'   : '❌ Load error: {msg}',
+        'cmp.toast.parse_ok'    : '✅ Parsed {n} rows, {c} cols.',
+        'cmp.toast.parse_fail'  : '❌ File parse error: {msg}',
+        'cmp.toast.sheet_empty' : 'Sheet is empty.',
+        'cmp.toast.bad_ext'     : 'Only .xlsx or .xls supported.',
+        'cmp.toast.cmp_ok'      : '✅ Compared {n} rows.',
+        'cmp.toast.cmp_fail'    : '❌ Comparison error: {msg}',
+        'cmp.toast.export_ok'   : '✅ Exported {n} rows.',
+        'cmp.toast.export_nodata': 'No data to export.',
+        
+        'cmp.empty.nodata'      : 'No data',
+        'cmp.empty.filter'      : 'No rows match the current filter.',
+        'cmp.pg.showing'        : 'Showing {from}–{to} of {total} rows',
+        
         /* ── Nav ── */
         'nav.create'  : 'Create',
         'nav.history' : 'History',
         'nav.report'  : 'Report',
         'nav.reportsvn' : 'Overview',
         'nav.defect.report' : 'Yield Report',
+        'nav.defect.upload' : 'Upload Defect',
+        'nav.defect.comparation' : 'Comparation',
+        
         
         /* ── Create page ── */
         'create.title'        : 'Production Data Entry',
