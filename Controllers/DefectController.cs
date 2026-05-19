@@ -131,19 +131,89 @@ namespace ItalisaTools.Controllers
         }
 
         // ── POST: Save batch of production records ───────────────────────────
+
         [HttpPost]
-        public async Task<IActionResult> SaveBatch([FromBody] List<SVN_Italisa_Production> records)
+        public async Task<IActionResult> SaveBatch([FromBody] List<ProductionBatchDto>? records)
         {
-            if (records == null || !records.Any())
-                return BadRequest("No records.");
+            try
+            {
+                // 1. Kiểm tra input
+                if (records == null)
+                    return BadRequest("records is null — JSON body không deserialize được.");
+                if (!records.Any())
+                    return BadRequest("No records.");
 
-            await _context.SVN_Italisa_Production.AddRangeAsync(records);
-            await _context.SaveChangesAsync();
+                // 2. Kiểm tra DbSet
+                if (_context.SVN_Italisa_Production_ByExcel == null)
+                    return StatusCode(500, "DbSet SVN_Italisa_Production_ByExcel is null — kiểm tra ApplicationDbContext.");
 
-            try { await _context.Database.ExecuteSqlRawAsync("EXEC SVN_Sync_Production_By_Hour_ITA"); }
-            catch { /* non-critical */ }
+                // 3. Map DTO → Entity
+                var entities = new List<SVN_Italisa_Production_ByExcel>();
+                for (int i = 0; i < records.Count; i++)
+                {
+                    var r = records[i];
+                    if (r == null)
+                    {
+                        Console.WriteLine($"[SaveBatch] records[{i}] is null — bỏ qua");
+                        continue;
+                    }
 
-            return Ok(new { saved = records.Count });
+                    entities.Add(new SVN_Italisa_Production_ByExcel
+                    {
+                        process       = r.process,
+                        product_qty   = r.product_qty,
+                        product_id    = r.product_id,
+                        color         = r.color,
+                        vendor        = r.vendor,
+                        type_value    = r.type_value,
+                        defect_name   = r.defect_name,
+                        date_finished = DateTime.TryParse(r.date_finished, out var dt) ? dt : DateTime.Now,
+                        description   = r.description,
+                        image_path    = r.image_path,
+                    });
+                }
+
+                if (!entities.Any())
+                    return BadRequest("Không có bản ghi hợp lệ sau khi map.");
+
+                // 4. Save
+                await _context.SVN_Italisa_Production_ByExcel.AddRangeAsync(entities);
+                await _context.SaveChangesAsync();
+
+                try { await _context.Database.ExecuteSqlRawAsync("EXEC SVN_Sync_Production_By_Hour_ITA"); }
+                catch (Exception syncEx) { Console.WriteLine($"[SaveBatch] Sync warning: {syncEx.Message}"); }
+
+                return Ok(new { saved = entities.Count });
+            }
+            catch (Exception ex)
+            {
+                // Log toàn bộ stack để xác định đúng dòng lỗi
+                Console.WriteLine($"[SaveBatch] ERROR: {ex.Message}");
+                Console.WriteLine($"[SaveBatch] INNER: {ex.InnerException?.Message}");
+                Console.WriteLine($"[SaveBatch] STACK: {ex.StackTrace}");
+                return StatusCode(500, new
+                {
+                    error      = ex.Message,
+                    inner      = ex.InnerException?.Message,
+                    stackTrace = ex.StackTrace
+                });
+            }
         }
+
+        // DTO khớp chính xác với JSON payload từ JS
+        public class ProductionBatchDto
+        {
+            public string? process { get; set; }
+            public int? product_qty { get; set; }
+            public int? product_id { get; set; }
+            public string? color { get; set; }
+            public string? vendor { get; set; }
+            public string? type_value { get; set; }
+            public string? defect_name { get; set; }
+            public string? date_finished { get; set; }  // nhận string, parse thủ công
+            public string? description { get; set; }
+            public string? image_path { get; set; }
+        }
+
     }
 }

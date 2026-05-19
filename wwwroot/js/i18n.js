@@ -6,7 +6,7 @@ const I18N = {
         'nav.report'  : 'Báo cáo sản lượng',
         'nav.reportsvn' : 'Báo cáo tổng quan',
         'nav.defect.report' : 'Báo cáo tỷ lệ đạt',
-        'nav.defect.upload' : 'Tải lên dữ liệu lỗi',
+        'nav.defect.upload' : 'Tải lên dữ liệu',
         'nav.defect.comparation' : 'So sánh dữ liệu',
         
         /* ── Create page ── */
@@ -520,7 +520,7 @@ const I18N = {
         'nav.report'  : 'Report',
         'nav.reportsvn' : 'Overview',
         'nav.defect.report' : 'Yield Report',
-        'nav.defect.upload' : 'Upload Defect',
+        'nav.defect.upload' : 'Upload Data',
         'nav.defect.comparation' : 'Comparation',
         
         
