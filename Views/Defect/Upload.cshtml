@@ -198,8 +198,9 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--denim);cursor:poi
         <div id="detectWrap" style="display:none;margin-top:1.1rem">
             <div class="section-title">🔍 Cột cố định (auto-detect từ headers)</div>
             <p class="hint">
-                Tự động tìm các cột: <code>Date</code> · <code>Part Code</code> · <code>Process</code> · <code>Coating/Color</code>.
+                Tự động tìm các cột: <code>Date</code> · <code>Part Code</code> · <code>Process</code> · <code>Coating/Color</code> · <code>Input Qty</code>.
                 Cột tô <span style="color:var(--success);font-weight:600">xanh</span> = đã nhận diện được; <span style="color:var(--danger);font-weight:600">đỏ</span> = chưa tìm được.
+                <strong>Input Qty</strong> là <em>optional</em> — nếu có sẽ tạo thêm record <code>type_value="Production Qty"</code>.
             </p>
             <div class="detect-panel">
                 <div class="detect-grid">
@@ -218,6 +219,10 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--denim);cursor:poi
                     <div class="detect-item" id="dItemColor">
                         <span class="detect-label">🎨 Coating / Color</span>
                         <span class="detect-value" id="dValColor"></span>
+                    </div>
+                    <div class="detect-item" id="dItemInput">
+                        <span class="detect-label">📦 Input Qty (→ Production Qty) <em style="font-weight:400;color:var(--gray-400)">— optional</em></span>
+                        <span class="detect-value" id="dValInput"></span>
                     </div>
                 </div>
 
@@ -268,10 +273,10 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--denim);cursor:poi
 <!-- STEP 2: REVIEW -->
 <div id="reviewSection">
     <div class="kpi-grid">
-        <div class="kpi-card"><div class="kpi-label">Tổng bản ghi</div><div class="kpi-value" id="kpiTotal">0</div><div class="kpi-sub">sau unpivot</div></div>
-        <div class="kpi-card"><div class="kpi-label">Mapping OK</div><div class="kpi-value green" id="kpiOk">0</div><div class="kpi-sub">đủ Process + Code + Defect</div></div>
-        <div class="kpi-card"><div class="kpi-label">Cần kiểm tra</div><div class="kpi-value red" id="kpiBad">0</div><div class="kpi-sub">thiếu mapping</div></div>
-        <div class="kpi-card"><div class="kpi-label">Tổng SL lỗi</div><div class="kpi-value red" id="kpiQty">0</div><div class="kpi-sub">product_qty</div></div>
+        <div class="kpi-card"><div class="kpi-label">Tổng bản ghi</div><div class="kpi-value" id="kpiTotal">0</div><div class="kpi-sub" id="kpiTotalSub">sau unpivot</div></div>
+        <div class="kpi-card"><div class="kpi-label">Mapping OK</div><div class="kpi-value green" id="kpiOk">0</div><div class="kpi-sub" id="kpiOkSub">đủ Process + Code + Defect</div></div>
+        <div class="kpi-card"><div class="kpi-label">📦 Tổng SL Đầu Vào</div><div class="kpi-value" style="color:var(--denim)" id="kpiInputQty">0</div><div class="kpi-sub" id="kpiInputSub">Production Qty</div></div>
+        <div class="kpi-card"><div class="kpi-label">❌ Tổng SL Lỗi</div><div class="kpi-value red" id="kpiQty">0</div><div class="kpi-sub" id="kpiQtySub">Defect Qty</div></div>
     </div>
 
     <div class="save-bar" id="saveBar" style="display:none">
@@ -345,10 +350,11 @@ let rawRows     = [];   // array of objects keyed by header
 let lookup      = null; // {processes, colors, vendors, defects, codes}
 
 let detected = {
-    date:    { header: null, idx: -1 },
-    part:    { header: null, idx: -1 },
-    process: { header: null, idx: -1 },
-    color:   { header: null, idx: -1 },
+    date:     { header: null, idx: -1 },
+    part:     { header: null, idx: -1 },
+    process:  { header: null, idx: -1 },
+    color:    { header: null, idx: -1 },
+    inputQty: { header: null, idx: -1 },  // NEW: Production Qty (optional)
 };
 
 let defectCols     = [];          // [{header, italisaMatch:nameEn or null, qtyCount}]
@@ -356,10 +362,9 @@ let selectedDefect = new Set();    // headers of selected defect cols
 
 let reviewRows  = [];
 let currentPage = 1;
-const codesCache = {}
-const RX_ITALISA_NO = /-(\d+)\s*\(/;
 const PAGE_SIZE = 50;
-
+const codesCache = {};                          // process → [{productId, text, italisaNo}]
+const RX_ITALISA_NO = /-(\d+)\s*\(/;            // extract italisaNo from "Powder_coating-480(ITA)"
 
 /* ─── Init ──────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', async () => {
@@ -496,10 +501,11 @@ function normHdr(s) {
 /* ─── Auto-detect fixed columns ─────────────────────── */
 function detectFixedCols() {
     const KW = {
-        date:    ['date','ngay','日期','ngày'],
-        part:    ['partcode','malinhkien','零件代码','零件代碼','italisapn'],
-        process: ['process','quytrinh','工序','quytrình'],
-        color:   ['coating','lopphu','涂层','color','màu','mau','sắcphủ'],
+        date:     ['date','ngay','日期','ngày'],
+        part:     ['partcode','malinhkien','零件代码','零件代碼','italisapn'],
+        process:  ['process','quytrinh','工序','quytrình'],
+        color:    ['coating','lopphu','涂层','color','màu','mau','sắcphủ'],
+        inputQty: ['inputqty','sldauvao','投入量','投入数','sanluongdauvao'],
     };
     Object.keys(detected).forEach(k => { detected[k] = { header:null, idx:-1 }; });
 
@@ -517,14 +523,22 @@ function detectFixedCols() {
     paintDetect('Part',    'dItemPart',    'dValPart',    detected.part);
     paintDetect('Process', 'dItemProcess', 'dValProcess', detected.process);
     paintDetect('Color',   'dItemColor',   'dValColor',   detected.color);
+    paintDetect('Input',   'dItemInput',   'dValInput',   detected.inputQty, /*optional*/ true);
 }
 
-function paintDetect(label, itemId, valId, d) {
+function paintDetect(label, itemId, valId, d, optional) {
     const item = document.getElementById(itemId);
     const val  = document.getElementById(valId);
     if (d.idx === -1) {
-        item.classList.remove('ok'); item.classList.add('bad');
-        val.innerHTML = '<span class="detect-empty">❌ Không tìm thấy</span>';
+        item.classList.remove('ok');
+        // For optional fields: show neutral state (gray), not "bad" (red)
+        if (optional) {
+            item.classList.remove('bad');
+            val.innerHTML = '<span class="detect-empty" style="color:var(--gray-400)">— Không có (bỏ qua Input)</span>';
+        } else {
+            item.classList.add('bad');
+            val.innerHTML = '<span class="detect-empty">❌ Không tìm thấy</span>';
+        }
     } else {
         item.classList.add('ok'); item.classList.remove('bad');
         val.textContent = '✓ ' + (d.header.length > 30 ? d.header.slice(0,30) + '…' : d.header);
@@ -554,7 +568,13 @@ function detectDefectCols() {
     defectCols = [];
     selectedDefect.clear();
 
-    const fixedIdx = new Set([detected.date.idx, detected.part.idx, detected.process.idx, detected.color.idx]);
+    const fixedIdx = new Set([
+        detected.date.idx,
+        detected.part.idx,
+        detected.process.idx,
+        detected.color.idx,
+        detected.inputQty.idx,   // skip Input Qty col when detecting defects
+    ]);
 
     rawHeaders.forEach((h, idx) => {
         if (fixedIdx.has(idx)) return;
@@ -620,12 +640,17 @@ function renderDefectChips() {
 }
 
 function toggleAllDefects(sel) {
-    document.querySelectorAll('#defectChips .defect-chip').forEach(chip => {
+    // ✅ FIX: Use defectCols array (original header strings) — NOT chip.dataset.col
+    // because multi-line headers can lose whitespace when round-tripped through HTML attrs
+    defectCols.forEach(dc => {
+        if (sel) selectedDefect.add(dc.header);
+        else     selectedDefect.delete(dc.header);
+    });
+    // Update chip UI state
+    document.querySelectorAll('#defectChips .defect-chip').forEach((chip, i) => {
         const cb = chip.querySelector('input');
-        const col = chip.dataset.col;
         cb.checked = sel;
-        if (sel) { selectedDefect.add(col); chip.classList.add('selected'); }
-        else     { selectedDefect.delete(col); chip.classList.remove('selected'); }
+        chip.classList.toggle('selected', sel);
     });
     updateDefectInfo(); updateReviewBtn();
 }
@@ -641,20 +666,41 @@ function updateDefectInfo() {
 }
 
 function updateReviewBtn() {
-    const ok = detected.date.idx !== -1
-            && detected.part.idx !== -1
-            && detected.process.idx !== -1
-            && selectedDefect.size > 0;
-    document.getElementById('btnReview').disabled = !ok;
+    const baseOk = detected.date.idx !== -1
+                && detected.part.idx !== -1
+                && detected.process.idx !== -1;
+    // Allow review if: at least 1 defect col selected OR Input Qty col detected
+    const hasData = selectedDefect.size > 0 || detected.inputQty.idx !== -1;
+    document.getElementById('btnReview').disabled = !(baseOk && hasData);
 }
 
 /* ─── REVIEW (resolve & unpivot) ────────────────────── */
 function doReview() {
-    if (!rawRows.length || !selectedDefect.size) {
-        showToast('Cần có dữ liệu và ít nhất 1 cột defect.', 'error'); return;
+    const hasDefect = selectedDefect.size > 0;
+    const hasInput  = detected.inputQty.idx !== -1;
+    if (!rawRows.length || (!hasDefect && !hasInput)) {
+        showToast('Cần có dữ liệu và ít nhất 1 cột Defect hoặc Input Qty.', 'error'); return;
     }
     if (detected.date.idx === -1 || detected.part.idx === -1 || detected.process.idx === -1) {
         showToast('Cần nhận diện được Date + Part Code + Process.', 'error'); return;
+    }
+
+    // ✅ SANITY: verify selectedDefect keys exist in row data; if not, re-sync from defectCols
+    const sampleRow = rawRows[0] || {};
+    const missingKeys = [];
+    selectedDefect.forEach(col => { if (!(col in sampleRow)) missingKeys.push(col); });
+    if (missingKeys.length) {
+        console.warn('⚠ KEY MISMATCH detected. Re-syncing selectedDefect from defectCols...');
+        console.warn('Missing keys (count=' + missingKeys.length + '):', missingKeys.slice(0,3));
+        const checkedChips = new Set();
+        document.querySelectorAll('#defectChips .defect-chip').forEach((chip, i) => {
+            if (chip.querySelector('input').checked && defectCols[i]) {
+                checkedChips.add(defectCols[i].header);
+            }
+        });
+        selectedDefect.clear();
+        checkedChips.forEach(h => selectedDefect.add(h));
+        console.log('✓ Re-synced. New selectedDefect.size =', selectedDefect.size);
     }
 
     showLoading(true, 'Đang resolve & unpivot...');
@@ -689,7 +735,51 @@ function doReview() {
                 // Resolve product_id from process + italisaNo
                 const codeInfo = resolveCode(process, italisaNo, vendor);
 
-                // For each selected defect col with value > 0
+                // Date = từ Excel; Giờ = random 8:00-20:00 (hoặc fixed nếu tick)
+                // Shared by both Production Qty + Defect records of THIS row
+                const useDate = dateStr || today;
+                const timeStr = useCustomTime ? (customTime + ':' + pad2(Math.floor(Math.random()*60)))
+                                               : randomWorkTime();
+                const recDtStr = useDate + 'T' + timeStr;
+
+                // ── NEW: Production Qty record (1 per row, if Input Qty col detected) ──
+                if (detected.inputQty.idx !== -1) {
+                    const inputRaw = String(row[detected.inputQty.header] ?? '').replace(/,/g,'').trim();
+                    const inputQty = parseFloat(inputRaw);
+                    if (!isNaN(inputQty) && inputQty > 0) {
+                        const issues = [];
+                        if (!process)   issues.push('Process');
+                        if (!italisaNo) issues.push('Part Code');
+                        if (!codeInfo)  issues.push('Code lookup');
+                        if (!color)     issues.push('Color');
+
+                        reviewRows.push({
+                            _idx:     reviewRows.length,
+                            _selected: issues.length === 0,
+                            _status:  issues.length === 0 ? 'ok' : 'warn',
+                            _issues:  issues,
+                            _excelPart: partRaw,
+                            _excelProc: procRaw,
+                            _excelColor: colorRaw,
+                            _excelCol: detected.inputQty.header,
+                            _excelDate: dateStr,
+
+                            date_finished: recDtStr,
+                            process:       process || procRaw,
+                            product_id:    codeInfo ? codeInfo.productId : null,
+                            code_text:     codeInfo ? codeInfo.text : null,
+                            color:         color || colorRaw,
+                            vendor:        vendor,
+                            type_value:    'Production Qty',
+                            defect_name:   null,
+                            product_qty:   inputQty,
+                            description:   null,
+                            image_path:    null,
+                        });
+                    }
+                }
+
+                // ── For each selected defect col with value > 0 ──
                 selectedDefect.forEach(col => {
                     const rawVal = String(row[col] ?? '').replace(/,/g,'').trim();
                     const qty    = parseFloat(rawVal);
@@ -702,12 +792,6 @@ function doReview() {
                     if (!codeInfo)       issues.push('Code lookup');
                     if (!matchMap[col])  issues.push('Defect not in DB');
                     if (!color)          issues.push('Color');
-
-                    // Date = từ Excel; Giờ = random 8:00-20:00 (hoặc fixed nếu tick)
-                    const useDate = dateStr || today;
-                    const timeStr = useCustomTime ? (customTime + ':' + pad2(Math.floor(Math.random()*60)))
-                                                   : randomWorkTime();
-                    const recDtStr = useDate + 'T' + timeStr;
 
                     reviewRows.push({
                         _idx:     reviewRows.length,
@@ -763,10 +847,14 @@ function doReview() {
             console.log(`Selected defect cols: ${selectedDefect.size}`);
             console.table(colStats);
 
-            autoFillMissingCodes();   // ← THÊM DÒNG NÀY
+            // Auto-resolve codes for rows whose process isn't pre-cached in lookup.codes
+            autoFillMissingCodes();
 
-            const ok = reviewRows.filter(r => r._status === 'ok').length;
-            showToast(`✅ ${reviewRows.length} bản ghi từ ${rawRows.length} dòng Excel × ${selectedDefect.size} cột · ${ok} OK · ${reviewRows.length - ok} cần kiểm tra (F12 để xem stats)`, 'success');
+            const ok       = reviewRows.filter(r => r._status === 'ok').length;
+            const prodCnt  = reviewRows.filter(r => r.type_value === 'Production Qty').length;
+            const defCnt   = reviewRows.filter(r => r.type_value === 'Defect').length;
+            const inputMsg = prodCnt > 0 ? ` (${prodCnt} Input + ${defCnt} Defect)` : '';
+            showToast(`✅ ${reviewRows.length} bản ghi${inputMsg} từ ${rawRows.length} dòng Excel · ${ok} OK · ${reviewRows.length - ok} cần kiểm tra`, 'success');
         } catch(e) {
             showToast('Lỗi: '+e.message, 'error'); console.error(e);
         } finally { showLoading(false); }
@@ -911,6 +999,18 @@ function renderReview() {
         const defectOpts = `<option value="">-- chọn --</option>${defectOptsBase}` +
             (defectVal && !defectInList ? `<option value="${esc(defectVal)}" selected>⚠ ${esc(defectVal)}</option>` : '');
 
+        const isProd = r.type_value === 'Production Qty';
+        const typeChip = isProd
+            ? `<span class="chip chip-blue" style="background:#dbeafe;color:#1e40af;border-color:#93c5fd">📦 Input</span>`
+            : `<span class="chip chip-purple">Defect</span>`;
+        // Defect cell: N/A for Production Qty rows (disable + grey out)
+        const defectCellHtml = isProd
+            ? `<span style="color:var(--gray-400);font-style:italic;font-size:.78rem">— (N/A — Input record)</span>`
+            : `<select class="cell-sel cell-defect ${r.defect_name && defectInList ? '' : 'invalid'}" data-idx="${r._idx}" data-field="defect_name" onchange="onCellChange(${r._idx},'defect_name',this)" title="Excel cột: ${esc(r._excelCol||'-')}">${defectOpts.replace(`value="${esc(defectVal)}"`, `value="${esc(defectVal)}" selected`)}</select>
+                <span class="excel-col-hint" title="${esc(r._excelCol||'-')}">📋 ${esc((r._excelCol||'').replace(/\s+/g,' ').slice(0,40))}</span>`;
+        // Qty color: blue for Input, red for Defect
+        const qtyColor = isProd ? 'var(--denim)' : 'var(--danger)';
+
         return `<tr class="${cls}" id="row_${r._idx}">
             <td class="tc"><input type="checkbox" ${r._selected?'checked':''} onchange="toggleRow(${r._idx},this)"/></td>
             <td style="color:var(--gray-400);font-size:.75rem">${gi}</td>
@@ -922,12 +1022,9 @@ function renderReview() {
                 <span class="excel-col-hint text-only" title="${esc(r._excelPart||'-')}">🏷️ ${esc(r._excelPart||'-')}</span>
             </td>
             <td><select class="cell-sel ${r.color ? '' : 'invalid'}" data-idx="${r._idx}" data-field="color" onchange="onCellChange(${r._idx},'color',this)" title="Excel: ${esc(r._excelColor||'-')}">${colorOpts.replace(`value="${esc(colorVal)}"`, `value="${esc(colorVal)}" selected`)}</select></td>
-            <td>
-                <select class="cell-sel cell-defect ${r.defect_name && defectInList ? '' : 'invalid'}" data-idx="${r._idx}" data-field="defect_name" onchange="onCellChange(${r._idx},'defect_name',this)" title="Excel cột: ${esc(r._excelCol||'-')}">${defectOpts.replace(`value="${esc(defectVal)}"`, `value="${esc(defectVal)}" selected`)}</select>
-                <span class="excel-col-hint" title="${esc(r._excelCol||'-')}">📋 ${esc((r._excelCol||'').replace(/\s+/g,' ').slice(0,40))}</span>
-            </td>
-            <td class="tn" style="font-weight:700;color:var(--danger)">${Number(r.product_qty).toLocaleString('en-US')}</td>
-            <td><span class="chip chip-purple">Defect</span></td>
+            <td>${defectCellHtml}</td>
+            <td class="tn" style="font-weight:700;color:${qtyColor}">${Number(r.product_qty).toLocaleString('en-US')}</td>
+            <td>${typeChip}</td>
             <td class="tc">${statusHtml}</td>
         </tr>`;
     }).join('');
@@ -947,23 +1044,21 @@ function onCellChange(idx, field, el) {
         r.process    = el.value;
         r.product_id = null;
         r.code_text  = null;
-        // Gọi API động như trang Create
+        // Load codes dynamically via API (same flow as Create page)
         loadCodesForRow(idx, el.value);
-
     } else if (field === 'product_id') {
-        r.product_id = parseInt(el.value) || null;
-        const opt    = el.options[el.selectedIndex];
-        r.code_text  = opt ? (opt.getAttribute('data-text') || opt.text) : null;
+        const productId = parseInt(el.value) || null;
+        r.product_id = productId;
+        const opt = el.options[el.selectedIndex];
+        r.code_text = opt ? (opt.getAttribute('data-text') || opt.text) : null;
         recomputeStatus(r);
         renderRowOnly(r);
         updateKpi();
-
     } else if (field === 'color') {
         r.color = el.value;
         recomputeStatus(r);
         renderRowOnly(r);
         updateKpi();
-
     } else if (field === 'defect_name') {
         r.defect_name = el.value;
         recomputeStatus(r);
@@ -972,7 +1067,7 @@ function onCellChange(idx, field, el) {
     }
 }
 
-/* ─── Load codes từ API theo process (như trang Create) ── */
+/* ─── Load codes from API by process (like Create page) ── */
 async function loadCodesForRow(rowIdx, process) {
     const r = reviewRows.find(x => x._idx === rowIdx);
     if (!r) return;
@@ -995,7 +1090,6 @@ async function loadCodesForRow(rowIdx, process) {
             const res  = await fetch(
                 `${pathBase}/Production/GetCodesByProcess?process=${encodeURIComponent(process)}`);
             const data = await res.json();
-
             codesCache[process] = data.map(c => {
                 const m = RX_ITALISA_NO.exec(c.text);
                 return { productId: c.value, text: c.text, italisaNo: m ? parseInt(m[1]) : 0 };
@@ -1011,10 +1105,10 @@ async function loadCodesForRow(rowIdx, process) {
         codeSelEl.innerHTML = html;
         codeSelEl.disabled  = false;
 
-        // Auto-select theo italisaNo từ _excelPart
+        // Auto-select by italisaNo from _excelPart
         const targetNo  = extractItalisaNo(r._excelPart || '');
         const autoMatch = targetNo ? codes.find(c => c.italisaNo === targetNo) : null;
-       
+
         if (autoMatch) {
             codeSelEl.value = autoMatch.productId;
             r.product_id    = autoMatch.productId;
@@ -1023,7 +1117,6 @@ async function loadCodesForRow(rowIdx, process) {
         } else {
             codeSelEl.classList.add('invalid');
         }
-
     } catch(e) {
         codeSelEl.innerHTML = `<option value="">❌ Lỗi tải code</option>`;
         codeSelEl.disabled  = false;
@@ -1035,12 +1128,14 @@ async function loadCodesForRow(rowIdx, process) {
     updateKpi();
 }
 
+/* ─── Batch auto-resolve codes for all rows missing product_id ── */
 async function autoFillMissingCodes() {
     const needFill = reviewRows.filter(r => r.process && !r.product_id);
-    if (!needFill.length) { showLoading(false); return; }
+    if (!needFill.length) return;
 
     showLoading(true, `Đang auto-resolve ${needFill.length} Code...`);
 
+    // Group rows by process to batch-fetch
     const byProcess = {};
     needFill.forEach(r => {
         (byProcess[r.process] = byProcess[r.process] || []).push(r._idx);
@@ -1052,7 +1147,6 @@ async function autoFillMissingCodes() {
                 const res  = await fetch(
                     `${pathBase}/Production/GetCodesByProcess?process=${encodeURIComponent(process)}`);
                 const data = await res.json();
-
                 codesCache[process] = data.map(c => {
                     const m = RX_ITALISA_NO.exec(c.text);
                     return { productId: c.value, text: c.text, italisaNo: m ? parseInt(m[1]) : 0 };
@@ -1085,17 +1179,19 @@ async function autoFillMissingCodes() {
     showLoading(false);
 }
 
-
 function recomputeStatus(r) {
     const issues = [];
     if (!r.process)     issues.push('Process');
     if (!r.product_id)  issues.push('Code');
     if (!r.color)       issues.push('Color');
-    if (!r.defect_name) issues.push('Defect');
-    // Check defect is in system DB
-    if (r.defect_name && lookup && lookup.defects &&
-        !lookup.defects.some(d => d.nameEn === r.defect_name)) {
-        issues.push('Defect not in DB');
+    // Defect validation only applies to Defect-type rows
+    if (r.type_value === 'Defect') {
+        if (!r.defect_name) issues.push('Defect');
+        // Check defect is in system DB
+        if (r.defect_name && lookup && lookup.defects &&
+            !lookup.defects.some(d => d.nameEn === r.defect_name)) {
+            issues.push('Defect not in DB');
+        }
     }
     r._issues = issues;
     r._status = issues.length === 0 ? 'ok' : 'warn';
@@ -1134,11 +1230,21 @@ function updateKpi() {
     const ok    = reviewRows.filter(r => r._status === 'ok').length;
     const bad   = total - ok;
     const sel   = reviewRows.filter(r => r._selected).length;
-    const qty   = reviewRows.reduce((s,r) => s + (r.product_qty||0), 0);
-    document.getElementById('kpiTotal').textContent = total;
-    document.getElementById('kpiOk').textContent    = ok;
-    document.getElementById('kpiBad').textContent   = bad;
-    document.getElementById('kpiQty').textContent   = qty.toLocaleString('en-US');
+
+    // Split by type
+    const prodRows   = reviewRows.filter(r => r.type_value === 'Production Qty');
+    const defectRows = reviewRows.filter(r => r.type_value === 'Defect');
+    const inputQty   = prodRows.reduce((s,r) => s + (r.product_qty||0), 0);
+    const defectQty  = defectRows.reduce((s,r) => s + (r.product_qty||0), 0);
+
+    document.getElementById('kpiTotal').textContent    = total;
+    document.getElementById('kpiTotalSub').textContent = `${prodRows.length} Input + ${defectRows.length} Defect`;
+    document.getElementById('kpiOk').textContent       = ok;
+    document.getElementById('kpiOkSub').textContent    = bad > 0 ? `⚠ ${bad} cần kiểm tra` : 'đủ Process + Code + Color';
+    document.getElementById('kpiInputQty').textContent = inputQty.toLocaleString('en-US');
+    document.getElementById('kpiInputSub').textContent = `${prodRows.length} bản ghi`;
+    document.getElementById('kpiQty').textContent      = defectQty.toLocaleString('en-US');
+    document.getElementById('kpiQtySub').textContent   = `${defectRows.length} bản ghi`;
 
     const txt = document.getElementById('saveBarTxt');
     const sub = document.getElementById('saveBarSub');
@@ -1171,17 +1277,19 @@ function updateChkAll() {
 }
 
 /* ─── Save ──────────────────────────────────────────── */
-/* ─── Save ──────────────────────────────────────────── */
 async function doSave() {
     const toSave = reviewRows.filter(r => r._selected);
     if (!toSave.length) { showToast('Chưa chọn bản ghi nào.', 'error'); return; }
 
-    // Chỉ check các field bắt buộc tối thiểu (process + product_id)
-    const critical = toSave.filter(r => !r.process || !r.product_id);
-    if (critical.length) {
-        if (!confirm(
-            `⚠️ ${critical.length} bản ghi thiếu Process hoặc Code — sẽ lưu null.\nVẫn tiếp tục?`
-        )) return;
+    // Warn if any selected rows still have issues
+    const incomplete = toSave.filter(r => r._status !== 'ok');
+    const prodCnt = toSave.filter(r => r.type_value === 'Production Qty').length;
+    const defCnt  = toSave.filter(r => r.type_value === 'Defect').length;
+    const splitMsg = prodCnt > 0 ? ` (${prodCnt} Input + ${defCnt} Defect)` : '';
+    if (incomplete.length) {
+        if (!confirm(`⚠️ ${incomplete.length}/${toSave.length} bản ghi đang thiếu mapping. Vẫn tiếp tục lưu?`)) return;
+    } else {
+        if (!confirm(`Lưu ${toSave.length} bản ghi${splitMsg} vào hệ thống?`)) return;
     }
 
     showLoading(true, `Đang lưu ${toSave.length} bản ghi...`);
@@ -1192,8 +1300,8 @@ async function doSave() {
         product_id:    r.product_id    ? parseInt(r.product_id)    : null,
         color:         r.color         || null,
         vendor:        r.vendor        || 'ITA',
-        type_value:    'Defect',
-        defect_name:   r.defect_name   || null,
+        type_value:    r.type_value    || 'Defect',                                          // ← FIX: dùng đúng type của row
+        defect_name:   r.type_value === 'Defect' ? (r.defect_name || null) : null,           // ← FIX: Production Qty không có defect_name
         date_finished: r.date_finished || new Date().toISOString().slice(0,10),
         description:   null,
         image_path:    null,
@@ -1201,9 +1309,9 @@ async function doSave() {
 
     try {
         const res = await fetch(`${pathBase}/Defect/SaveBatch`, {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify(payload)
+            method: 'POST',
+            headers: { 'Content-Type':'application/json' },
+            body: JSON.stringify(payload)
         });
         if (res.ok) {
             toSave.forEach(r => { r._selected = false; r._saved = true; });
@@ -1214,7 +1322,7 @@ async function doSave() {
             showToast('Lỗi lưu: ' + err, 'error');
         }
     } catch(e) {
-        showToast('Lỗi kết nối: ' + e.message, 'error');
+        showToast('Lỗi kết nối: '+e.message, 'error');
     } finally { showLoading(false); }
 }
 
