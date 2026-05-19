@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = "Yield Report";
+    ViewData["Title"] = "Defect Report";
 }
 
 <!DOCTYPE html>
@@ -10,6 +10,7 @@
     <title>@ViewData["Title"]</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="@Url.Content("~/js/i18n.js")"></script>
     <style>
@@ -388,8 +389,8 @@
 
     <!-- Page title -->
     <div class="page-header">
-        <h1>🔍 <span data-i18n="dr.page.title">Yield Report — Báo Cáo Tỷ Lệ Đạt</span></h1>
-        <p data-i18n="dr.page.subtitle">Phân tích tỷ lệ đạt theo công đoạn, lớp phủ và mã sản phẩm.</p>
+        <h1>🔍 <span data-i18n="dr.page.title">Defect Report — Báo Cáo Tỷ Lệ Lỗi & Tỷ Lệ Đạt</span></h1>
+        <p data-i18n="dr.page.subtitle">Phân tích tỷ lệ lỗi và tỷ lệ đạt theo công đoạn, lớp phủ và mã sản phẩm.</p>
         <div class="header-line"></div>
     </div>
 
@@ -539,6 +540,12 @@
    State
 ────────────────────────────────────────────────────────────── */
 const pathBase    = '@Context.Request.PathBase';
+
+// Register datalabels plugin globally — Chart.js v4 + chartjs-plugin-datalabels
+if (typeof ChartDataLabels !== 'undefined') {
+    Chart.register(ChartDataLabels);
+}
+
 let allRows       = [];
 let defectTypes   = [];   // [{en,vn,cn}]
 let currentPage   = 1;
@@ -547,10 +554,23 @@ let chartTrend = null, chartDefects = null, chartProcess = null;
 
 // ── Init ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    const today = new Date(), from = new Date(today);
-    from.setDate(today.getDate() - 30);
-    document.getElementById('fDateTo').value   = fmtDate(today);
-    document.getElementById('fDateFrom').value = fmtDate(from);
+    const today = new Date();
+    const dFrom = document.getElementById('fDateFrom');
+    const dTo   = document.getElementById('fDateTo');
+    dFrom.value = fmtDate(today);
+    dTo  .value = fmtDate(today);
+
+    // ── Link min/max giữa 2 ô date ──────────────────────────────
+    // Khi đổi fromDate → cập nhật min của toDate (UX: không cho chọn lùi)
+    // Khi đổi toDate   → cập nhật max của fromDate
+    const syncDateRange = () => {
+        if (dFrom.value) dTo.min   = dFrom.value;
+        if (dTo.value)   dFrom.max = dTo.value;
+    };
+    dFrom.addEventListener('change', syncDateRange);
+    dTo  .addEventListener('change', syncDateRange);
+    syncDateRange(); // apply initial constraints
+
     loadFilterDropdowns();
     loadData();
 });
@@ -588,6 +608,13 @@ async function loadFilterDropdowns() {
 async function loadData() {
     const df  = document.getElementById('fDateFrom').value;
     const dt  = document.getElementById('fDateTo').value;
+
+    // ── Validate: From Date không được lớn hơn To Date ──────────
+    if (df && dt && df > dt) {
+        showToast('From Date không được lớn hơn To Date', 'error');
+        return;
+    }
+
     const pr  = document.getElementById('fProcess').value;
     const cl  = document.getElementById('fColor').value;
     const pc  = document.getElementById('fPartCode').value;   // productId from part code select
@@ -669,9 +696,11 @@ function renderKPI() {
         ['kpiInput','kpiNG','kpiDefRate','kpiYield'].forEach(id => document.getElementById(id).textContent = '—');
         return;
     }
+    // Clamp ngQty per row to inputQty so Defect+Yield always sum to 100%
+    // (some rows have raw NG > Input due to data entry order: Defect logged before Production Qty)
     const tI = allRows.reduce((s,r) => s+(r.inputQty||0), 0);
-    const tN = allRows.reduce((s,r) => s+(r.ngQty   ||0), 0);
     const tO = allRows.reduce((s,r) => s+(r.okQty   ||0), 0);
+    const tN = Math.max(0, tI - tO);   // guaranteed tN + tO = tI → dr + yr = 100%
     const dr = tI > 0 ? tN/tI*100 : 0;
     const yr = tI > 0 ? tO/tI*100 : 100;
     document.getElementById('kpiInput').textContent   = fmt(tI);
@@ -702,7 +731,19 @@ function renderCharts() {
             tension:0.35, fill:true
         }]},
         options:{ responsive:true, maintainAspectRatio:false,
-            plugins:{legend:{display:false}},
+            layout:{ padding:{ top:18 } },   // chừa chỗ cho label trên đỉnh point
+            plugins:{
+                legend:{display:false},
+                datalabels:{
+                    align:'top', anchor:'end',
+                    color:'#991B1B',
+                    font:{ size:10, weight:'bold' },
+                    formatter:v => v > 0 ? v + '%' : '',
+                    backgroundColor:'rgba(255,255,255,0.85)',
+                    borderRadius:3,
+                    padding:{ top:2, bottom:2, left:4, right:4 }
+                }
+            },
             scales:{
                 x:{ticks:{font:{size:10},maxRotation:45},grid:{display:false}},
                 y:{ticks:{callback:v=>v+'%',font:{size:10}},beginAtZero:true}
@@ -725,7 +766,21 @@ function renderCharts() {
             datasets:[{data:defSorted.map(x=>x[1]),backgroundColor:PAL,borderWidth:2,borderColor:'#fff'}]
         },
         options:{ responsive:true, maintainAspectRatio:false,
-            plugins:{legend:{position:'right',labels:{font:{size:9},boxWidth:11}}}
+            plugins:{
+                legend:{position:'right',labels:{font:{size:9},boxWidth:11}},
+                datalabels:{
+                    color:'#fff',
+                    font:{ size:10, weight:'bold' },
+                    textStrokeColor:'rgba(0,0,0,0.5)',
+                    textStrokeWidth:2,
+                    formatter:(v, ctx) => {
+                        const total = ctx.dataset.data.reduce((a,b) => a+b, 0);
+                        const pct   = total > 0 ? v/total*100 : 0;
+                        // chỉ hiện label cho slice >= 5% (tránh chồng chữ)
+                        return pct >= 5 ? v.toLocaleString() : '';
+                    }
+                }
+            }
         }
     });
 
@@ -752,7 +807,17 @@ function renderCharts() {
             }]
         },
         options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
-            plugins:{legend:{display:false}},
+            layout:{ padding:{ right:38 } },   // chừa chỗ cuối thanh cho label %
+            plugins:{
+                legend:{display:false},
+                datalabels:{
+                    align:'end', anchor:'end',
+                    color:'#1e293b',
+                    font:{ size:10, weight:'bold' },
+                    formatter:v => v + '%',
+                    clip:false
+                }
+            },
             scales:{
                 x:{ticks:{callback:v=>v+'%',font:{size:10}},beginAtZero:true},
                 y:{ticks:{font:{size:9}}}
@@ -856,7 +921,7 @@ function renderTable() {
     const tDR = tI>0?(tN/tI*100).toFixed(1):'0.0';
     const tYR = tI>0?(tO/tI*100).toFixed(1):'100.0';
     html += `<tr class="total-row">
-        <td colspan="7" style="text-align:left;padding-left:14px;letter-spacing:.3px">
+        <td colspan="7" style="text-align:left;padding-left:14px;letter-spacing:.3px;position:sticky;left:0;z-index:2;background:var(--denim-dark)">
             ${t('dr.total.label')} — ${allRows.length} rows | pg ${currentPage}/${Math.ceil(allRows.length/PAGE_SIZE)}
         </td>
         <td style="text-align:right">${fmt(tI)}</td>
@@ -1194,9 +1259,14 @@ function toggleFilter() {
     tg.classList.toggle('collapsed', b.classList.contains('collapsed'));
 }
 function resetFilters() {
-    const today=new Date(), from=new Date(today); from.setDate(today.getDate()-30);
-    document.getElementById('fDateFrom').value = fmtDate(from);
-    document.getElementById('fDateTo').value   = fmtDate(today);
+    const today = new Date();
+    const dFrom = document.getElementById('fDateFrom');
+    const dTo   = document.getElementById('fDateTo');
+    dFrom.value = fmtDate(today);
+    dTo  .value = fmtDate(today);
+    // Re-sync min/max sau khi reset
+    dTo.min   = dFrom.value;
+    dFrom.max = dTo.value;
     ['fProcess','fColor','fPartCode','fProduct'].forEach(id => document.getElementById(id).value = '');
     loadData();
 }

@@ -151,8 +151,6 @@ namespace ItalisaTools.Controllers
                 var ws = package.Workbook.Worksheets.Add("Production History");
 
                 // ── Column definitions ──────────────────────────────────────
-                // Col:  1     2        3         4           5       6      7         8       9             10           11
-                // Hdr:  #  Vendor  Process  Operation  Color   Type  Defect  Quantity  Date  Description  Image
                 double[] colWidths = { 5, 14, 18, 32, 16, 20, 24, 12, 22, 40, 16 };
                 string[] headers   = { "#", "Vendor", "Process", "Operation", "Color", "Type", "Defect", "Quantity", "Date", "Description", "Image" };
 
@@ -173,7 +171,7 @@ namespace ItalisaTools.Controllers
                 ws.Row(1).Height = 22;
 
                 // ── Data rows ───────────────────────────────────────────────
-                const int    ImgCol        = 11;    // column index (1-based) — shifted +1
+                const int    ImgCol        = 11;
                 const double ImgRowHeight  = 65;
                 const int    ImgSizePx     = 70;
 
@@ -182,7 +180,6 @@ namespace ItalisaTools.Controllers
                     var item   = data[i];
                     int exlRow = i + 2;
 
-                    // ── Cell values ─────────────────────────────────────────
                     ws.Cells[exlRow, 1].Value = i + 1;
                     ws.Cells[exlRow, 2].Value = item.vendor      ?? "";
                     ws.Cells[exlRow, 3].Value = item.process     ?? "";
@@ -190,12 +187,11 @@ namespace ItalisaTools.Controllers
                                                 : item.product_id.HasValue ? $"ID:{item.product_id}" : "";
                     ws.Cells[exlRow, 5].Value = item.color       ?? "";
                     ws.Cells[exlRow, 6].Value = item.type_value  ?? "";
-                    ws.Cells[exlRow, 7].Value = item.defect_name ?? "";   // ← Defect
+                    ws.Cells[exlRow, 7].Value = item.defect_name ?? "";
                     ws.Cells[exlRow, 8].Value = item.product_qty ?? 0;
                     ws.Cells[exlRow, 9].Value = item.date_finished.ToString("dd/MM/yyyy HH:mm");
                     ws.Cells[exlRow, 10].Value = item.description ?? "";
 
-                    // ── Alternate row background ────────────────────────────
                     if (i % 2 == 1)
                     {
                         using var range = ws.Cells[exlRow, 1, exlRow, ImgCol];
@@ -203,7 +199,6 @@ namespace ItalisaTools.Controllers
                         range.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(0xEF, 0xF6, 0xFF));
                     }
 
-                    // ── Embed image ─────────────────────────────────────────
                     var physPath = ResolvePhysicalImagePath(item.image_path);
                     if (physPath != null)
                     {
@@ -222,16 +217,12 @@ namespace ItalisaTools.Controllers
                         }
                     }
 
-                    // ── Vertical alignment for all data cells ───────────────
                     ws.Cells[exlRow, 1, exlRow, ImgCol - 1].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
                 }
 
-                // ── Global style ────────────────────────────────────────────
-                // Quantity column (col 8): right-align + number format
                 ws.Column(8).Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
                 ws.Cells[2, 8, data.Count + 1, 8].Style.Numberformat.Format = "#,##0";
 
-                // Borders on entire data range
                 if (data.Count > 0)
                 {
                     var dataRange = ws.Cells[1, 1, data.Count + 1, ImgCol];
@@ -240,14 +231,11 @@ namespace ItalisaTools.Controllers
                         ws.Cells[r, 1, r, ImgCol].Style.Border.Bottom.Style = ExcelBorderStyle.Hair;
                 }
 
-                // ── Column widths ───────────────────────────────────────────
                 for (int c = 0; c < colWidths.Length; c++)
                     ws.Column(c + 1).Width = colWidths[c];
 
-                // Freeze header row
                 ws.View.FreezePanes(2, 1);
 
-                // ── Return file ─────────────────────────────────────────────
                 var bytes    = package.GetAsByteArray();
                 var fileName = $"Production_History_{DateTime.Now:yyyyMMdd_HHmm}.xlsx";
                 return File(
@@ -300,14 +288,12 @@ namespace ItalisaTools.Controllers
             var path      = storedPath;
             var pathBase  = HttpContext.Request.PathBase.Value ?? "";
 
-            // Strip PathBase prefix (e.g. "/italisa")
             if (!string.IsNullOrEmpty(pathBase) &&
                 path.StartsWith(pathBase, StringComparison.OrdinalIgnoreCase))
             {
                 path = path[pathBase.Length..];
             }
 
-            // Normalize to relative path under wwwroot
             path = path.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
             var physical = Path.Combine(_env.WebRootPath, path);
 
@@ -457,129 +443,183 @@ namespace ItalisaTools.Controllers
             return Json(result);
         }
 
- 
+        // ════════════════════════════════════════════════════════════════════════
+        // YIELD REPORT — Filter-based table switch (Cách B):
+        //   • dateTo >= today (bao trùm hôm nay/tương lai) → SVN_Italisa_Production         (live, GIỮ NGUYÊN LOGIC CŨ)
+        //   • dateTo <  today (range hoàn toàn quá khứ)    → SVN_Italisa_Production_ByExcel (QC đã upload)
+        // ════════════════════════════════════════════════════════════════════════
 
-        // ── YIELD REPORT ──────────────────────────────────────────────────────
+        public IActionResult DefectReport() => View();
 
-
-// ═══════════════════════════════════════════════════════════════════════════
-// REPLACE GetDefectReportData + ADD GetItemNameFromOverviewAsync
-// Dùng lại stored proc Overview để lấy Item Name — nhất quán với trang Overview
-// ═══════════════════════════════════════════════════════════════════════════
-
-// ═══════════════════════════════════════════════════════════════════════════
-// REPLACE GetDefectReportData + GetItemNameFromOverviewAsync
-// Thêm SVN Code và SVN Name vào kết quả
-// ═══════════════════════════════════════════════════════════════════════════
-
-public IActionResult DefectReport() => View();
-
-[HttpGet]
-public async Task<IActionResult> GetDefectReportData(
-    string? dateFrom, string? dateTo,
-    string? process, string? color, int? productId)
-{
-    try
-    {
-        var query = _context.SVN_Italisa_Production.AsQueryable();
-
-        if (!string.IsNullOrEmpty(dateFrom) && DateTime.TryParse(dateFrom, out var dfrom))
-            query = query.Where(x => x.date_finished >= dfrom);
-        if (!string.IsNullOrEmpty(dateTo) && DateTime.TryParse(dateTo, out var dto2))
-            query = query.Where(x => x.date_finished <= dto2.AddDays(1).AddSeconds(-1));
-        if (!string.IsNullOrEmpty(process))
-            query = query.Where(x => x.process == process);
-        if (!string.IsNullOrEmpty(color))
-            query = query.Where(x => x.color == color);
-        if (productId.HasValue)
-            query = query.Where(x => x.product_id == productId.Value);
-
-        var records = await query.ToListAsync();
-
-        var (italisaNameMap, svnMap, productItalisaMap) = await GetItemNameFromOverviewAsync();
-
-        var defectInfoAll  = await _context.SVN_Italisa_DefectInfor.ToListAsync();
-        var defectInfoByEn = defectInfoAll
-            .Where(d => !string.IsNullOrEmpty(d.defect_name_en))
-            .ToDictionary(d => d.defect_name_en!, d => d);
-
-        var grouped = records
-            .GroupBy(x => new
-            {
-                Date    = x.date_finished.Date,
-                ProdId  = x.product_id,
-                Color   = x.color   ?? "-",
-                Process = x.process ?? "-"
-            })
-            .Select(g =>
-            {
-                // Chỉ tính Production Qty làm input
-                var inputQty = g.Where(x => x.type_value == "Production Qty").Sum(x => x.product_qty ?? 0);
-                var ngQty    = g.Where(x => x.type_value == "Defect").Sum(x => x.product_qty ?? 0);
-                var okQty    = Math.Max(0, inputQty - ngQty);
-
-                var defects = g
-                    .Where(x => x.type_value == "Defect" && !string.IsNullOrEmpty(x.defect_name))
-                    .GroupBy(x => x.defect_name!)
-                    .ToDictionary(dg => dg.Key, dg => dg.Sum(x => x.product_qty ?? 0));
-
-                // product_id → Italisa_no → Item_name
-                productItalisaMap.TryGetValue(g.Key.ProdId ?? -1, out var italisaNo);
-
-                var partCode = italisaNo > 0
-                    ? $"Y{italisaNo:D4}"
-                    : (g.Key.ProdId.HasValue ? g.Key.ProdId.Value.ToString() : "-");
-
-                italisaNameMap.TryGetValue(italisaNo, out var itemName);
-                var product = !string.IsNullOrEmpty(itemName) ? itemName : partCode;
-
-                // SVN Code + SVN Name: key = "ItalisaNo_Color"
-                var svnKey = $"{italisaNo}_{g.Key.Color}";
-                svnMap.TryGetValue(svnKey, out var svnInfo);
-
-                return new
-                {
-                    date      = g.Key.Date.ToString("dd-MMM-yyyy"),
-                    productId = g.Key.ProdId,
-                    italisaNo = italisaNo > 0 ? (int?)italisaNo : null,
-                    partCode,
-                    product,
-                    svnCode   = svnInfo.SvnCode ?? "",
-                    svnName   = svnInfo.SvnName ?? "",
-                    coating   = g.Key.Color,
-                    process   = g.Key.Process,
-                    inputQty,
-                    okQty,
-                    ngQty,
-                    outputQty  = okQty,
-                    defectRate = inputQty > 0 ? Math.Round((double)ngQty / inputQty * 100, 1) : 0.0,
-                    yieldRate  = inputQty > 0 ? Math.Round((double)okQty  / inputQty * 100, 1) : 100.0,
-                    defects
-                };
-            })
-            .Where(x => x.inputQty > 0 || x.ngQty > 0)
-            .OrderByDescending(x => x.date)
-            .ThenBy(x => x.partCode)
-            .ToList();
-
-        var usedDefectEnNames = grouped
-            .SelectMany(x => x.defects.Keys)
-            .Distinct().OrderBy(x => x).ToList();
-
-        var defectTypes = usedDefectEnNames.Select(en =>
+        [HttpGet]
+        public async Task<IActionResult> GetDefectReportData(
+            string? dateFrom, string? dateTo,
+            string? process, string? color, int? productId)
         {
-            defectInfoByEn.TryGetValue(en, out var info);
-            return new { en, vn = info?.defect_name_vn ?? en, cn = info?.defect_name_cn ?? en };
-        }).ToList();
+            try
+            {
+                // ── Quyết định bảng nguồn dựa trên dateTo ────────────────
+                var today = DateTime.Today;
+                bool useExcel = false;
+                if (!string.IsNullOrEmpty(dateTo) && DateTime.TryParse(dateTo, out var dtoCheck))
+                {
+                    useExcel = dtoCheck.Date < today;
+                }
 
-        return Json(new { rows = grouped, defectTypes });
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"GetDefectReportData Error: {ex.Message}");
-        return StatusCode(500, new { error = ex.Message });
-    }
-}
+                // ── Fetch records: project về anonymous type chung ───────
+                // (cả 2 bảng có schema giống hệt nhau, C# unify anonymous type)
+                var records = useExcel
+                    ? await BuildExcelQuery(dateFrom, dateTo, process, color, productId)
+                        .Select(x => new
+                        {
+                            x.date_finished,
+                            x.product_id,
+                            x.color,
+                            x.process,
+                            x.type_value,
+                            x.defect_name,
+                            x.product_qty
+                        })
+                        .ToListAsync()
+                    : await BuildProductionQuery(dateFrom, dateTo, process, color, productId)
+                        .Select(x => new
+                        {
+                            x.date_finished,
+                            x.product_id,
+                            x.color,
+                            x.process,
+                            x.type_value,
+                            x.defect_name,
+                            x.product_qty
+                        })
+                        .ToListAsync();
+
+                Console.WriteLine(
+                    $"GetDefectReportData: source={(useExcel ? "ByExcel" : "Production")} " +
+                    $"(dateTo={dateTo}, today={today:yyyy-MM-dd}), {records.Count} records");
+
+                // ── Rest of logic unchanged ───────────────────────────────
+                var (italisaNameMap, svnMap, productItalisaMap) = await GetItemNameFromOverviewAsync();
+
+                var defectInfoAll  = await _context.SVN_Italisa_DefectInfor.ToListAsync();
+                var defectInfoByEn = defectInfoAll
+                    .Where(d => !string.IsNullOrEmpty(d.defect_name_en))
+                    .ToDictionary(d => d.defect_name_en!, d => d);
+
+                var grouped = records
+                    .GroupBy(x => new
+                    {
+                        Date    = x.date_finished.Date,
+                        ProdId  = x.product_id,
+                        Color   = x.color   ?? "-",
+                        Process = x.process ?? "-"
+                    })
+                    .Select(g =>
+                    {
+                        // Chỉ tính Production Qty làm input
+                        var inputQty = g.Where(x => x.type_value == "Production Qty").Sum(x => x.product_qty ?? 0);
+                        var ngQty    = g.Where(x => x.type_value == "Defect").Sum(x => x.product_qty ?? 0);
+                        var okQty    = Math.Max(0, inputQty - ngQty);
+
+                        var defects = g
+                            .Where(x => x.type_value == "Defect" && !string.IsNullOrEmpty(x.defect_name))
+                            .GroupBy(x => x.defect_name!)
+                            .ToDictionary(dg => dg.Key, dg => dg.Sum(x => x.product_qty ?? 0));
+
+                        // product_id → Italisa_no → Item_name
+                        productItalisaMap.TryGetValue(g.Key.ProdId ?? -1, out var italisaNo);
+
+                        var partCode = italisaNo > 0
+                            ? $"Y{italisaNo:D4}"
+                            : (g.Key.ProdId.HasValue ? g.Key.ProdId.Value.ToString() : "-");
+
+                        italisaNameMap.TryGetValue(italisaNo, out var itemName);
+                        var product = !string.IsNullOrEmpty(itemName) ? itemName : partCode;
+
+                        // SVN Code + SVN Name: key = "ItalisaNo_Color"
+                        var svnKey = $"{italisaNo}_{g.Key.Color}";
+                        svnMap.TryGetValue(svnKey, out var svnInfo);
+
+                        return new
+                        {
+                            date      = g.Key.Date.ToString("dd-MMM-yyyy"),
+                            productId = g.Key.ProdId,
+                            italisaNo = italisaNo > 0 ? (int?)italisaNo : null,
+                            partCode,
+                            product,
+                            svnCode   = svnInfo.SvnCode ?? "",
+                            svnName   = svnInfo.SvnName ?? "",
+                            coating   = g.Key.Color,
+                            process   = g.Key.Process,
+                            inputQty,
+                            okQty,
+                            ngQty,
+                            outputQty  = okQty,
+                            defectRate = inputQty > 0 ? Math.Round((double)ngQty / inputQty * 100, 1) : 0.0,
+                            yieldRate  = inputQty > 0 ? Math.Round((double)okQty  / inputQty * 100, 1) : 100.0,
+                            defects
+                        };
+                    })
+                    .Where(x => x.inputQty > 0 || x.ngQty > 0)
+                    .OrderByDescending(x => x.date)
+                    .ThenBy(x => x.partCode)
+                    .ToList();
+
+                var usedDefectEnNames = grouped
+                    .SelectMany(x => x.defects.Keys)
+                    .Distinct().OrderBy(x => x).ToList();
+
+                var defectTypes = usedDefectEnNames.Select(en =>
+                {
+                    defectInfoByEn.TryGetValue(en, out var info);
+                    return new { en, vn = info?.defect_name_vn ?? en, cn = info?.defect_name_cn ?? en };
+                }).ToList();
+
+                return Json(new { rows = grouped, defectTypes });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"GetDefectReportData Error: {ex.Message}");
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        // ── Helpers: build query với cùng bộ filter cho 2 bảng ────────────────
+        private IQueryable<SVN_Italisa_Production> BuildProductionQuery(
+            string? dateFrom, string? dateTo,
+            string? process, string? color, int? productId)
+        {
+            var q = _context.SVN_Italisa_Production.AsQueryable();
+            if (!string.IsNullOrEmpty(dateFrom) && DateTime.TryParse(dateFrom, out var dfrom))
+                q = q.Where(x => x.date_finished >= dfrom);
+            if (!string.IsNullOrEmpty(dateTo) && DateTime.TryParse(dateTo, out var dto2))
+                q = q.Where(x => x.date_finished <= dto2.AddDays(1).AddSeconds(-1));
+            if (!string.IsNullOrEmpty(process))
+                q = q.Where(x => x.process == process);
+            if (!string.IsNullOrEmpty(color))
+                q = q.Where(x => x.color == color);
+            if (productId.HasValue)
+                q = q.Where(x => x.product_id == productId.Value);
+            return q;
+        }
+
+        private IQueryable<SVN_Italisa_Production_ByExcel> BuildExcelQuery(
+            string? dateFrom, string? dateTo,
+            string? process, string? color, int? productId)
+        {
+            var q = _context.SVN_Italisa_Production_ByExcel.AsQueryable();
+            if (!string.IsNullOrEmpty(dateFrom) && DateTime.TryParse(dateFrom, out var dfrom))
+                q = q.Where(x => x.date_finished >= dfrom);
+            if (!string.IsNullOrEmpty(dateTo) && DateTime.TryParse(dateTo, out var dto2))
+                q = q.Where(x => x.date_finished <= dto2.AddDays(1).AddSeconds(-1));
+            if (!string.IsNullOrEmpty(process))
+                q = q.Where(x => x.process == process);
+            if (!string.IsNullOrEmpty(color))
+                q = q.Where(x => x.color == color);
+            if (productId.HasValue)
+                q = q.Where(x => x.product_id == productId.Value);
+            return q;
+        }
 
         // ── Helper: lấy item name + SVN info từ stored proc Overview ─────────────
         private async Task<(
@@ -631,7 +671,6 @@ public async Task<IActionResult> GetDefectReportData(
 
                             italisaNameMap.TryAdd(pn, name);
 
-                            // Key: "ItalisaNo_Color" — vì cùng sản phẩm màu khác → SVN Code khác
                             var key = $"{pn}_{col2}";
                             svnMap.TryAdd(key, (svnCode, svnName));
                         }
@@ -653,10 +692,6 @@ public async Task<IActionResult> GetDefectReportData(
 
             return (italisaNameMap, svnMap, productItalisaMap);
         }
-
-
-
-
 
 
         public IActionResult Report() => View();
@@ -708,8 +743,7 @@ public async Task<IActionResult> GetDefectReportData(
                 return StatusCode(500, new { error = ex.Message });
             }
         }
-        
-        
+
 
         // ── DTOs ─────────────────────────────────────────────────────────────
 
